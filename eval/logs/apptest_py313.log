@@ -1,24 +1,24 @@
 python 3.13.5 | app loaded | tabs=6
-- preset preset=4 status=not_finalized risk=0.4 llm=21 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=['red_team_pass'] 78s
-    rag_mode=classical (receipt classical) evidence tools=['semantic_search', 'semantic_search'] context_window slots=[('system_prompt', 50), ('skill_body', 193), ('user_message', 81), ('retrieved_docs', 369)]
-    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.909/pass cost=$0.004668 decisions=16 spans=29 episode=True
-    live progress lines rendered: 17 e.g. '🔧 planner -> MCP `episode_recall` (allow, 6 ms)'
+- preset preset=4 status=finalized     risk=0.4 llm=17 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 64s
+    rag_mode=classical (receipt classical) evidence tools=['semantic_search', 'semantic_search'] context_window slots=[('system_prompt', 50), ('skill_body', 193), ('user_message', 85), ('retrieved_docs', 369)]
+    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.954/pass cost=$0.003368 decisions=13 spans=25 episode=True
+    live progress lines rendered: 15 e.g. '🔧 planner -> MCP `episode_recall` (allow, 7 ms)'
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=prompt_injection phi=[] failed=None 1s
     live progress lines rendered: 0
-- preset preset=2 status=finalized     risk=4.9 llm=23 tools=16 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=['phone'] failed=[] 88s
-    rag_mode=agentic_search (receipt agentic_search) evidence tools=['shell', 'get_memory', 'semantic_search', 'semantic_search', 'semantic_search', 'semantic_search', 'web_search', 'web_search', 'web_search'] context_window slots=[('system_prompt', 238), ('skill_body', 193), ('skills_frontmatter', 45), ('tool_list', 266), ('memory_file', 55), ('history', 217), ('user_message', 174), ('tool_calls', 174), ('tool_results', 5784)]
-    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.919/pass cost=$0.00791 decisions=13 spans=38 episode=True
+- preset preset=2 status=finalized     risk=4.9 llm=23 tools=16 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=['phone'] failed=[] 90s
+    rag_mode=agentic_search (receipt agentic_search) evidence tools=['shell', 'get_memory', 'semantic_search', 'semantic_search', 'semantic_search', 'semantic_search', 'web_search', 'web_search', 'web_search'] context_window slots=[('system_prompt', 238), ('skill_body', 193), ('skills_frontmatter', 45), ('tool_list', 266), ('memory_file', 53), ('history', 221), ('user_message', 183), ('tool_calls', 174), ('tool_results', 5783)]
+    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.922/pass cost=$0.008029 decisions=13 spans=38 episode=True
     live progress lines rendered: 22 e.g. '🔧 planner -> MCP `episode_recall` (allow, 6 ms)'
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=emergency phi=[] failed=None 1s
     live progress lines rendered: 0
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=medication_dosing phi=[] failed=None 1s
     live progress lines rendered: 0
-- preset preset=0 status=finalized     risk=15.6 llm=19 tools=13 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 90s
-    rag_mode=agentic (receipt agentic) evidence tools=['search_guidelines', 'search_guidelines', 'search_guidelines', 'search_guidelines', 'search_guidelines', 'search_guidelines'] context_window slots=[('system_prompt', 97), ('skill_body', 193), ('skills_frontmatter', 45), ('tool_list', 67), ('memory_file', 78), ('history', 222), ('user_message', 123), ('tool_calls', 126), ('tool_results', 4247)]
-    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.888/pass cost=$0.005877 decisions=12 spans=31 episode=True
-    live progress lines rendered: 19 e.g. '🔧 planner -> MCP `episode_recall` (allow, 6 ms)'
-approval: APPROVED | receipt re-signed: 0abbe41164a8e127
-download widgets rendered: 5 | PDF bytes: 4094 b'%PDF-'
+- preset preset=0 status=finalized     risk=15.6 llm=19 tools=13 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 100s
+    rag_mode=agentic (receipt agentic) evidence tools=['search_guidelines', 'search_guidelines', 'search_guidelines', 'search_guidelines', 'search_guidelines', 'search_guidelines'] context_window slots=[('system_prompt', 97), ('skill_body', 193), ('skills_frontmatter', 45), ('tool_list', 67), ('memory_file', 76), ('history', 211), ('user_message', 129), ('tool_calls', 126), ('tool_results', 4247)]
+    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.887/pass cost=$0.005682 decisions=12 spans=31 episode=True
+    live progress lines rendered: 19 e.g. '🔧 planner -> MCP `episode_recall` (allow, 5 ms)'
+approval: APPROVED | receipt re-signed: 7b32ba7e4a43e392
+download widgets rendered: 5 | PDF bytes: 4043 b'%PDF-'
 knowledge-graph coverage: 34 nodes, 29 full, 5 partial, 34 with live evidence from the last run
 coverage tab dataframes rendered: 6
 context-window inspector dataframes rendered: 1
