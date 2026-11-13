@@ -1,0 +1,4 @@
+mode,runs,finalized,hit_at_3,retrieval_calls,coverage,citation_validity,findings,faithfulness,latency_mean_s,tokens_mean,llm_calls_mean,evidence_context_tokens_mean,web_search_calls,web_pages_live_200,tools_used
+agentic,8,7,0.933,15,0.875,1.0,34,1.0,113.8,25023,18.1,2974,0,0,['search_guidelines']
+classical,8,8,1.0,26,1.0,1.0,31,0.968,71.3,21272,18.1,913,0,0,['semantic_search']
+agentic_search,8,7,0.929,28,1.0,1.0,42,1.0,89.5,49867,23.2,5483,11,21,"['get_memory', 'search_files', 'semantic_search', 'shell', 'web_search']"

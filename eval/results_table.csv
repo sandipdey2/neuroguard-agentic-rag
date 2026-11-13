@@ -1,9 +1,9 @@
 case,status,route_valid,route_overrides,route_decisions,revisions,first_draft_pass,failed_checks,needs_approval,llm_calls,tool_calls,tokens,latency_s,receipt_verifies,audit_chain_valid,skills_loaded,resource_reads,a2a_messages,writer_truncations,red_team_dropped,plan_followed,react_steps,react_thoughts_with_text,graph_traversals,retrieval_rounds,coverage,self_critique_revised,self_critique_llm_unverified_dropped,confidence,confidence_gate,cost_usd,decisions,spans,max_context_tokens,tool_outputs_truncated,episode_stored
-N1,finalized,True,0,6,0,True,[],True,22,12,30398,92.79,True,True,6,8,12,0,2,True,13,4,1,2,1.0,False,2,0.894,pass,0.0056,13,32,2357,0,True
-N2,finalized,True,0,6,0,True,[],True,19,9,25127,78.38,True,True,5,8,12,0,1,True,10,3,1,1,1.0,False,1,0.904,pass,0.004753,12,27,2549,0,True
-N3,finalized,True,1,6,0,True,[],True,19,9,25105,78.54,True,True,5,7,12,0,2,True,10,3,1,1,1.0,False,2,0.911,pass,0.004946,12,27,2360,0,True
-N4,finalized,True,0,6,0,True,[],False,19,9,23335,78.7,True,True,5,5,12,0,1,True,10,3,0,1,1.0,False,3,0.911,pass,0.004466,12,27,2005,0,True
-N5,finalized,True,0,6,0,True,[],True,19,10,24322,73.57,True,True,5,4,12,0,2,True,11,3,0,1,1.0,False,2,0.886,pass,0.004659,12,28,2611,0,True
-N6,finalized,True,0,6,0,True,[],False,19,9,24399,76.23,True,True,5,6,12,0,1,True,10,3,0,1,1.0,False,2,0.956,pass,0.004747,12,27,2086,0,True
-N7,finalized,True,0,6,0,True,[],False,19,9,24734,76.67,True,True,5,7,12,0,0,True,10,3,1,1,1.0,False,2,0.911,pass,0.004741,12,27,2338,0,True
-N8,finalized,True,0,8,1,False,[],True,27,11,45300,142.78,True,True,8,13,16,0,2,True,13,4,1,2,1.0,True,2,0.914,pass,0.008323,16,37,2765,0,True
+N1,timeout,False,0,0,0,False,[],,12,11,16195,331.05,True,True,0,0,7,0,0,True,0,0,0,1,,False,0,,,0.003042,4,23,0,0,False
+N2,finalized,True,0,6,0,True,[],True,19,11,26540,78.23,True,True,5,5,12,0,2,True,12,3,0,1,1.0,False,2,0.909,pass,0.0049,12,29,3749,0,True
+N3,finalized,True,1,6,0,True,[],True,19,10,25650,84.83,True,True,5,5,12,0,2,True,11,3,0,1,1.0,False,2,0.893,pass,0.004825,12,28,3047,0,True
+N4,finalized,True,0,6,0,True,[],False,19,9,24282,72.69,True,True,5,5,12,0,0,True,10,3,0,1,1.0,False,2,0.919,pass,0.00452,12,27,2410,0,True
+N5,finalized,True,0,6,0,True,[],True,19,10,26097,83.27,True,True,5,5,12,0,2,True,11,3,0,1,1.0,False,2,0.898,pass,0.004896,12,28,3074,0,True
+N6,finalized,True,0,6,0,True,[],False,19,9,26031,87.92,True,True,5,7,12,0,2,True,10,3,0,1,1.0,False,1,0.95,pass,0.004934,12,27,2528,0,True
+N7,finalized,True,0,6,0,True,[],False,19,9,25465,84.09,True,True,5,6,12,0,2,True,10,3,0,1,1.0,False,2,0.929,pass,0.004823,12,27,2512,0,True
+N8,finalized,True,0,6,0,True,[],True,19,12,29924,88.02,True,True,5,8,12,0,2,True,13,3,0,1,1.0,False,1,0.903,pass,0.005522,12,30,4593,0,True

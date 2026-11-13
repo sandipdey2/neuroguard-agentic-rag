@@ -2,44 +2,44 @@
  "n": 3,
  "max_concurrency": 3,
  "rate_per_min": 120.0,
- "wall_s": 89.28,
- "sum_latency_s": 249.86,
- "speedup": 2.8,
+ "wall_s": 76.94,
+ "sum_latency_s": 214.58,
+ "speedup": 2.79,
  "limiter_wait_s": 0.0,
  "finalized": 3,
  "rows": [
   {
    "i": 0,
    "status": "finalized",
-   "latency_s": 89.27,
+   "latency_s": 76.94,
    "queued_s": 0.0,
-   "llm_calls": 22,
-   "cost_usd": 0.005961,
-   "confidence": 0.9,
+   "llm_calls": 19,
+   "cost_usd": 0.00547,
+   "confidence": 0.916,
    "risk_band": "high",
-   "run_id": "88b930c1088442bbb00465d422a43d62"
+   "run_id": "0c4bb4ff180d445b851ff1db293f5bf6"
   },
   {
    "i": 1,
    "status": "finalized",
-   "latency_s": 79.79,
+   "latency_s": 70.21,
    "queued_s": 0.01,
    "llm_calls": 19,
-   "cost_usd": 0.004416,
-   "confidence": 0.904,
+   "cost_usd": 0.004894,
+   "confidence": 0.902,
    "risk_band": "high",
-   "run_id": "faf75694577945929a2aabf58dbdcd32"
+   "run_id": "11fb655fa5cd459783d71b6143faaeb2"
   },
   {
    "i": 2,
    "status": "finalized",
-   "latency_s": 80.8,
+   "latency_s": 67.43,
    "queued_s": 0.01,
    "llm_calls": 19,
-   "cost_usd": 0.004958,
-   "confidence": 0.907,
+   "cost_usd": 0.004902,
+   "confidence": 0.909,
    "risk_band": "high",
-   "run_id": "93062a46f2f14b7ca58fe4f100ede15f"
+   "run_id": "7c0a1dac87c14d29b5511ff3ba34b00b"
   }
  ]
 }

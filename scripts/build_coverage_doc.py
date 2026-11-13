@@ -92,6 +92,12 @@ lines += ["", "Mean Evidence Researcher context-window tokens per slot (tiktoken
 for m, v in SLOTS.items():
     keys = sorted({k for vv in SLOTS.values() for k in vv if k != "total"})
     lines.append(f"| {m} | " + " | ".join(str(int(v.get(k, 0))) for k in keys) + f" | {int(v['total'])} |")
+_ag = [float(r["latency_s"]) for r in _rows if r["status"] != "timeout"]
+_to = [r["case"] for r in _rows if r["status"] == "timeout"]
+lines += ["", "Notes: the agentic row reuses the section-8 runs" + (f"; case {', '.join(_to)} hit the harness wall-clock timeout there (12 LLM calls in 331 s, most likely Vocareum gateway "
+          f"slowness, stopped by the harness with a signed receipt), which lowers its coverage and finalized count - without it the agentic "
+          f"latency mean is {sum(_ag) / len(_ag):.1f} s" if _to else "") + ". In agentic-search mode one report (N8) was not finalized by the gate. "
+          "Classical mode has no re-retrieval loop by design. n = 8 cases per mode: differences of one case are within noise.", ""]
 lines += ["", f"Red team for the context tools (s.6b): {RT['attacks_total']} attacks ({RT['shell_attacks']} shell injection, {RT['ssrf_attacks']} SSRF, "
           f"{RT['sql_attacks']} SQL write/escape) - {RT['hook_blocked']} blocked by the pre-tool-use hook and {RT['server_refused']} refused again inside the "
           f"server; {RT['positive_controls_allowed']}/{RT['positive_controls']} legitimate calls allowed.", ""]
