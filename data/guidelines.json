@@ -1,0 +1,302 @@
+[
+ {
+  "id": "G-01",
+  "title": "Risk Factors for Stroke - Overview",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "overview",
+  "text": "Anyone can have a stroke at any age. But certain things can increase your chances of having a stroke. The best way to protect yourself and your loved ones from a stroke is to understand your risk and how to control it. While you can't control your age or family history, you can take steps to lower your chances of having a stroke."
+ },
+ {
+  "id": "G-02",
+  "title": "Risk Factors for Stroke - Previous stroke or TIA",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "tia",
+  "text": "If you have already had a stroke or a transient ischemic attack (TIA), also known as a \"mini-stroke,\" your chances of having another stroke are higher."
+ },
+ {
+  "id": "G-03",
+  "title": "Risk Factors for Stroke - High blood pressure",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "hypertension",
+  "text": "High blood pressure is a leading cause of stroke. It occurs when the pressure of the blood in your arteries is too high. There are often no symptoms of high blood pressure. Get your blood pressure checked often. If you have high blood pressure, lowering your blood pressure through lifestyle changes or medicine can also lower your risk for stroke."
+ },
+ {
+  "id": "G-04",
+  "title": "Risk Factors for Stroke - High cholesterol",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "cholesterol",
+  "text": "Cholesterol is a waxy, fat-like substance made by the liver and found in certain foods. Your liver makes enough for your body's needs, but we often get more cholesterol from the foods we eat. If we take in more cholesterol than the body can use, the extra cholesterol can build up in the arteries, including those of the brain. This can lead to narrowing of the arteries, stroke, and other problems."
+ },
+ {
+  "id": "G-05",
+  "title": "Risk Factors for Stroke - Heart disease",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "heart_disease",
+  "text": "Common heart disorders can increase your risk for stroke. For example, coronary artery disease increases your risk for stroke, because plaque builds up in the arteries and blocks the flow of oxygen-rich blood to the brain. Other heart conditions, such as heart valve defects, irregular heartbeat (including atrial fibrillation), and enlarged heart chambers, can cause blood clots that may break loose and cause a stroke."
+ },
+ {
+  "id": "G-06",
+  "title": "Risk Factors for Stroke - Diabetes",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "glucose",
+  "text": "Diabetes increases your risk for stroke. Diabetes causes sugars to build up in the blood and prevent oxygen and nutrients from getting to the various parts of your body, including your brain. High blood pressure is also common in people with diabetes. High blood pressure is the leading cause of stroke and is the main cause for increased risk of stroke among people with diabetes."
+ },
+ {
+  "id": "G-07",
+  "title": "Risk Factors for Stroke - Obesity",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "bmi",
+  "text": "Obesity is excess body fat. Obesity is linked to higher \"bad\" cholesterol and triglyceride levels and to lower \"good\" cholesterol levels. Obesity can also lead to high blood pressure and diabetes."
+ },
+ {
+  "id": "G-08",
+  "title": "Risk Factors for Stroke - Tobacco use",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "smoking",
+  "text": "Tobacco use increases the risk for stroke. Cigarette smoking can damage the heart and blood vessels, increasing your risk for stroke. Nicotine raises blood pressure. Carbon monoxide from cigarette smoke reduces the amount of oxygen that your blood can carry. Exposure to secondhand smoke can make you more likely to have a stroke."
+ },
+ {
+  "id": "G-09",
+  "title": "Risk Factors for Stroke - Diet, activity and alcohol",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "lifestyle",
+  "text": "Eating a diet high in saturated fats, trans fat, and cholesterol has been linked to stroke and related conditions, such as heart disease. Also, getting too much salt (sodium) in the diet can raise blood pressure levels. Not getting enough physical activity can lead to other health conditions that can raise the risk for stroke. These health conditions include obesity, high blood pressure, high cholesterol, and diabetes. Regular physical activity can lower your chances for stroke. Drinking too much alcohol can raise blood pressure levels and the risk for stroke."
+ },
+ {
+  "id": "G-10",
+  "title": "Risk Factors for Stroke - Age",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "age",
+  "text": "The older you are, the more likely you are to have a stroke. The chance of having a stroke about doubles every 10 years after age 55. Although stroke is common among older adults, many people younger than 65 years also have strokes. In fact, about one in seven strokes occur in adolescents and young adults ages 15 to 49."
+ },
+ {
+  "id": "G-11",
+  "title": "Risk Factors for Stroke - Sex, race and ethnicity",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/risk-factors/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "demographics",
+  "text": "Stroke is more common in women than in men, and women of all ages are more likely than men are to die from stroke. Pregnancy and use of birth control pills pose special stroke risks for women. The risk of having a first stroke is nearly twice as high for Black people as for White people. Black people are also more likely than White people to die from stroke."
+ },
+ {
+  "id": "G-12",
+  "title": "Signs and Symptoms of Stroke",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "emergency",
+  "text": "Sudden trouble walking, dizziness, loss of balance, or lack of coordination. Sudden trouble seeing. Sudden numbness or weakness in the face, arm, or leg, especially on one side of the body. Sudden confusion, trouble speaking, or difficulty understanding speech. Sudden severe headache with no known cause. Call 9-1-1 right away if you or someone else has any of these symptoms."
+ },
+ {
+  "id": "G-13",
+  "title": "B.E. F.A.S.T. to identify stroke",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "emergency",
+  "text": "B—Balance Loss: Ask the person if they are feeling off-balance or dizzy. E—Eye (Vision) Changes: Ask the person if they have trouble seeing normally. F—Face: Ask the person to smile. Does one side of the face droop? A—Arms: Ask the person to raise both arms. Does one arm drift downward? S—Speech: Ask the person to repeat a simple phrase. Is the speech slurred or strange? T—Time: If you see any of these signs, call 9-1-1 right away."
+ },
+ {
+  "id": "G-14",
+  "title": "When to seek emergency help",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "emergency",
+  "text": "Note the time when any symptoms first appear. This information helps health care providers determine the best treatment. Do not drive to the hospital or let someone else drive you. Call 9-1-1 for an ambulance so that medical personnel can begin life-saving treatment on the way to the emergency room."
+ },
+ {
+  "id": "G-15",
+  "title": "Transient ischemic attack (mini-stroke)",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "tia",
+  "text": "If your stroke symptoms go away after a few minutes, you may have had a transient ischemic attack (TIA), also sometimes called a \"mini-stroke.\" Although brief, a TIA is a sign of a serious condition that will not go away without medical help. If you think you or someone you know has had a TIA, tell a health care team about the symptoms right away."
+ },
+ {
+  "id": "G-16",
+  "title": "Preventing Stroke - Healthy weight and activity",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/prevention/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "lifestyle",
+  "text": "Having overweight or obesity increases your risk for stroke. To determine whether your weight is in a healthy range, doctors often calculate your body mass index (BMI). Physical activity can help you stay at a healthy weight and lower your cholesterol and blood pressure levels. For adults, the surgeon general recommends 2 hours and 30 minutes of moderate-intensity aerobic physical activity, such as a brisk walk, each week."
+ },
+ {
+  "id": "G-17",
+  "title": "Preventing Stroke - Don't smoke, limit alcohol",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/prevention/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "smoking",
+  "text": "Cigarette smoking greatly increases your chances of having a stroke. If you don't smoke, don't start. If you do smoke, quitting will lower your risk for stroke. Your doctor can suggest ways to help you quit. Avoid drinking too much alcohol, which can raise your blood pressure. Men should have no more than two drinks per day, and women should have no more than one per day."
+ },
+ {
+  "id": "G-18",
+  "title": "Preventing Stroke - Control blood pressure",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/prevention/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "hypertension",
+  "text": "High blood pressure usually has no symptoms, so be sure to have it checked on a regular basis. Talk to your health care team about how often you should check your levels. You can check your blood pressure at home, at a doctor's office, or at a pharmacy. If you have high blood pressure, your doctor might prescribe medicine, suggest some changes in your lifestyle, or recommend that you choose foods with lower sodium (salt)."
+ },
+ {
+  "id": "G-19",
+  "title": "Preventing Stroke - Control diabetes",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/prevention/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "glucose",
+  "text": "If your doctor thinks you have symptoms of diabetes, he or she may recommend that you get tested. If you have diabetes, check your blood sugar levels regularly. Your doctor may recommend certain lifestyle changes, such as getting more physical activity or choosing healthier foods. These actions will help keep your blood sugar under control and help lower your risk for stroke."
+ },
+ {
+  "id": "G-20",
+  "title": "Preventing Stroke - Treat heart disease and take medicine as directed",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/prevention/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "heart_disease",
+  "text": "If you have certain heart conditions, such as coronary artery disease or atrial fibrillation (irregular heartbeat), your health care team may recommend medical treatment or surgery. Taking care of heart problems can help prevent stroke. If you take medicine to treat heart disease, high cholesterol, high blood pressure, or diabetes, follow your doctor's instructions carefully. Never stop taking your medicine without first talking to your doctor or pharmacist."
+ },
+ {
+  "id": "G-21",
+  "title": "Stroke Facts - Fast facts",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/data-research/facts-stats/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "overview",
+  "text": "Every year, more than 795,000 people in the United States have a stroke. About 610,000 of these are first or new strokes. About 185,000 strokes— nearly 1 in 4—are in people who have had a previous stroke. About 87% of all strokes are ischemic strokes, in which blood flow to the brain is blocked. Stroke is a leading cause of serious long-term disability."
+ },
+ {
+  "id": "G-22",
+  "title": "Stroke Facts - Americans at risk",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/data-research/facts-stats/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "overview",
+  "text": "High blood pressure, high cholesterol, smoking, obesity, and diabetes are leading causes of stroke. One in three US adults has at least one of these conditions or risk factors. Patients who arrive at the emergency room within 3 hours of their first symptoms often have less disability 3 months after a stroke than those who receive delayed care."
+ },
+ {
+  "id": "G-23",
+  "title": "About Stroke - What it is",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/about/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "overview",
+  "text": "A stroke, sometimes called a brain attack, occurs when something blocks blood supply to part of the brain or when a blood vessel in the brain bursts. In either case, parts of the brain become damaged or die. A stroke can cause lasting brain damage, long-term disability, or even death."
+ },
+ {
+  "id": "G-24",
+  "title": "About Stroke - TIA is a warning sign",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/stroke/about/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "tia",
+  "text": "A TIA is a warning sign of a future stroke. A TIA is a medical emergency, just like a major stroke. Strokes and TIAs require emergency care. Call 9-1-1 right away if you feel symptoms of a stroke or see signs in another person. There is no way to know in the beginning whether symptoms are from a TIA or from a major type of stroke."
+ },
+ {
+  "id": "G-25",
+  "title": "About High Blood Pressure - Categories",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/high-blood-pressure/about/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "hypertension",
+  "text": "Normal blood pressure is less than 120/80 mm Hg. High blood pressure is consistently at or above 130/80 mm Hg. Most people with high blood pressure, also called hypertension, have no signs or symptoms. Measuring your blood pressure is the only way to know if you have high blood pressure. High blood pressure increases your risk for stroke."
+ },
+ {
+  "id": "G-26",
+  "title": "Adult BMI Categories",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "bmi",
+  "text": "For adults 20 and older, BMI categories are based on a person's BMI regardless of age, sex, or race. Underweight: Less than 18.5. Healthy Weight: 18.5 to less than 25. Overweight: 25 to less than 30. Obesity: 30 or greater. BMI is a screening measure. BMI should be considered with other factors when assessing an individual's health."
+ },
+ {
+  "id": "G-27",
+  "title": "Diabetes Testing - Blood sugar tests",
+  "publisher": "Centers for Disease Control and Prevention",
+  "url": "https://www.cdc.gov/diabetes/diabetes-testing/index.html",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "glucose",
+  "text": "Prediabetes and type 2 diabetes often don't have any symptoms. Fasting blood sugar test: Normal: 99 mg/dL or below. Prediabetes: 100–125 mg/dL. Diabetes: 126 mg/dL or above. Random blood sugar test: Diabetes: 200 mg/dL or above. A1C test: Normal: below 5.7%. Prediabetes: 5.7–6.4%. Diabetes: 6.5% or above."
+ },
+ {
+  "id": "G-28",
+  "title": "Stroke Causes and Risk Factors - Controllable factors",
+  "publisher": "National Heart, Lung, and Blood Institute",
+  "url": "https://www.nhlbi.nih.gov/health/stroke/causes",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "lifestyle",
+  "text": "Factors that you can control account for 82% to 90% of all strokes: High blood pressure, Obesity, Physical inactivity, Poor diet, Smoking. Ischemic and hemorrhagic strokes share many of the same risk factors, such as high blood pressure, diabetes, and high blood cholesterol. Blood clots can arise from coronary heart disease, atrial fibrillation, heart valve disease, and carotid artery disease."
+ },
+ {
+  "id": "G-29",
+  "title": "Stroke Causes and Risk Factors - Age, family history and other conditions",
+  "publisher": "National Heart, Lung, and Blood Institute",
+  "url": "https://www.nhlbi.nih.gov/health/stroke/causes",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "age",
+  "text": "A stroke can occur at any age, but the risk is higher for babies under the age of 1 and for adults as they grow older. Your risk of having a stroke is higher if a parent or other family member has had a stroke, particularly at a younger age. Other medical conditions, such as sleep apnea, kidney disease, and migraine headaches, are also factors."
+ },
+ {
+  "id": "G-30",
+  "title": "Stroke Causes and Risk Factors - Sex",
+  "publisher": "National Heart, Lung, and Blood Institute",
+  "url": "https://www.nhlbi.nih.gov/health/stroke/causes",
+  "accessed": "2026-11-13",
+  "license": "Public domain (U.S. federal government work); attribution requested",
+  "topic": "demographics",
+  "text": "At younger ages, men are more likely than women to have a stroke. But women tend to live longer, so their lifetime risk of having a stroke is higher. Women who take birth control pills or use hormone replacement therapy are at higher risk. Women are also at higher risk during pregnancy and in the weeks after giving birth."
+ }
+]

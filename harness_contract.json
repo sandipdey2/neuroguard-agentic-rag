@@ -1,0 +1,49 @@
+{
+  "contract_version": "1.0.0",
+  "description": "Run contract fixed before the first LLM token. Loaded and SHA-256 hashed at the start of every run; the hash is written into the signed receipt.",
+  "model": "gpt-4o-mini",
+  "temperature": 0,
+  "llm_timeout_s": 60,
+  "loop": {
+    "max_orchestrator_turns": 9,
+    "max_visits_per_agent": 2,
+    "max_tool_rounds_per_agent": 4,
+    "max_revisions": 1
+  },
+  "budget": {
+    "max_llm_calls": 30,
+    "max_tool_calls": 24,
+    "max_total_tokens": 80000,
+    "wall_clock_timeout_s": 240
+  },
+  "agents": {
+    "orchestrator": {"tools": [], "resources": [], "prompts": []},
+    "intake": {"tools": ["screen_note", "memory_read"], "resources": [], "prompts": []},
+    "risk_analyst": {"tools": ["predict_risk", "explain_factors", "cohort_stats", "calculator"], "resources": ["model://risk-card"], "prompts": []},
+    "evidence_researcher": {"tools": ["search_guidelines"], "resources": ["guideline://{id}"], "prompts": []},
+    "clinical_writer": {"tools": [], "resources": [], "prompts": ["clinical_report"]},
+    "safety_reviewer": {"tools": [], "resources": [], "prompts": ["red_team_review"]},
+    "harness": {"tools": ["memory_write"], "resources": [], "prompts": []}
+  },
+  "write_tools": {"memory_write": "requires_user_consent"},
+  "tool_arg_limits": {"calculator.expression_max_chars": 120, "search_guidelines.k_max": 5, "memory_read.limit_max": 5},
+  "required_checks": [
+    "risk_in_unit_interval",
+    "risk_matches_model",
+    "report_states_model_risk",
+    "every_evidence_claim_cited",
+    "citations_were_retrieved",
+    "numbers_grounded",
+    "no_dosing_advice",
+    "no_diagnosis_claim",
+    "disclaimer_present",
+    "no_phi_in_output",
+    "red_team_pass",
+    "within_budget"
+  ],
+  "human_approval": {
+    "required_when": ["risk_band == high", "note_has_red_flag_signs", "reviewer_approved_with_warnings"],
+    "effect": "report is finalized as a draft that a clinician must approve or reject in the UI; the decision is added to a re-signed receipt"
+  },
+  "receipt": {"algorithm": "HMAC-SHA256", "key_source": "NG_RECEIPT_KEY secret (ephemeral per-process key if unset)"}
+}

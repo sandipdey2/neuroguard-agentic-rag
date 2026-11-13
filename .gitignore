@@ -1,0 +1,13 @@
+.streamlit/secrets.toml
+.env
+*.env
+.voc_env
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+.DS_Store
+data/runtime/
+dist/*.zip
+build/

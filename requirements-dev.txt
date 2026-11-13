@@ -1,0 +1,7 @@
+# Extra packages to execute evaluation.ipynb and rebuild the PDF paper (not needed on Streamlit Cloud)
+-r requirements.txt
+ipykernel==7.4.0
+nbconvert==7.17.2
+nbformat==5.11.1
+markdown==3.11.3
+weasyprint==70.0

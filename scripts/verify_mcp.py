@@ -1,0 +1,41 @@
+"""Prove the MCP server works over real stdio: initialize, tools/list, resources/list, templates, prompts/list,
+tools/call, resources/read and prompts/get.   python scripts/verify_mcp.py"""
+import asyncio
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from core.mcp_client import SERVER, mcp_session  # noqa: E402
+
+P = {"age": 67, "gender": "Male", "hypertension": 0, "heart_disease": 1, "ever_married": "Yes", "work_type": "Private",
+     "Residence_type": "Urban", "avg_glucose_level": 228.69, "bmi": 36.6, "smoking_status": "formerly smoked"}
+
+
+async def main():
+    print("server:", SERVER.name, "transport: stdio (subprocess)")
+    async with mcp_session() as s:
+        tools = await s.list_tools()
+        print("tools/list ->", [t.name for t in tools.tools])
+        res = await s.list_resources()
+        print("resources/list ->", [str(r.uri) for r in res.resources])
+        tmpl = await s.list_resource_templates()
+        print("resources/templates/list ->", [t.uriTemplate for t in tmpl.resourceTemplates])
+        prompts = await s.list_prompts()
+        print("prompts/list ->", [p.name for p in prompts.prompts])
+        calls = [("predict_risk", P), ("explain_factors", {**P, "top": 3}), ("cohort_stats", {"age": 67, "hypertension": 0, "heart_disease": 1}),
+                 ("screen_note", {"note": "Follow-up visit. Denies weakness. Occasional headaches."}),
+                 ("search_guidelines", {"query": "high blood pressure stroke risk", "k": 2}),
+                 ("calculator", {"expression": "round(0.1498 / 0.0487, 2)"}), ("calculator", {"expression": "__import__('os')"}),
+                 ("memory_read", {"session_id": "verify-mcp", "limit": 2})]
+        for name, args in calls:
+            r = await s.call_tool(name, args)
+            print(f"tools/call {name} isError={r.isError} ->", r.content[0].text[:260].replace("\n", " "))
+        for uri in ["guideline://G-13", "model://risk-card", "dataset://stroke-card"]:
+            r = await s.read_resource(uri)
+            print(f"resources/read {uri} ->", r.contents[0].text[:200].replace("\n", " "))
+        g = await s.get_prompt("clinical_report", {"audience": "clinician", "facts_json": "{}", "evidence_json": "[]"})
+        print("prompts/get clinical_report ->", g.messages[0].content.text[:160].replace("\n", " "))
+
+
+asyncio.run(main())

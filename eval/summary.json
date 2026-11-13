@@ -1,0 +1,194 @@
+{
+ "python": "3.13.5",
+ "model": "gpt-4o-mini",
+ "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
+ "data": {
+  "rows": 5109,
+  "train": 4087,
+  "test": 1022,
+  "prevalence": 0.0487,
+  "test_positives": 50,
+  "sha256": "644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420"
+ },
+ "model_comparison": {
+  "logistic_regression": {
+   "cv_roc_auc": 0.838,
+   "test_roc_auc": 0.839,
+   "test_pr_auc": 0.259,
+   "test_brier_uncalibrated": 0.1726
+  },
+  "random_forest": {
+   "cv_roc_auc": 0.835,
+   "test_roc_auc": 0.815,
+   "test_pr_auc": 0.208,
+   "test_brier_uncalibrated": 0.0707
+  },
+  "gradient_boosting": {
+   "cv_roc_auc": 0.822,
+   "test_roc_auc": 0.83,
+   "test_pr_auc": 0.213,
+   "test_brier_uncalibrated": 0.1591
+  }
+ },
+ "model_test_metrics": {
+  "roc_auc": 0.84,
+  "pr_auc": 0.26,
+  "brier": 0.041,
+  "threshold": 0.0549,
+  "recall": 0.8,
+  "precision": 0.137,
+  "f1": 0.233,
+  "specificity": 0.74,
+  "confusion": {
+   "tn": 719,
+   "fp": 253,
+   "fn": 10,
+   "tp": 40
+  }
+ },
+ "note_classifier": {
+  "dataset": "MTSamples (Kaggle tboyle10/medicaltranscriptions, CC0)",
+  "docs": 4999,
+  "positives": 317,
+  "train": 3999,
+  "test": 1000,
+  "label": "medical_specialty in {Neurology, Neurosurgery}",
+  "test_roc_auc": 0.881,
+  "test_pr_auc": 0.233,
+  "threshold": 0.5,
+  "test_precision": 0.248,
+  "test_recall": 0.413,
+  "test_f1": 0.31
+ },
+ "odds_ratios": [
+  {
+   "exposure": "hypertension",
+   "odds_ratio": 3.7,
+   "ci95": [
+    2.74,
+    4.98
+   ],
+   "n_exposed": 498
+  },
+  {
+   "exposure": "heart_disease",
+   "odds_ratio": 4.71,
+   "ci95": [
+    3.34,
+    6.64
+   ],
+   "n_exposed": 276
+  },
+  {
+   "exposure": "age_65_plus",
+   "odds_ratio": 8.13,
+   "ci95": [
+    6.21,
+    10.63
+   ],
+   "n_exposed": 1027
+  },
+  {
+   "exposure": "glucose_ge_200",
+   "odds_ratio": 3.44,
+   "ci95": [
+    2.51,
+    4.72
+   ],
+   "n_exposed": 434
+  },
+  {
+   "exposure": "bmi_ge_30",
+   "odds_ratio": 1.08,
+   "ci95": [
+    0.83,
+    1.4
+   ],
+   "n_exposed": 1920
+  },
+  {
+   "exposure": "ever_smoked",
+   "odds_ratio": 1.73,
+   "ci95": [
+    1.34,
+    2.23
+   ],
+   "n_exposed": 1673
+  }
+ ],
+ "retrieval": {
+  "queries": 12,
+  "hit_at_3": 1.0,
+  "mrr_at_3": 1.0
+ },
+ "harness_unit": {
+  "hook_denials_expected": 4,
+  "hook_denials_observed": 4,
+  "session_id_pinned": true,
+  "k_clamped_to": 5,
+  "receipt_verifies": true,
+  "tampered_receipt_verifies": false,
+  "audit_chain_valid": true,
+  "audit_chain_valid_after_tamper": false
+ },
+ "mcp": {
+  "tools": [
+   "predict_risk",
+   "explain_factors",
+   "cohort_stats",
+   "screen_note",
+   "search_guidelines",
+   "calculator",
+   "memory_read",
+   "memory_write"
+  ],
+  "resources": [
+   "guideline://index",
+   "model://risk-card",
+   "dataset://stroke-card",
+   "policy://harness-contract"
+  ],
+  "resource_templates": [
+   "guideline://{chunk_id}"
+  ],
+  "prompts": [
+   "clinical_report",
+   "red_team_review"
+  ],
+  "resource_G12_url": "https://www.cdc.gov/stroke/signs-symptoms/index.html"
+ },
+ "agent": {
+  "normal_cases": 8,
+  "attack_cases": 8,
+  "attack_block_rate": 1.0,
+  "attack_reason_correct": 1.0,
+  "false_block_rate_normal": 0.0,
+  "phi_redacted_in_N6": [
+   "phone",
+   "person_name"
+  ],
+  "phi_leak_after_redaction": false,
+  "route_policy_valid_rate": 1.0,
+  "llm_route_choices_accepted": 0.812,
+  "finalized_rate": 1.0,
+  "first_draft_pass_rate": 1.0,
+  "mean_revisions": 0.0,
+  "citation_coverage": 1.0,
+  "grounding_mean_support": 0.62,
+  "grounded_bullets_ge_0_5": 0.757,
+  "evidence_bullets": 37,
+  "latency_mean_s": 51.7,
+  "latency_median_s": 50.5,
+  "latency_max_s": 65.0,
+  "llm_calls_mean": 17.0,
+  "tool_calls_mean": 8.4,
+  "tokens_mean": 22163,
+  "receipts_verify": true,
+  "audit_chains_valid": true,
+  "approval_required_cases": 5,
+  "writer_truncations_retried": 0
+ },
+ "ragas_faithfulness": 1.0,
+ "failed_check_counts": {},
+ "failure_rows": 9
+}
