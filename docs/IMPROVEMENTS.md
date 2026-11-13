@@ -57,7 +57,7 @@ Regression: mean latency rose from 56.3 s to 87.2 s and LLM calls from 17.6 to 2
    were premature jumps to the Clinical Writer); with the planner in v2.1.0 it is 98%. Options: constrain the structured-output enum
    to the currently eligible agents (removes invalid choices structurally), add two few-shot examples, or let code
    handle the fixed gather phase and keep the LLM for review/revision decisions. Track "LLM choice accepted" as a KPI.
-7. **Latency (87.2 s mean, max 142.8 s; 20.4 sequential LLM calls in v2.1.0)**:
+7. **Latency (v2.2.0 run3: median 84.5 s, one 331 s timeout; 18.1 sequential LLM calls)**:
    * run Intake, Risk Analyst and Evidence Researcher in parallel (they are independent; LangGraph fan-out) - estimated, not yet measured:
      roughly 35-40% less wall-clock time;
    * allow parallel tool calls within a round (already returned by the model; execute with `asyncio.gather`);

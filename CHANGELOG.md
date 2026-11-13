@@ -2,6 +2,18 @@
 
 **Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
+## 2.2.0 - 2026-11-13
+Three selectable RAG modes plus agentic-search context tools; knowledge-graph coverage now 34 nodes (29 full, 5 partial).
+- **Classical RAG**: a fixed pipeline calls MCP `semantic_search` once per required topic before the LLM; docs are injected (system + user + docs).
+- **Agentic RAG** (default): the Evidence Researcher's context window is assembled from named slots (system prompt, skills YAML front matter, tool list, memory file, history, user message, tool calls, tool results).
+- **Agentic search**: 8 new MCP tools - `semantic_search`, `search_files` (read-only `knowledge/` incl. `Plan.md`), `load_skill`, `execute_query` (read-only SQL over the cohort), `web_search` / `web_fetch` (CDC/NIH/WHO allowlist, SSRF guard, offline fallback), `get_memory`, `shell` (grep/wc/head/ls argv sandbox). MCP server: 19 tools.
+- **Hooks**: per-run tool set by RAG mode; argument checks for shell, URL and SQL in the pre-tool-use hook and again in the server; skills limited to the agent's catalog; `get_memory` session pinned; web (3) and shell (4) call budgets. One "source check" nudge in agentic-search mode.
+- **Context-window inspector**: `context_window` trace events with tiktoken counts per slot; new result tab "Context window"; sidebar RAG-mode selector; `rag_mode` in the signed receipt.
+- LLM calls retried up to twice when the gateway answers "timed out".
+- Notebook run3: s.6b red team (44/44 shell/SSRF/SQL attacks blocked by hook and server, 5/5 positive controls allowed), s.17 three-mode comparison (hit@3 1.0 / 0.933 / 0.929; latency 71.3 / 113.8 / 89.5 s; tokens 21,272 / 25,023 / 49,867).
+- Regressions vs 2.1.0: one eval case (N1) hit the 330 s timeout, so finalized 1.0 -> 0.875; the LLM no longer chose `graph_traverse` (0.625 -> 0.0) and re-retrieval was not triggered (0.25 -> 0.0). Faithfulness improved 0.977 -> 1.0.
+- Contract v1.2.0.
+
 ## 2.1.0 - 2026-11-13
 Every node of the agentic-AI knowledge graph is now implemented and mapped to code (`docs/KNOWLEDGE_GRAPH_COVERAGE.md`,
 app tab "Knowledge-graph coverage"): 27 nodes, 23 full, 4 partial.
