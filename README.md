@@ -1,6 +1,6 @@
 # 🧠 NeuroGuard AI — governed multi-agent stroke-risk decision support
 
-**Live demo:** _add the Streamlit Cloud URL after deployment_ · **Paper:** [module_summary.pdf](module_summary.pdf) · **Evaluation:** [evaluation.ipynb](evaluation.ipynb) · **License:** MIT (code)
+**Live demo:** [https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/](https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/) · **Paper:** [module_summary.pdf](module_summary.pdf) · **Evaluation:** [evaluation.ipynb](evaluation.ipynb) · **License:** MIT (code)
 
 > ⚠️ **Decision support only — not a medical device.** No regulatory clearance. Not for diagnosis, treatment or emergency triage.
 > If someone shows sudden face drooping, arm weakness or speech difficulty, call 9-1-1.

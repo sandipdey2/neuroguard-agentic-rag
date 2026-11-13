@@ -21,7 +21,7 @@ from core.stats import factor_tests
 
 st.set_page_config(page_title="NeuroGuard AI - stroke-risk decision support", page_icon="🧠", layout="wide")
 REPO = "https://github.com/sandipdey2/neuroguard-agentic-rag"
-LIVE_DEMO = ""  # paste the URL Streamlit Cloud assigns after deployment
+LIVE_DEMO = "https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/"
 CONTRACT = load_contract()
 DISCLAIMER = ("**Decision support only - not a medical device.** NeuroGuard AI has no regulatory clearance and must not be "
               "used to diagnose, treat or triage real patients. If someone shows sudden face drooping, arm weakness or speech "
