@@ -49,6 +49,7 @@ class PermissionEngine:
         self.session_id = session_id
         self.consent = consent
         self.tool_calls = 0
+        self.pinned: dict[str, dict] = {}     # harness-set arguments an agent can never choose itself (per tool)
 
     def allowed_tools(self, agent: str) -> list[str]:
         return list(self.c["agents"].get(agent, {}).get("tools", []))
@@ -71,7 +72,7 @@ class PermissionEngine:
             d = Decision(False, "tool-call budget exhausted", args)
         elif tool == "calculator" and len(str(args.get("expression", ""))) > lim["calculator.expression_max_chars"]:
             d = Decision(False, "calculator expression too long", args)
-        elif tool in self.c["write_tools"] and not self.consent:
+        elif self.c["write_tools"].get(tool) == "requires_user_consent" and not self.consent:
             d = Decision(False, "write blocked: user has not consented to case-history storage", args)
         else:
             if tool == "search_guidelines":
@@ -80,6 +81,12 @@ class PermissionEngine:
                 args["session_id"] = self.session_id          # pinned: agents can never read another session
             if tool == "memory_read":
                 args["limit"] = max(1, min(int(args.get("limit", 3)), lim["memory_read.limit_max"]))
+            if tool == "graph_traverse":
+                args["max_hops"] = max(1, min(int(args.get("max_hops", 2)), lim["graph_traverse.max_hops_max"]))
+                args["k"] = max(1, min(int(args.get("k", 6)), lim["graph_traverse.k_max"]))
+            if tool == "episode_recall":
+                args["k"] = max(1, min(int(args.get("k", 3)), lim["episode_recall.k_max"]))
+            args.update(self.pinned.get(tool, {}))
             d = Decision(True, "allowed by contract", args)
         if d.allow:
             self.tool_calls += 1

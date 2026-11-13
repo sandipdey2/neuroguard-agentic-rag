@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "description": "Run contract fixed before the first LLM token. Loaded and SHA-256 hashed at the start of every run; the hash is written into the signed receipt.",
   "model": "gpt-4o-mini",
   "temperature": 0,
@@ -8,25 +8,98 @@
     "max_orchestrator_turns": 9,
     "max_visits_per_agent": 2,
     "max_tool_rounds_per_agent": 4,
-    "max_revisions": 1
+    "max_revisions": 1,
+    "max_retrieval_rounds": 2,
+    "max_self_revisions": 1,
+    "planner": true
   },
   "budget": {
-    "max_llm_calls": 30,
-    "max_tool_calls": 24,
-    "max_total_tokens": 80000,
-    "wall_clock_timeout_s": 240
+    "max_llm_calls": 36,
+    "max_tool_calls": 32,
+    "max_total_tokens": 110000,
+    "wall_clock_timeout_s": 300
   },
   "agents": {
-    "orchestrator": {"tools": [], "resources": [], "prompts": []},
-    "intake": {"tools": ["screen_note", "memory_read"], "resources": [], "prompts": []},
-    "risk_analyst": {"tools": ["predict_risk", "explain_factors", "cohort_stats", "calculator"], "resources": ["model://risk-card"], "prompts": []},
-    "evidence_researcher": {"tools": ["search_guidelines"], "resources": ["guideline://{id}"], "prompts": []},
-    "clinical_writer": {"tools": [], "resources": [], "prompts": ["clinical_report"]},
-    "safety_reviewer": {"tools": [], "resources": [], "prompts": ["red_team_review"]},
-    "harness": {"tools": ["memory_write"], "resources": [], "prompts": []}
+    "orchestrator": {
+      "tools": [],
+      "resources": [],
+      "prompts": []
+    },
+    "planner": {
+      "tools": [
+        "episode_recall"
+      ],
+      "resources": [],
+      "prompts": []
+    },
+    "intake": {
+      "tools": [
+        "screen_note",
+        "memory_read"
+      ],
+      "resources": [],
+      "prompts": []
+    },
+    "risk_analyst": {
+      "tools": [
+        "predict_risk",
+        "explain_factors",
+        "cohort_stats",
+        "calculator"
+      ],
+      "resources": [
+        "model://risk-card"
+      ],
+      "prompts": []
+    },
+    "evidence_researcher": {
+      "tools": [
+        "search_guidelines",
+        "graph_traverse"
+      ],
+      "resources": [
+        "guideline://{id}",
+        "graph://knowledge-graph"
+      ],
+      "prompts": []
+    },
+    "clinical_writer": {
+      "tools": [],
+      "resources": [],
+      "prompts": [
+        "clinical_report"
+      ]
+    },
+    "safety_reviewer": {
+      "tools": [],
+      "resources": [],
+      "prompts": [
+        "red_team_review"
+      ]
+    },
+    "harness": {
+      "tools": [
+        "memory_write",
+        "episode_write"
+      ],
+      "resources": [
+        "model://risk-card"
+      ],
+      "prompts": []
+    }
   },
-  "write_tools": {"memory_write": "requires_user_consent"},
-  "tool_arg_limits": {"calculator.expression_max_chars": 120, "search_guidelines.k_max": 5, "memory_read.limit_max": 5},
+  "write_tools": {
+    "memory_write": "requires_user_consent",
+    "episode_write": "harness_only_deidentified"
+  },
+  "tool_arg_limits": {
+    "calculator.expression_max_chars": 120,
+    "search_guidelines.k_max": 5,
+    "memory_read.limit_max": 5,
+    "graph_traverse.max_hops_max": 3,
+    "graph_traverse.k_max": 8,
+    "episode_recall.k_max": 3
+  },
   "required_checks": [
     "risk_in_unit_interval",
     "risk_matches_model",
@@ -42,8 +115,63 @@
     "within_budget"
   ],
   "human_approval": {
-    "required_when": ["risk_band == high", "note_has_red_flag_signs", "reviewer_approved_with_warnings"],
+    "required_when": [
+      "risk_band == high",
+      "note_has_red_flag_signs",
+      "reviewer_approved_with_warnings",
+      "confidence < confidence.review_below"
+    ],
     "effect": "report is finalized as a draft that a clinician must approve or reject in the UI; the decision is added to a re-signed receipt"
   },
-  "receipt": {"algorithm": "HMAC-SHA256", "key_source": "NG_RECEIPT_KEY secret (ephemeral per-process key if unset)"}
+  "receipt": {
+    "algorithm": "HMAC-SHA256",
+    "key_source": "NG_RECEIPT_KEY secret (ephemeral per-process key if unset)"
+  },
+  "context": {
+    "model_context_window": 128000,
+    "tokenizer": "tiktoken o200k_base",
+    "max_tool_output_tokens": 1500,
+    "writer_evidence_tokens": 3500,
+    "agent_context_tokens": 12000
+  },
+  "confidence": {
+    "weights": {
+      "calibration": 0.15,
+      "cohort": 0.1,
+      "coverage": 0.25,
+      "verifier": 0.3,
+      "red_team": 0.1,
+      "grounding": 0.1
+    },
+    "refuse_below": 0.4,
+    "review_below": 0.7,
+    "note": "heuristic evidence-quality score, not a probability of correctness"
+  },
+  "pricing": {
+    "model": "gpt-4o-mini",
+    "input_per_1m": 0.15,
+    "output_per_1m": 0.6,
+    "cached_input_per_1m": 0.075,
+    "source": "https://platform.openai.com/docs/pricing (Standard tier, gpt-4o-mini)",
+    "accessed": "2026-11-13",
+    "note": "list price; the Vocareum course gateway may bill differently"
+  },
+  "learning": {
+    "enabled": true,
+    "window": 30,
+    "min_support": 2,
+    "max_hints": 3,
+    "retrieval_boost_step": 0.01,
+    "retrieval_boost_cap": 0.06,
+    "scope": "whitelisted hint texts + bounded retrieval boosts only; no code, prompt-file, contract or model changes; reset in UI"
+  },
+  "episodic_memory": {
+    "store": "every LLM run, de-identified (age band, factor names, route, verdicts, outcome); no free text",
+    "recall_k": 3
+  },
+  "batch": {
+    "max_concurrency": 3,
+    "llm_calls_per_minute": 120,
+    "max_cases": 6
+  }
 }

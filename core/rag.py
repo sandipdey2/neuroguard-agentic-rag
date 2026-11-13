@@ -2,7 +2,9 @@
 
 retrieve -> inject -> generate (Lewis et al., 2020): ``search`` returns ranked chunks with id, title, publisher
 and URL; the Evidence agent injects them into the writer's context, and the writer must cite ids like [G-03].
-TF-IDF (unigrams + bigrams, sublinear tf) with a small topic boost when the query names a chunk's topic.
+Hybrid retrieval (default): score = 0.6 * sparse TF-IDF cosine + 0.4 * dense LSA cosine (core/vectors.py) plus a small
+topic boost when the query names a chunk's topic. mode="sparse" or "dense" gives either component alone (used by the
+evaluation to compare them). ``boosts`` lets the learning loop add a bounded per-chunk bonus (capped at 0.06).
 """
 from __future__ import annotations
 
@@ -12,6 +14,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .data import load_guidelines
+from .vectors import DenseEncoder
 
 TOPIC_SYNONYMS = {
     "hypertension": ["hypertension", "blood pressure"], "glucose": ["glucose", "diabetes", "blood sugar"],
@@ -21,6 +24,8 @@ TOPIC_SYNONYMS = {
 }
 TOPIC_BOOST = 0.08
 MIN_SCORE = 0.04
+W_SPARSE, W_DENSE = 0.6, 0.4
+MAX_LEARNED_BOOST = 0.06
 
 
 class GuidelineIndex:
@@ -30,20 +35,26 @@ class GuidelineIndex:
         self.vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), sublinear_tf=True)
         self.matrix = self.vec.fit_transform(corpus)
         self.by_id = {d["id"]: d for d in self.docs}
+        self.dense = DenseEncoder(corpus)
 
-    def search(self, query: str, k: int = 4) -> list[dict]:
-        scores = cosine_similarity(self.vec.transform([query]), self.matrix).ravel()
+    def search(self, query: str, k: int = 4, mode: str = "hybrid", boosts: dict | None = None) -> list[dict]:
+        sparse = cosine_similarity(self.vec.transform([query]), self.matrix).ravel()
+        dense = self.dense.similarities(query).clip(min=0)
+        scores = {"sparse": sparse, "dense": dense}.get(mode, W_SPARSE * sparse + W_DENSE * dense).copy()
         ql = query.lower()
         for i, d in enumerate(self.docs):
             if any(s in ql for s in TOPIC_SYNONYMS.get(d["topic"], [])):
                 scores[i] += TOPIC_BOOST
+            if boosts:
+                scores[i] += min(MAX_LEARNED_BOOST, max(0.0, float(boosts.get(d["id"], 0.0))))
         out = []
         for i in scores.argsort()[::-1][:k]:
             if scores[i] < MIN_SCORE:
                 continue
             d = self.docs[i]
             out.append({"id": d["id"], "title": d["title"], "publisher": d["publisher"], "url": d["url"],
-                        "text": d["text"], "score": round(float(scores[i]), 3)})
+                        "text": d["text"], "score": round(float(scores[i]), 3),
+                        "sparse": round(float(sparse[i]), 3), "dense": round(float(dense[i]), 3), "mode": mode})
         return out
 
 

@@ -17,8 +17,10 @@ async def main():
     async with mcp_session() as s:
         tools = await s.list_tools()
         print("tools/list ->", [t.name for t in tools.tools])
+        assert len(tools.tools) == 11, len(tools.tools)
         res = await s.list_resources()
         print("resources/list ->", [str(r.uri) for r in res.resources])
+        assert len(res.resources) == 5, len(res.resources)
         tmpl = await s.list_resource_templates()
         print("resources/templates/list ->", [t.uriTemplate for t in tmpl.resourceTemplates])
         prompts = await s.list_prompts()
@@ -27,11 +29,15 @@ async def main():
                  ("screen_note", {"note": "Follow-up visit. Denies weakness. Occasional headaches."}),
                  ("search_guidelines", {"query": "high blood pressure stroke risk", "k": 2}),
                  ("calculator", {"expression": "round(0.1498 / 0.0487, 2)"}), ("calculator", {"expression": "__import__('os')"}),
-                 ("memory_read", {"session_id": "verify-mcp", "limit": 2})]
+                 ("memory_read", {"session_id": "verify-mcp", "limit": 2}),
+                 ("search_guidelines", {"query": "brain attack warning", "k": 2, "mode": "dense"}),
+                 ("graph_traverse", {"factors": ["hypertension", "glucose"], "max_hops": 2, "k": 3}),
+                 ("episode_recall", {"factors": ["age", "hypertension"], "age_band": "60-69", "k": 2}),
+                 ("episode_write", {"episode_json": "{\"note\": \"free text is rejected (no run_id)\"}"})]
         for name, args in calls:
             r = await s.call_tool(name, args)
             print(f"tools/call {name} isError={r.isError} ->", r.content[0].text[:260].replace("\n", " "))
-        for uri in ["guideline://G-13", "model://risk-card", "dataset://stroke-card"]:
+        for uri in ["guideline://G-13", "model://risk-card", "dataset://stroke-card", "graph://knowledge-graph"]:
             r = await s.read_resource(uri)
             print(f"resources/read {uri} ->", r.contents[0].text[:200].replace("\n", " "))
         g = await s.get_prompt("clinical_report", {"audience": "clinician", "facts_json": "{}", "evidence_json": "[]"})

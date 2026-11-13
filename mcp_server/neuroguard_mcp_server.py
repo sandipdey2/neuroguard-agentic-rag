@@ -4,9 +4,10 @@ Launched by the app as a subprocess (`sys.executable mcp_server/neuroguard_mcp_s
 speaks real MCP JSON-RPC over stdin/stdout (initialize, tools/list, tools/call, resources/list,
 resources/read, resources/templates/list, prompts/list, prompts/get).
 
-Tools      predict_risk, explain_factors, cohort_stats, screen_note, search_guidelines, calculator,
-           memory_read, memory_write
-Resources  guideline://index, guideline://{id}, model://risk-card, dataset://stroke-card, policy://harness-contract
+Tools      predict_risk, explain_factors, cohort_stats, screen_note, search_guidelines (hybrid sparse+dense),
+           graph_traverse (graph RAG), calculator, memory_read, memory_write, episode_recall, episode_write
+Resources  guideline://index, guideline://{id}, model://risk-card, dataset://stroke-card, policy://harness-contract,
+           graph://knowledge-graph
 Prompts    clinical_report, red_team_review
 The server never receives the OpenAI key (the client strips it from the environment).
 """
@@ -23,11 +24,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
-from core import memory  # noqa: E402
+from core import episodes, memory  # noqa: E402
 from core.config import CONTRACT_PATH  # noqa: E402
 from core.data import load_guidelines, pipeline_log, validate_profile  # noqa: E402
 from core.model import get_model  # noqa: E402
 from core.notes import screen_note as _screen  # noqa: E402
+from core.graph_rag import stats as graph_stats, traverse  # noqa: E402
 from core.rag import get_index  # noqa: E402
 from core.stats import age_band, cohort_stats as _cohort, factor_tests  # noqa: E402
 
@@ -78,9 +80,21 @@ def screen_note(note: str) -> str:
 
 
 @mcp.tool()
-def search_guidelines(query: str, k: int = 4) -> str:
-    """TF-IDF search over 30 verbatim CDC/NHLBI stroke guideline excerpts. Returns id (cite as [G-xx]), title, publisher, url, text."""
-    return _j(get_index().search(query, k=max(1, min(int(k), 5))))
+def search_guidelines(query: str, k: int = 4, mode: str = "hybrid", boost_factors: list[str] | None = None) -> str:
+    """Search 30 verbatim CDC/NHLBI stroke guideline excerpts. mode: hybrid (default; 0.6 TF-IDF + 0.4 dense LSA vectors),
+    sparse or dense. Returns id (cite as [G-xx]), title, publisher, url, text and the score components.
+    boost_factors is set by the harness (learning loop), not by the agent."""
+    boosts = episodes.retrieval_boosts(boost_factors) if boost_factors else None
+    mode = mode if mode in ("hybrid", "sparse", "dense") else "hybrid"
+    return _j(get_index().search(query, k=max(1, min(int(k), 5)), mode=mode, boosts=boosts))
+
+
+@mcp.tool()
+def graph_traverse(factors: list[str], max_hops: int = 2, k: int = 6) -> str:
+    """Graph RAG: traverse the knowledge graph (risk factor -> guideline excerpt -> condition -> excerpt) from the
+    patient's factors. factors use: hypertension, glucose, bmi, smoking, heart_disease, age, cholesterol, lifestyle, tia.
+    Returns ranked excerpt ids with the path that reached each one (cite as [G-xx] after reading/searching them)."""
+    return _j(traverse(factors, max_hops=max(1, min(int(max_hops), 3)), k=max(1, min(int(k), 8))))
 
 
 _OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv,
@@ -131,6 +145,23 @@ def memory_write(session_id: str, age: float, risk_probability: float, risk_band
     return _j({"stored_case_id": cid, "age_band": f"{lo}-{hi - 1}"})
 
 
+@mcp.tool()
+def episode_recall(factors: list[str], age_band: str | None = None, k: int = 3) -> str:
+    """Episodic memory: the most similar past runs (de-identified) and the learning loop's active, whitelisted hints."""
+    return _j({"similar_episodes": episodes.recall(factors, age_band, max(1, min(int(k), 3))),
+               "learned_hints": episodes.learned_hints(), "retrieval_boosts": episodes.retrieval_boosts(factors)})
+
+
+@mcp.tool()
+def episode_write(episode_json: str) -> str:
+    """Store one de-identified run episode (harness only). Free-text fields are not accepted."""
+    ep = json.loads(episode_json)
+    allowed = {"run_id", "age_band", "factors", "audience", "plan", "route", "overrides", "retrieval_rounds", "self_critique",
+               "review_verdicts", "failed_checks", "red_team_rules", "confidence", "outcome", "cited"}
+    ep = {k: v for k, v in ep.items() if k in allowed}
+    return _j({"stored_episode_id": episodes.write_episode(ep), "fields": sorted(ep)})
+
+
 # ----------------------------------------------------------------------------- resources
 @mcp.resource("guideline://index", mime_type="application/json")
 def guideline_index() -> str:
@@ -151,7 +182,7 @@ def guideline_chunk(chunk_id: str) -> str:
 def risk_card() -> str:
     """Model card: data split, candidate comparison, held-out metrics, calibration and threshold rule."""
     r = get_model().report
-    return _j({k: r[k] for k in ("data", "comparison", "best_by_cv_auc", "served_model", "threshold_rule", "test_metrics", "sklearn")})
+    return _j({k: r[k] for k in ("data", "comparison", "best_by_cv_auc", "served_model", "threshold_rule", "test_metrics", "calibration_curve", "sklearn") if k in r})
 
 
 @mcp.resource("dataset://stroke-card", mime_type="application/json")
@@ -166,6 +197,12 @@ def dataset_card() -> str:
 def harness_contract() -> str:
     """The run contract (budgets, per-agent permissions, required checks)."""
     return CONTRACT_PATH.read_text(encoding="utf-8")
+
+
+@mcp.resource("graph://knowledge-graph", mime_type="application/json")
+def knowledge_graph() -> str:
+    """Knowledge-graph summary: node kinds, edge relations and counts (graph RAG)."""
+    return _j(graph_stats())
 
 
 # ----------------------------------------------------------------------------- prompts

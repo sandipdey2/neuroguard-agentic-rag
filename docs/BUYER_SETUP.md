@@ -7,7 +7,7 @@ and an OpenAI-compatible API key (OpenAI, or a course gateway such as Vocareum).
 
 ## 1. Unzip and install
 ```bash
-unzip neuroguard-ai-2.0.1.zip && cd neuroguard-ai
+unzip neuroguard-ai-2.1.0.zip && cd neuroguard-ai
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -39,7 +39,7 @@ streamlit run app.py
 1. Push the folder to a GitHub repository (the `.gitignore` already excludes secrets and caches).
 2. On https://share.streamlit.io choose **Create app**, pick the repo, branch `main`, main file `app.py`.
 3. In **Advanced settings > Secrets** paste the contents of your `secrets.toml`. Python 3.13 or 3.14 both work.
-4. Deploy. The first start trains the models (about 20 s); later runs take roughly 50-90 s each.
+4. Deploy. The first start trains the models (about 20 s); later runs take roughly 70-120 s each (mean 87.2 s in the evaluation).
 
 ## 6. Customise
 - Budgets, turn caps, per-agent tool permissions and required checks: `harness_contract.json`.

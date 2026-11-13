@@ -99,12 +99,20 @@ def main():
                       "resources_and_prompts": [t.get("uri") or t.get("prompt") for t in r["trace"] if t.get("type") in ("mcp_resource_read", "mcp_prompt_get")],
                       "skills_loaded": [t["skill"] for t in r["trace"] if t.get("type") == "skill_loaded"],
                       "gate": next((t for t in r["trace"] if t.get("type") == "gate"), None),
-                      "receipt_signature_prefix": r["receipt"]["signature"][:16]}
+                      "receipt_signature_prefix": r["receipt"]["signature"][:16],
+                      "plan": [s_["agent"] for s_ in (r.get("plan") or {}).get("steps", [])],
+                      "react_steps": [{k: t.get(k) for k in ("agent", "step", "thought", "action")} for t in r["trace"] if t.get("type") == "react_step"],
+                      "evidence_sufficiency": [{k: t.get(k) for k in ("round", "score", "missing", "action")} for t in r["trace"] if t.get("type") == "evidence_sufficiency"],
+                      "self_critique": r.get("self_critique"), "confidence": r.get("confidence"), "cost": r.get("cost"),
+                      "decision_kinds": [d["kind"] for d in r.get("decisions", [])], "spans": len(r.get("spans", [])),
+                      "episode_stored": (r.get("episode") or {}).get("stored")}
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(ev, indent=1, default=str))
     print(json.dumps({k: ev[k] for k in ("python", "handshake", "server_process", "client_pid", "llm_tool_choice", "server_process_after_close")}, indent=1, default=str))
     fr = ev["full_run"]
     print("full run:", fr["status"], fr["latency_s"], "s | llm", fr["llm_calls"], "| tools", fr["tool_calls"], "| route", fr["route"])
+    print("  plan", fr["plan"], "| react steps", len(fr["react_steps"]), "| sufficiency", fr["evidence_sufficiency"],
+          "| confidence", (fr["confidence"] or {}).get("score"), "| cost $", (fr["cost"] or {}).get("cost_usd"), "| decisions", len(fr["decision_kinds"]))
     for d in fr["orchestrator_decisions"]:
         print(f"  turn {d['turn']}: eligible={d['eligible']} -> {d['next']} ({d['skill']}) override={d['override']}")
     print("wrote", out_path.relative_to(ROOT))

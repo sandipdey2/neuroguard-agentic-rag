@@ -40,7 +40,14 @@ for kind, preset_idx, q, note in CASES:
     print(f"- {kind:6s} preset={preset_idx} status={r['status']:13s} risk={(r.get('risk') or {}).get('risk_percent')} "
           f"llm={r['llm_calls']} tools={r['tool_calls']} route={r.get('route')} guard={r['input_guardrail']['reason']} "
           f"phi={r['input_guardrail']['phi_redacted']} failed={(r.get('final') or {}).get('verification', {}).get('failed')} {time.time() - t0:.0f}s")
-    live = [m.value for m in at.markdown if "Orchestrator (turn" in m.value or "-> MCP `" in m.value]
+    if kind == "preset":
+        cov = r.get("coverage") or {}
+        print(f"    plan={[s_['agent'] for s_ in (r.get('plan') or {}).get('steps', [])]} retrieval_rounds={cov.get('rounds')} "
+              f"coverage={cov.get('score')} self_critique_revised={(r.get('self_critique') or {}).get('revised')} "
+              f"confidence={(r.get('confidence') or {}).get('score')}/{(r.get('confidence') or {}).get('gate')} "
+              f"cost=${(r.get('cost') or {}).get('cost_usd')} decisions={len(r.get('decisions', []))} spans={len(r.get('spans', []))} "
+              f"episode={(r.get('episode') or {}).get('stored')}")
+    live = [m.value for m in at.markdown if "Orchestrator (turn" in m.value or "-> MCP `" in m.value or "Planner:" in m.value]
     print(f"    live progress lines rendered: {len(live)}" + (f" e.g. {live[0][:90]!r}" if live else ""))
     if kind == "preset" and not live:
         ok = False
@@ -56,4 +63,12 @@ if appr:
 from core.report import full_markdown, to_pdf  # noqa: E402
 pdf = to_pdf(full_markdown(at.session_state["result"], at.session_state["approval"]))
 print("download widgets rendered:", len(at.get("download_button")), "| PDF bytes:", len(pdf), pdf[:5])
+from core.coverage import coverage_rows  # noqa: E402
+rows = coverage_rows(at.session_state["result"])
+n_ev = sum(bool(x["live_evidence"]) for x in rows)
+print(f"knowledge-graph coverage: {len(rows)} nodes, {sum(x['status'] == 'full' for x in rows)} full, "
+      f"{sum(x['status'] == 'partial' for x in rows)} partial, {n_ev} with live evidence from the last run")
+cov_frames = [d for d in at.dataframe if hasattr(d, "value") and "live_evidence" in getattr(d.value, "columns", [])]
+print("coverage tab dataframes rendered:", len(cov_frames))
+ok = ok and len(rows) == 27 and len(cov_frames) == 5
 print("RESULT:", "PASS" if ok and not at.exception else "FAIL")

@@ -1,17 +1,23 @@
-2026-11-13 12:08:55.625 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-python 3.13.5 | app loaded | tabs=4
-- preset preset=4 status=finalized     risk=0.4 llm=17 tools=7 route=['risk_analyst', 'evidence_researcher', 'intake', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 81s
-    live progress lines rendered: 13 e.g. '🧭 Orchestrator (turn 1) -> **risk_analyst** with skill `cohort-comparison` - The risk anal'
+2026-11-13 12:44:44.444 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+python 3.13.5 | app loaded | tabs=6
+- preset preset=4 status=finalized     risk=0.4 llm=19 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 79s
+    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.967/pass cost=$0.004825 decisions=12 spans=27 episode=True
+    live progress lines rendered: 15 e.g. '🔧 planner -> MCP `episode_recall` (allow, 7 ms)'
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=prompt_injection phi=[] failed=None 1s
     live progress lines rendered: 0
-- preset preset=2 status=finalized     risk=4.9 llm=17 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=['phone'] failed=[] 79s
-    live progress lines rendered: 15 e.g. '🧭 Orchestrator (turn 1) -> **intake** with skill `note-screening` - override: LLM chose cl'
+- preset preset=2 status=finalized     risk=4.9 llm=19 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=['phone'] failed=[] 93s
+    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=1 coverage=1.0 self_critique_revised=False confidence=0.919/pass cost=$0.005176 decisions=12 spans=27 episode=True
+    live progress lines rendered: 15 e.g. '🔧 planner -> MCP `episode_recall` (allow, 6 ms)'
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=emergency phi=[] failed=None 1s
     live progress lines rendered: 0
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=medication_dosing phi=[] failed=None 1s
     live progress lines rendered: 0
-- preset preset=0 status=finalized     risk=15.6 llm=17 tools=11 route=['risk_analyst', 'evidence_researcher', 'intake', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 69s
-    live progress lines rendered: 17 e.g. '🧭 Orchestrator (turn 1) -> **risk_analyst** with skill `cohort-comparison` - The clinician'
-approval: APPROVED | receipt re-signed: 49226f23e6183886
-download widgets rendered: 4 | PDF bytes: 4093 b'%PDF-'
+- preset preset=0 status=finalized     risk=15.6 llm=22 tools=12 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 93s
+    plan=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer'] retrieval_rounds=2 coverage=1.0 self_critique_revised=False confidence=0.887/pass cost=$0.006112 decisions=13 spans=33 episode=True
+    live progress lines rendered: 18 e.g. '🔧 planner -> MCP `episode_recall` (allow, 6 ms)'
+approval: APPROVED | receipt re-signed: b2231b31ca401c29
+download widgets rendered: 5 | PDF bytes: 4218 b'%PDF-'
+knowledge-graph coverage: 27 nodes, 23 full, 4 partial, 27 with live evidence from the last run
+coverage tab dataframes rendered: 5
 RESULT: PASS
+EXIT 0

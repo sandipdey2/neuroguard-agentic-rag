@@ -1,6 +1,7 @@
+python 3.14.10
 server: neuroguard_mcp_server.py transport: stdio (subprocess)
-tools/list -> ['predict_risk', 'explain_factors', 'cohort_stats', 'screen_note', 'search_guidelines', 'calculator', 'memory_read', 'memory_write']
-resources/list -> ['guideline://index', 'model://risk-card', 'dataset://stroke-card', 'policy://harness-contract']
+tools/list -> ['predict_risk', 'explain_factors', 'cohort_stats', 'screen_note', 'search_guidelines', 'graph_traverse', 'calculator', 'memory_read', 'memory_write', 'episode_recall', 'episode_write']
+resources/list -> ['guideline://index', 'model://risk-card', 'dataset://stroke-card', 'policy://harness-contract', 'graph://knowledge-graph']
 resources/templates/list -> ['guideline://{chunk_id}']
 prompts/list -> ['clinical_report', 'red_team_review']
 tools/call predict_risk isError=False -> {  "risk_probability": 0.1564,  "risk_percent": 15.6,  "risk_band": "high",  "flag_threshold": 0.0549,  "dataset_prevalence": 0.0487,  "model": "logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)",  "test_roc_auc": 0.84,  "note": "Associa
@@ -11,7 +12,12 @@ tools/call search_guidelines isError=False -> [  {   "id": "G-03",   "title": "R
 tools/call calculator isError=False -> {  "expression": "round(0.1498 / 0.0487, 2)",  "result": 3.08 }
 tools/call calculator isError=False -> {  "expression": "__import__('os')",  "error": "disallowed expression element: Call" }
 tools/call memory_read isError=False -> {  "cases": [] }
+tools/call search_guidelines isError=False -> [  {   "id": "G-23",   "title": "About Stroke - What it is",   "publisher": "Centers for Disease Control and Prevention",   "url": "https://www.cdc.gov/stroke/about/index.html",   "text": "A stroke, sometimes called a brain attack, occurs when something blocks
+tools/call graph_traverse isError=False -> {  "start_factors": [   "hypertension",   "glucose"  ],  "unknown_factors": [],  "max_hops": 2,  "chunks": [   {    "id": "G-06",    "title": "Risk Factors for Stroke - Diabetes",    "url": "https://www.cdc.gov/stroke/risk-factors/index.html",    "score": 1.6,
+tools/call episode_recall isError=False -> {  "similar_episodes": [],  "learned_hints": [],  "retrieval_boosts": {} }
+tools/call episode_write isError=True -> Error executing tool episode_write: 'run_id'
 resources/read guideline://G-13 -> {  "id": "G-13",  "title": "B.E. F.A.S.T. to identify stroke",  "publisher": "Centers for Disease Control and Prevention",  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",  "accessed": 
 resources/read model://risk-card -> {  "data": {   "rows": 5109,   "train": 4087,   "test": 1022,   "prevalence": 0.0487,   "test_positives": 50,   "sha256": "644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420"  },  "compa
 resources/read dataset://stroke-card -> {  "name": "Stroke Prediction Dataset (fedesoriano, Kaggle)",  "license_note": "Kaggle: 'Data files (c) Original Authors'; source described as confidential, for educational use only",  "pipeline_log":
+resources/read graph://knowledge-graph -> {  "nodes": 49,  "edges": 144,  "node_kinds": {   "factor": 10,   "condition": 9,   "chunk": 30  },  "edge_relations": {   "evidenced_by": 60,   "increases_risk_of": 10,   "mentions": 74  },  "built_f
 prompts/get clinical_report -> Write a stroke-risk decision-support report for a clinician reader in Markdown. Use exactly these level-2 headings in this order: ## Summary ## Risk estimate ##

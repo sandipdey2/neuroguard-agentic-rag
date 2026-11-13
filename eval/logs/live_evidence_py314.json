@@ -1,6 +1,6 @@
 {
  "python": "3.14.10",
- "at": "2026-11-13T12:12:53+0000",
+ "at": "2026-11-13T12:55:28+0000",
  "handshake": {
   "protocolVersion": "2025-11-25",
   "serverInfo": {
@@ -15,26 +15,29 @@
    "resources",
    "tools"
   ],
-  "ms": 1147
+  "ms": 1642
  },
  "server_process": [
   {
-   "pid": 200432,
-   "ppid": 200368,
+   "pid": 228253,
+   "ppid": 228218,
    "cmdline": "/workspace/ng314/bin/python <repo>/mcp_server/neuroguard_mcp_server.py",
    "secret_vars_in_child_env": []
   }
  ],
- "client_pid": 200368,
+ "client_pid": 228218,
  "tools_list": [
   "predict_risk",
   "explain_factors",
   "cohort_stats",
   "screen_note",
   "search_guidelines",
+  "graph_traverse",
   "calculator",
   "memory_read",
-  "memory_write"
+  "memory_write",
+  "episode_recall",
+  "episode_write"
  ],
  "llm_tool_choice": {
   "bound_tools": [
@@ -45,7 +48,7 @@
   ],
   "model": "gpt-4o-mini-2024-07-18",
   "finish_reason": "tool_calls",
-  "openai_response_id_prefix": "chatcmpl-EjkRE",
+  "openai_response_id_prefix": "chatcmpl-Ejl6S",
   "tool_calls": [
    {
     "name": "predict_risk",
@@ -104,23 +107,26 @@
  "server_process_after_close": [],
  "full_run": {
   "status": "finalized",
-  "latency_s": 72.6,
-  "llm_calls": 17,
-  "tool_calls": 11,
+  "latency_s": 80.63,
+  "llm_calls": 22,
+  "tool_calls": 12,
   "mcp_tools_listed": [
    "predict_risk",
    "explain_factors",
    "cohort_stats",
    "screen_note",
    "search_guidelines",
+   "graph_traverse",
    "calculator",
    "memory_read",
-   "memory_write"
+   "memory_write",
+   "episode_recall",
+   "episode_write"
   ],
   "route": [
+   "intake",
    "risk_analyst",
    "evidence_researcher",
-   "intake",
    "clinical_writer",
    "safety_reviewer",
    "FINISH"
@@ -133,30 +139,30 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "next": "risk_analyst",
-    "skill": "cohort-comparison",
-    "reason": "The clinician needs a detailed understanding of the patient's stroke risk in context.",
+    "next": "intake",
+    "skill": "note-screening",
+    "reason": "The intake agent is needed to assess the patient's note for stroke risk indicators.",
     "override": null
    },
    {
     "turn": 2,
     "eligible": [
-     "intake",
+     "risk_analyst",
      "evidence_researcher"
     ],
-    "next": "evidence_researcher",
-    "skill": "guideline-citation",
-    "reason": "We need to gather evidence-based guidelines to support the clinician's discussion about the patient's stroke risk.",
+    "next": "risk_analyst",
+    "skill": "cohort-comparison",
+    "reason": "The clinician needs a detailed explanation of the patient's stroke risk and relevant discussions for the next visit.",
     "override": null
    },
    {
     "turn": 3,
     "eligible": [
-     "intake"
+     "evidence_researcher"
     ],
-    "next": "intake",
-    "skill": "note-screening",
-    "reason": "The intake agent can help identify any immediate stroke risk indicators from the note.",
+    "next": "evidence_researcher",
+    "skill": "guideline-citation",
+    "reason": "We need to gather evidence-based information to explain the patient's stroke risk.",
     "override": null
    },
    {
@@ -166,7 +172,7 @@
     ],
     "next": "clinical_writer",
     "skill": "risk-communication",
-    "reason": "The clinical_writer can synthesize the information from previous agents into a comprehensive report for the clinician.",
+    "reason": "The clinical_writer is needed to create a comprehensive report for the clinician.",
     "override": null
    },
    {
@@ -176,7 +182,7 @@
     ],
     "next": "safety_reviewer",
     "skill": "red-team-review",
-    "reason": "The draft is ready for safety review.",
+    "reason": "The draft is ready for safety review before finalization.",
     "override": null
    },
    {
@@ -186,11 +192,50 @@
     ],
     "next": "FINISH",
     "skill": null,
-    "reason": "The safety reviewer is the final step before completion.",
+    "reason": "The case is complete and awaiting safety review approval.",
     "override": null
    }
   ],
   "mcp_tool_calls": [
+   {
+    "agent": "planner",
+    "tool": "episode_recall",
+    "args": {
+     "factors": [
+      "age",
+      "heart_disease",
+      "glucose",
+      "bmi",
+      "smoking",
+      "emergency"
+     ],
+     "age_band": "60-69",
+     "k": 3
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 11
+   },
+   {
+    "agent": "intake",
+    "tool": "screen_note",
+    "args": {
+     "note": "Follow-up visit. Denies weakness or speech problems."
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 75
+   },
+   {
+    "agent": "intake",
+    "tool": "memory_read",
+    "args": {
+     "limit": 3
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 4
+   },
    {
     "agent": "risk_analyst",
     "tool": "predict_risk",
@@ -208,7 +253,7 @@
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
-    "ms": 58
+    "ms": 71
    },
    {
     "agent": "risk_analyst",
@@ -227,7 +272,7 @@
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
-    "ms": 8
+    "ms": 14
    },
    {
     "agent": "risk_analyst",
@@ -239,18 +284,47 @@
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
-    "ms": 14
+    "ms": 21
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "graph_traverse",
+    "args": {
+     "factors": [
+      "age",
+      "heart_disease",
+      "glucose",
+      "bmi",
+      "smoking"
+     ],
+     "max_hops": 2,
+     "k": 6
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 15
    },
    {
     "agent": "evidence_researcher",
     "tool": "search_guidelines",
     "args": {
-     "query": "age stroke risk doubles",
+     "query": "stroke warning signs BE FAST call 9-1-1",
      "k": 4
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
-    "ms": 13
+    "ms": 24
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "older age stroke risk",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 7
    },
    {
     "agent": "evidence_researcher",
@@ -261,67 +335,14 @@
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
-    "ms": 5
+    "ms": 6
    },
    {
     "agent": "evidence_researcher",
     "tool": "search_guidelines",
     "args": {
-     "query": "high average glucose stroke risk",
+     "query": "high glucose stroke risk",
      "k": 4
-    },
-    "decision": "allow",
-    "hook_reason": "allowed by contract",
-    "ms": 4
-   },
-   {
-    "agent": "evidence_researcher",
-    "tool": "search_guidelines",
-    "args": {
-     "query": "obesity stroke risk",
-     "k": 4
-    },
-    "decision": "allow",
-    "hook_reason": "allowed by contract",
-    "ms": 5
-   },
-   {
-    "agent": "evidence_researcher",
-    "tool": "search_guidelines",
-    "args": {
-     "query": "smoking stroke risk",
-     "k": 4
-    },
-    "decision": "allow",
-    "hook_reason": "allowed by contract",
-    "ms": 4
-   },
-   {
-    "agent": "evidence_researcher",
-    "tool": "search_guidelines",
-    "args": {
-     "query": "stroke warning signs BE FAST",
-     "k": 4
-    },
-    "decision": "allow",
-    "hook_reason": "allowed by contract",
-    "ms": 4
-   },
-   {
-    "agent": "intake",
-    "tool": "screen_note",
-    "args": {
-     "note": "Follow-up visit. Denies weakness or speech problems."
-    },
-    "decision": "allow",
-    "hook_reason": "allowed by contract",
-    "ms": 76
-   },
-   {
-    "agent": "intake",
-    "tool": "memory_read",
-    "args": {
-     "limit": 3
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
@@ -330,19 +351,23 @@
   ],
   "resources_and_prompts": [
    "model://risk-card",
-   "guideline://G-05",
-   "guideline://G-06",
    "guideline://G-07",
    "guideline://G-08",
-   "guideline://G-10",
    "guideline://G-12",
+   "guideline://G-13",
+   "guideline://G-22",
+   "guideline://G-28",
+   "guideline://G-05",
+   "guideline://G-06",
+   "guideline://G-10",
    "clinical_report",
    "red_team_review"
   ],
   "skills_loaded": [
+   "note-screening",
    "cohort-comparison",
    "guideline-citation",
-   "note-screening",
+   "guideline-citation",
    "risk-communication",
    "red-team-review"
   ],
@@ -358,8 +383,180 @@
    "memory": {
     "skipped": "write blocked: user has not consented to case-history storage"
    },
-   "ms": 1
+   "confidence": 0.879,
+   "confidence_gate": "pass",
+   "ms": 14
   },
-  "receipt_signature_prefix": "974396a26408d6ba"
+  "receipt_signature_prefix": "d2da7207c25d1a77",
+  "plan": [
+   "intake",
+   "risk_analyst",
+   "evidence_researcher",
+   "clinical_writer",
+   "safety_reviewer"
+  ],
+  "react_steps": [
+   {
+    "agent": "intake",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "screen_note({\"note\": \"Follow-up visit. Denies weakness or speech problems.\"})"
+   },
+   {
+    "agent": "intake",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "memory_read({\"limit\": 3})"
+   },
+   {
+    "agent": "intake",
+    "step": 2,
+    "thought": "The note screening returned no red-flag signs, and there was no sudden-onset language indicating an emergency. The note's wording resembles neurology notes with a probability of 0.25.\n\nAdditionally, there are no earlier cases in this session.\n\nFor the next visit, it would be prudent to discuss the patient's overall stroke risk factors, even though they currently deny weakness or speech problems. C",
+    "action": "final_answer"
+   },
+   {
+    "agent": "risk_analyst",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "predict_risk({\"age\": 67, \"gender\": \"Male\", \"hypertension\": 0, \"heart_disease\": 1, \"ever_married\": \"Yes\", \"work_type\": \"Private\", \"Residence_type\": \"Urban\", \"avg_glucose_leve)"
+   },
+   {
+    "agent": "risk_analyst",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "explain_factors({\"age\": 67, \"gender\": \"Male\", \"hypertension\": 0, \"heart_disease\": 1, \"ever_married\": \"Yes\", \"work_type\": \"Private\", \"Residence_type\": \"Urban\", \"avg_glucose_leve)"
+   },
+   {
+    "agent": "risk_analyst",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "cohort_stats({\"age\": 67, \"hypertension\": 0, \"heart_disease\": 1})"
+   },
+   {
+    "agent": "risk_analyst",
+    "step": 2,
+    "thought": "### Risk Prediction Results\n- **Risk Probability**: 0.1564\n- **Risk Percent**: 15.6%\n- **Risk Band**: high\n\n### Contribution of Risk Factors\nThe following factors contribute to the risk of stroke for this patient:\n\n1. **Age**: 67.0 (raises risk, log-odds contribution: 1.971)\n2. **Average Glucose Level**: 228.69 (raises risk, log-odds contribution: 0.582)\n3. **Heart Disease**: 1 (raises risk, log-o",
+    "action": "final_answer"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "graph_traverse({\"factors\": [\"age\", \"heart_disease\", \"glucose\", \"bmi\", \"smoking\"], \"max_hops\": 2, \"k\": 6})"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "search_guidelines({\"query\": \"stroke warning signs BE FAST call 9-1-1\", \"k\": 4})"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 2,
+    "thought": "Thought: I need to summarize the patient's risk factors for stroke based on the retrieved excerpts. \n\n1. Older age increases the risk of stroke significantly. [G-28]\n2. Heart disease is a major risk factor for stroke, contributing to blood clots. [G-28]\n3. High blood glucose levels and diabetes are leading causes of stroke. [G-22]\n4. Obesity is linked to higher cholesterol levels and increases the",
+    "action": "final_answer"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "search_guidelines({\"query\": \"older age stroke risk\", \"k\": 4})"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "search_guidelines({\"query\": \"heart disease stroke risk\", \"k\": 4})"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 1,
+    "thought": "(no thought text returned with the tool call)",
+    "action": "search_guidelines({\"query\": \"high glucose stroke risk\", \"k\": 4})"
+   },
+   {
+    "agent": "evidence_researcher",
+    "step": 2,
+    "thought": "Thought: I need to summarize findings for the patient's missing risk factors: age, heart disease, and glucose. \n\n1. The likelihood of having a stroke increases with age, particularly after 55 years old. [G-10]\n2. Heart conditions like coronary artery disease and atrial fibrillation can elevate stroke risk due to blood clots. [G-05]\n3. Diabetes raises stroke risk by causing sugar buildup in the blo",
+    "action": "final_answer"
+   }
+  ],
+  "evidence_sufficiency": [
+   {
+    "round": 1,
+    "score": 0.5,
+    "missing": [
+     "age",
+     "heart_disease",
+     "glucose"
+    ],
+    "action": "re-retrieve"
+   },
+   {
+    "round": 2,
+    "score": 1.0,
+    "missing": [],
+    "action": "sufficient"
+   }
+  ],
+  "self_critique": {
+   "code_issues": [],
+   "llm_problems": [],
+   "revised": false,
+   "llm_flagged_unverified": 2
+  },
+  "confidence": {
+   "score": 0.879,
+   "gate": "pass",
+   "components": {
+    "calibration": 0.653,
+    "cohort": 0.76,
+    "coverage": 1.0,
+    "verifier": 1.0,
+    "red_team": 1.0,
+    "grounding": 0.551
+   },
+   "weights": {
+    "calibration": 0.15,
+    "cohort": 0.1,
+    "coverage": 0.25,
+    "verifier": 0.3,
+    "red_team": 0.1,
+    "grounding": 0.1
+   },
+   "refuse_below": 0.4,
+   "review_below": 0.7
+  },
+  "cost": {
+   "model": "gpt-4o-mini",
+   "input_tokens": 29192,
+   "output_tokens": 2792,
+   "cached_input_tokens": 0,
+   "cost_usd": 0.006054,
+   "rates_usd_per_1m": {
+    "input": 0.15,
+    "output": 0.6,
+    "cached_input": 0.075
+   },
+   "pricing_source": "https://platform.openai.com/docs/pricing (Standard tier, gpt-4o-mini)",
+   "pricing_accessed": "2026-11-13"
+  },
+  "decision_kinds": [
+   "plan",
+   "route",
+   "route",
+   "route",
+   "re_retrieve",
+   "route",
+   "self_critique",
+   "route",
+   "review",
+   "route",
+   "confidence_gate",
+   "finalize",
+   "episode_write"
+  ],
+  "spans": 33,
+  "episode_stored": true
  }
 }

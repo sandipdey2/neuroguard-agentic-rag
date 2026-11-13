@@ -16,6 +16,18 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.1.0 (agentic-AI knowledge-graph coverage; notebook re-executed)
+| Change | Effect (eval/summary.json) |
+|---|---|
+| Planner -> executor | LLM route choices accepted 0.82 -> 0.98 (this addresses item 6 below); plan followed in 8 of 8 runs |
+| Hybrid sparse + dense vectors | paraphrase hit@3 0.875 (sparse) -> 1.0 (hybrid) |
+| Graph RAG + agentic re-retrieval | re-retrieval in 25% of runs, final topic coverage 1.0 |
+| Writer self-critique | self-revision in 12.5% of runs; reviewer first-draft pass unchanged at 0.875 |
+| Confidence gate, decision log, OTLP spans, cost | mean confidence 0.911; USD 0.0053 per run at list price |
+| Episodic memory + bounded learning loop, multi-modal intake, batch runner | see docs/KNOWLEDGE_GRAPH_COVERAGE.md (partial items) |
+
+Regression: mean latency rose from 56.3 s to 87.2 s and LLM calls from 17.6 to 20.4, so item 7 (parallel gathering) is now more important.
+
 ## P0 - validity and safety
 1. **External validation on a licensed clinical cohort** (effort: months, needs data access + IRB/DUA).
    The model is trained on an educational Kaggle dataset without event timing or race/ethnicity (test ROC-AUC 0.84,
@@ -41,17 +53,17 @@ The core evaluation numbers were **not** changed by these items (no model, promp
    sentence-embedding model or fine-tuned clinical BERT, or drop it from the UI until it beats a rules baseline.
 
 ## P1 - agentic quality and latency
-6. **Orchestrator routing accuracy** - in the eval only 82% of the LLM's own route choices were accepted; code overrode
-   the rest (8 of 9 overrides were premature jumps to the Clinical Writer). Options: constrain the structured-output enum
+6. **Orchestrator routing accuracy** - in v2.0.1 only 82% of the LLM's own route choices were accepted (8 of 9 overrides
+   were premature jumps to the Clinical Writer); with the planner in v2.1.0 it is 98%. Options: constrain the structured-output enum
    to the currently eligible agents (removes invalid choices structurally), add two few-shot examples, or let code
    handle the fixed gather phase and keep the LLM for review/revision decisions. Track "LLM choice accepted" as a KPI.
-7. **Latency (~56 s mean, max 79 s; ~17.6 sequential LLM calls)**:
+7. **Latency (87.2 s mean, max 142.8 s; 20.4 sequential LLM calls in v2.1.0)**:
    * run Intake, Risk Analyst and Evidence Researcher in parallel (they are independent; LangGraph fan-out) - estimated, not yet measured:
      roughly 35-40% less wall-clock time;
    * allow parallel tool calls within a round (already returned by the model; execute with `asyncio.gather`);
    * stream the writer's tokens to the UI; cache `search_guidelines` results per factor set;
    * keep the MCP subprocess warm across runs instead of one spawn per run (~1.2 s handshake each).
-8. **Grounding metric** - word-overlap support is 0.612 while LLM-judged faithfulness is 1.0; add an NLI / entailment
+8. **Grounding metric** - word-overlap support is 0.55 while LLM-judged faithfulness is 0.977 (one mis-cited bullet); add an NLI / entailment
    check per evidence bullet and report it alongside the LLM judge (an LLM judging an LLM is weak evidence).
 9. **Bigger eval set** - 16 cases are too few for confidence intervals; target 100 real profiles + 100 attacks with
    CI reporting, and run it in CI on every merge (nightly with the real key, budget-capped).

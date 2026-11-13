@@ -1,0 +1,45 @@
+{
+ "n": 3,
+ "max_concurrency": 3,
+ "rate_per_min": 120.0,
+ "wall_s": 89.28,
+ "sum_latency_s": 249.86,
+ "speedup": 2.8,
+ "limiter_wait_s": 0.0,
+ "finalized": 3,
+ "rows": [
+  {
+   "i": 0,
+   "status": "finalized",
+   "latency_s": 89.27,
+   "queued_s": 0.0,
+   "llm_calls": 22,
+   "cost_usd": 0.005961,
+   "confidence": 0.9,
+   "risk_band": "high",
+   "run_id": "88b930c1088442bbb00465d422a43d62"
+  },
+  {
+   "i": 1,
+   "status": "finalized",
+   "latency_s": 79.79,
+   "queued_s": 0.01,
+   "llm_calls": 19,
+   "cost_usd": 0.004416,
+   "confidence": 0.904,
+   "risk_band": "high",
+   "run_id": "faf75694577945929a2aabf58dbdcd32"
+  },
+  {
+   "i": 2,
+   "status": "finalized",
+   "latency_s": 80.8,
+   "queued_s": 0.01,
+   "llm_calls": 19,
+   "cost_usd": 0.004958,
+   "confidence": 0.907,
+   "risk_band": "high",
+   "run_id": "93062a46f2f14b7ca58fe4f100ede15f"
+  }
+ ]
+}

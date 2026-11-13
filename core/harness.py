@@ -43,9 +43,16 @@ class RunContext:
     started: float = field(default_factory=time.time)
     llm_calls: int = 0
     tokens: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cached_tokens: int = 0
+    cost_usd: float = 0.0
     audit: AuditLog = field(default_factory=AuditLog)
     bus: MessageBus = field(default_factory=MessageBus)
     perms: PermissionEngine = None
+    spans: list = field(default_factory=list)          # observability: one span per LLM / MCP call
+    decisions: list = field(default_factory=list)      # decision reasoning log
+    limiter: object = None                             # optional shared rate limiter (batch mode)
 
     def __post_init__(self):
         self.contract_sha256 = sha(self.contract)
@@ -53,11 +60,42 @@ class RunContext:
         self.audit.log("harness", "contract_loaded", "harness_contract.json", "ok", sha256=self.contract_sha256,
                        budget=self.contract["budget"], loop=self.contract["loop"])
 
-    def record_llm(self, agent: str, msg) -> None:
+    def record_llm(self, agent: str, msg, start: float | None = None, end: float | None = None) -> None:
+        """Count the call against the budget and price it with the contract's public per-token rates."""
         self.llm_calls += 1
         usage = getattr(msg, "usage_metadata", None) or {}
-        self.tokens += int(usage.get("total_tokens", 0))
-        self.audit.log(agent, "llm_call", self.contract["model"], "ok", tokens=usage.get("total_tokens"))
+        inp, out = int(usage.get("input_tokens", 0)), int(usage.get("output_tokens", 0))
+        cached = int((usage.get("input_token_details") or {}).get("cache_read", 0) or 0)
+        self.tokens += int(usage.get("total_tokens", inp + out))
+        self.input_tokens += inp
+        self.output_tokens += out
+        self.cached_tokens += cached
+        cost = price(inp, out, cached, self.contract["pricing"])
+        self.cost_usd += cost
+        finish = (getattr(msg, "response_metadata", None) or {}).get("finish_reason")
+        now = time.time()
+        self.spans.append({"name": f"llm.{agent}", "kind": "client", "start": start or now, "end": end or now,
+                           "attrs": {"agent": agent, "model": self.contract["model"], "input_tokens": inp, "output_tokens": out,
+                                     "cached_tokens": cached, "cost_usd": round(cost, 7), "finish_reason": finish}})
+        self.audit.log(agent, "llm_call", self.contract["model"], "ok", tokens=usage.get("total_tokens"), cost_usd=round(cost, 7))
+
+    def record_tool_span(self, agent: str, tool: str, start: float, end: float, decision: str) -> None:
+        self.spans.append({"name": f"mcp.tools/call.{tool}", "kind": "client", "start": start, "end": end,
+                           "attrs": {"agent": agent, "tool": tool, "hook": decision}})
+
+    def decide(self, actor: str, kind: str, chosen, rationale: str, options=None, evidence=None, **extra) -> dict:
+        """Decision reasoning log: one structured entry per decision (who, what, between which options, why, on what)."""
+        d = {"seq": len(self.decisions) + 1, "ts": round(time.time(), 3), "actor": actor, "kind": kind, "chosen": chosen,
+             "options": options, "rationale": rationale, "evidence": evidence, **extra}
+        self.decisions.append(d)
+        return d
+
+    def cost_summary(self) -> dict:
+        p = self.contract["pricing"]
+        return {"model": self.contract["model"], "input_tokens": self.input_tokens, "output_tokens": self.output_tokens,
+                "cached_input_tokens": self.cached_tokens, "cost_usd": round(self.cost_usd, 6),
+                "rates_usd_per_1m": {"input": p["input_per_1m"], "output": p["output_per_1m"], "cached_input": p["cached_input_per_1m"]},
+                "pricing_source": p["source"], "pricing_accessed": p["accessed"]}
 
     def budget_left(self) -> bool:
         b = self.contract["budget"]
@@ -68,6 +106,13 @@ class RunContext:
         b = self.contract["budget"]
         return (self.llm_calls <= b["max_llm_calls"] and self.tokens <= b["max_total_tokens"]
                 and self.perms.tool_calls <= b["max_tool_calls"] and time.time() - self.started <= b["wall_clock_timeout_s"])
+
+
+def price(input_tokens: int, output_tokens: int, cached_tokens: int, pricing: dict) -> float:
+    """USD cost of one call at public list prices (cached input tokens are billed at the cached rate)."""
+    uncached = max(0, input_tokens - cached_tokens)
+    return (uncached * pricing["input_per_1m"] + cached_tokens * pricing["cached_input_per_1m"]
+            + output_tokens * pricing["output_per_1m"]) / 1_000_000
 
 
 # ----------------------------------------------------------------------------- invariant verifier

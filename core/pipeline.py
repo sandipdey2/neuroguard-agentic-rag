@@ -17,11 +17,13 @@ from pathlib import Path
 import httpx
 from langchain_mcp_adapters.tools import load_mcp_tools
 
+from . import episodes
 from .agents import build_graph
 from .config import get_llm
 from .data import validate_profile
 from .guardrails import check_input
 from .harness import RunContext, sha, sign_receipt
+from .observability import metrics, otlp_json
 from .mcp_client import SERVER, mcp_session
 
 SERVER_SHA = hashlib.sha256(Path(SERVER).read_bytes()).hexdigest()
@@ -37,15 +39,19 @@ def _receipt(ctx: RunContext, inputs: dict, result: dict) -> dict:
         "trace_sha256": sha(result.get("trace", [])), "audit_chain_head": ctx.audit.entries[-1]["hash"] if ctx.audit.entries else None,
         "audit_chain_valid": ctx.audit.verify_chain(), "status": result["status"], "checks": v.get("checks", {}),
         "failed_checks": v.get("failed", []), "needs_human_approval": final.get("needs_human_approval", False),
-        "approval": None, "counts": {"llm_calls": ctx.llm_calls, "tokens": ctx.tokens, "tool_calls": ctx.perms.tool_calls},
+        "approval": None, "counts": {"llm_calls": ctx.llm_calls, "tokens": ctx.tokens, "tool_calls": ctx.perms.tool_calls,
+                                     "spans": len(ctx.spans), "decisions": len(ctx.decisions)},
+        "cost_usd": round(ctx.cost_usd, 6), "confidence": (final.get("confidence") or {}).get("score"),
+        "confidence_gate": (final.get("confidence") or {}).get("gate"), "decision_log_sha256": sha(ctx.decisions),
         "latency_s": result.get("latency_s")})
 
 
 async def arun_case(profile: dict, question: str, note: str = "", audience: str = "clinician",
-                    session_id: str = "anonymous", consent: bool = False, llm=None, progress=None) -> dict:
-    """``progress`` (optional callable) receives each new trace event as the graph runs - used for live UI updates."""
+                    session_id: str = "anonymous", consent: bool = False, llm=None, progress=None, limiter=None) -> dict:
+    """``progress`` (optional callable) receives each new trace event as the graph runs - used for live UI updates.
+    ``limiter`` (optional, batch mode) is a shared token-bucket rate limiter awaited before every LLM call."""
     t0 = time.perf_counter()
-    ctx = RunContext(session_id=session_id, consent=consent)        # contract fixed before any LLM token
+    ctx = RunContext(session_id=session_id, consent=consent, limiter=limiter)        # contract fixed before any LLM token
     gate = check_input(question, note)
     ctx.audit.log("input_guardrail", "check_input", "question+note", "allow" if gate["allowed"] else "block",
                   reason=gate["reason"], phi_redacted=gate["phi_redacted"])
@@ -57,8 +63,10 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
     inputs = {"profile": prof, "question": gate["question"], "note": gate["note"], "audience": audience}
     base = {"run_id": ctx.run_id, "inputs": inputs, "input_guardrail": gate, "contract_sha256": ctx.contract_sha256}
     if not gate["allowed"]:
+        ctx.decide("input_guardrail", "block", gate["reason"], "input guardrail blocked the request before any LLM call")
         res = {**base, "status": "blocked", "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}],
-               "latency_s": round(time.perf_counter() - t0, 2), "tool_calls": 0, "llm_calls": 0, "a2a": [], "audit": ctx.audit.entries}
+               "latency_s": round(time.perf_counter() - t0, 2), "tool_calls": 0, "llm_calls": 0, "a2a": [], "audit": ctx.audit.entries,
+               "decisions": ctx.decisions, "spans": [], "cost": ctx.cost_summary(), "metrics": metrics([])}
         res["receipt"] = _receipt(ctx, inputs, res)
         return res
     try:
@@ -74,7 +82,10 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
         ctx.audit.log("harness", "timeout", "run", "stop")
     res = {**base, **{k: v for k, v in state.items() if k not in ("task",)}, "status": status,
            "report": state.get("draft", ""), "tool_calls": ctx.perms.tool_calls, "llm_calls": ctx.llm_calls, "tokens": ctx.tokens,
-           "latency_s": round(time.perf_counter() - t0, 2), "a2a": ctx.bus.log, "audit": ctx.audit.entries}
+           "latency_s": round(time.perf_counter() - t0, 2), "a2a": ctx.bus.log, "audit": ctx.audit.entries,
+           "decisions": ctx.decisions, "spans": ctx.spans, "cost": ctx.cost_summary(), "metrics": metrics(ctx.spans),
+           "confidence": (state.get("final") or {}).get("confidence"), "episode": (state.get("final") or {}).get("episode")}
+    res["otlp"] = otlp_json(ctx.run_id, ctx.spans, ctx.started, time.time())
     res["receipt"] = _receipt(ctx, inputs, res)
     return res
 
@@ -87,7 +98,7 @@ async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm, progress=No
         graph = build_graph(llm, tools, session, ctx)
         init = {"question": inputs["question"], "note": inputs["note"], "audience": inputs["audience"], "profile": inputs["profile"],
                 "turns": 0, "visits": {}, "revisions": 0, "pending_review": False, "retrieved": {}, "evidence_log": [],
-                "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}], "route": []}
+                "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}], "route": [], "self_critique": {}}
         state, seen = None, 0
         # astream(values) yields the full state after every node; the last value equals ainvoke's result.
         async for state in graph.astream(init, config={"recursion_limit": 80}, stream_mode="values"):
@@ -109,6 +120,10 @@ def approve(result: dict, decision: str, note: str = "") -> dict:
     r = {k: v for k, v in result["receipt"].items() if k not in ("signature", "signed_at", "key_id", "algorithm")}
     r["approval"] = {"decision": decision, "at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "note": note[:200],
                      "previous_signature": result["receipt"]["signature"]}
+    try:      # feed the clinician decision back into episodic memory (learning loop); never blocks the approval
+        episodes.set_clinician_decision(result["run_id"], decision)
+    except Exception:
+        pass
     return _sign(r)
 
 
@@ -157,7 +172,15 @@ def describe(ev: dict) -> str | None:
     if t == "review":
         return f"🔍 Safety review: **{ev['verdict']}**" + (f" (failed: {', '.join(ev['failed_checks'])})" if ev.get("failed_checks") else "")
     if t == "gate":
-        return f"🚦 Finalize gate: **{ev['status']}**"
+        return f"🚦 Finalize gate: **{ev['status']}**" + (f" - confidence {ev['confidence']} ({ev['confidence_gate']})" if ev.get("confidence") is not None else "")
+    if t == "plan":
+        return f"🗺️ Planner: {' -> '.join(st['agent'] for st in ev['steps'])}" + (f" ({len(ev['learned_hints'])} learned hint(s))" if ev.get("learned_hints") else "")
+    if t == "react_step":
+        return f"💭 {a} thought: {ev['thought'][:140]}"
+    if t == "evidence_sufficiency":
+        return f"📚 Evidence round {ev['round']}: coverage {ev['score']}" + (f" - missing {ev['missing']} -> re-retrieve" if ev.get("missing") else " - sufficient")
+    if t == "self_critique":
+        return f"🪞 Writer self-critique: {'revised' if ev['revised'] else 'kept'} ({len(ev['code_issues'])} check issue(s), {len(ev['llm_problems'])} LLM-flagged)"
     if t == "warning":
         return f"⚠️ {a}: {ev.get('detail')}"
     return None

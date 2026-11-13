@@ -5,34 +5,47 @@
 > ⚠️ **Decision support only — not a medical device.** No regulatory clearance. Not for diagnosis, treatment or emergency triage.
 > If someone shows sudden face drooping, arm weakness or speech difficulty, call 9-1-1.
 
-NeuroGuard AI turns a patient profile (plus an optional free-text note) into a **cited, verified stroke-risk report**.
-An LLM orchestrator (gpt-4o-mini via the OpenAI-compatible Vocareum endpoint, temperature 0) delegates to five
-specialist agents that act only through a **real MCP server** (official `mcp` SDK, stdio subprocess). A deterministic
-verifier and an LLM red-team pass check every draft, a finalize gate refuses anything that fails, and every run
-ends with an **HMAC-SHA256 signed receipt**. Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
+NeuroGuard AI turns a patient profile (plus an optional free-text note or lab report) into a **cited, verified stroke-risk report**.
+A planner and an LLM orchestrator (gpt-4o-mini via the OpenAI-compatible Vocareum endpoint, temperature 0) delegate to five
+specialist agents that act only through a **real MCP server** (official `mcp` SDK, stdio subprocess). Retrieval is hybrid
+(sparse + dense vectors), graph-based and agentic; a deterministic verifier, an LLM red-team pass and the writer's own
+self-critique check every draft; a finalize gate and a confidence gate refuse anything that fails; and every run ends
+with an **HMAC-SHA256 signed receipt**, a decision reasoning log, OTLP-JSON spans and a cost estimate.
+Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
 
 ![architecture](architecture_diagram.png)
 
 ## How a request flows (as implemented)
 1. **Input guardrails** (`core/guardrails.py`, no LLM): PHI redaction → prompt-injection/tool-misuse block → CDC BE FAST emergency stop ("call 9-1-1") → medication-dosing refusal → out-of-scope refusal.
-2. **Run contract** (`harness_contract.json`) is loaded and SHA-256 hashed before the first token: 9 turns, 30 LLM calls, 24 tool calls, 80k tokens, 240 s, per-agent permissions, 12 required checks.
-3. **Orchestrator** (`core/agents.py`, LangGraph): LLM picks next agent + skill + instruction; code enforces eligibility, FINISH-only-after-review, one revision, visit/turn caps. Every override is logged.
-4. **Specialists** — Intake, Risk Analyst, Evidence Researcher, Clinical Writer, Safety Reviewer — exchange **A2A-style** tasks/messages/artifacts (`core/a2a.py`). Tool users run the harness loop: context → LLM → tool call → **pre-tool-use hook** → MCP result (PHI-redacted) → back to context.
-5. **Finalize gate** re-runs the verifier; high-risk or red-flag cases need **clinician sign-off** in the UI; consented de-identified summaries go to SQLite memory via `memory_write`; a signed receipt is produced.
+2. **Run contract** (`harness_contract.json` v1.1.0) is loaded and SHA-256 hashed before the first token: 9 turns, 36 LLM calls, 32 tool calls, 110k tokens, 300 s, per-agent permissions, 12 required checks, context budgets, confidence policy, list prices, learning and batch limits.
+3. **Planner** (LLM) recalls similar de-identified past episodes via MCP `episode_recall` and writes a structured plan; the **orchestrator** (LangGraph) executes it — the LLM picks next agent + skill + instruction; code enforces eligibility, FINISH-only-after-review, one revision, visit/turn caps. Every decision goes to the decision log.
+4. **Specialists** — Intake, Risk Analyst, Evidence Researcher, Clinical Writer, Safety Reviewer — exchange **A2A-style** tasks/messages/artifacts (`core/a2a.py`). Tool users run a **ReAct** loop: thought → tool call → **pre-tool-use hook** → MCP observation (PHI-redacted, token-truncated) → back to context. The Evidence Researcher uses hybrid search and **graph RAG**, and re-retrieves when code finds a required topic uncovered (**agentic RAG**). The writer **self-critiques** and revises once before review.
+5. **Finalize gate** re-runs the verifier, then a **confidence score** (calibration, cohort size, coverage, verifier, red team, grounding) refuses below 0.4 and asks for review below 0.7; high-risk or red-flag cases need **clinician sign-off**; one de-identified **episode** is stored for the bounded learning loop; a signed receipt is produced.
 
 ## Coverage of the nine required concepts
 | # | Concept | Where / how (real code) |
 |---|---|---|
 | 1 | Harness: agent loop, fixed contract, gate | `react()` loop in `core/agents.py`; `harness_contract.json` hashed in `core/harness.py`; `gate` node refuses to finalize unless all 12 checks pass |
 | 2 | Memory & state | Short-term: LangGraph `CaseState`. Long-term: SQLite (`core/memory.py`) via MCP `memory_read`/`memory_write`, consent checkbox + clear button |
-| 3 | RAG | `core/rag.py` TF-IDF over 30 verbatim CDC/NHLBI excerpts → injected via `guideline://{id}` resources → writer cites `[G-xx]`; verifier checks citations were retrieved |
-| 4 | MCP | `mcp_server/neuroguard_mcp_server.py`: 8 tools, 4 resources + 1 resource template, 2 prompts; `scripts/verify_mcp.py` |
+| 3 | RAG | `core/rag.py` hybrid TF-IDF + 24-d LSA vectors over 30 verbatim CDC/NHLBI excerpts, `core/graph_rag.py` graph traversal, agentic re-retrieval → `guideline://{id}` resources → writer cites `[G-xx]`; verifier checks citations were retrieved |
+| 4 | MCP | `mcp_server/neuroguard_mcp_server.py`: 11 tools, 5 resources + 1 resource template, 2 prompts; `scripts/verify_mcp.py` |
 | 5 | Skills | `skills/*/SKILL.md`; `core/skills.py` exposes name+description only; body injected when selected (trace: `skill_loaded`) |
 | 6 | Guardrails & permissions | Input guardrails; permission engine + pre-tool-use hook (`core/permissions.py`); AST-sandboxed calculator; consent for writes; human approval; hash-chained audit log |
 | 7 | Evals | Executed `evaluation.ipynb`, `eval/cases.json`, `eval/summary.json`, `eval/raw_results.json` (traces) |
 | 8 | A2A | Agent Cards + Task/Message/Artifact on an **in-process** bus modelled on the A2A spec (not a networked A2A server) |
 | 9 | Multi-agent system | LLM orchestrator + 5 specialists with a genuine graph cycle and caps |
 | + | Verifier, red team, receipt | Deterministic invariants + quote-confirmed LLM red team; HMAC-SHA256 `receipt.json` (download in UI) |
+
+## Agentic-AI knowledge-graph coverage (27 nodes: 23 full, 4 partial)
+Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md); live evidence per node for your own run: app tab **🧩 Knowledge-graph coverage**.
+
+| Group | Node → implementation (status) |
+|---|---|
+| Foundations | LLM reasoning → 7 gpt-4o-mini roles (full) · Prompt patterns → role prompts, ReAct format, MCP prompts, skills (full) · Tool use → `bind_tools` + MCP (full) · Embeddings & vectors → `core/vectors.py` LSA + hybrid; OpenAI embeddings compared in the notebook (full) · Context windows → `core/context.py` tiktoken budgets (full) |
+| Retrieval & Memory | Classical RAG → `core/rag.py` (full) · Graph RAG → `core/graph_rag.py`, MCP `graph_traverse` (full) · Agentic RAG → coverage check + re-retrieval (full) · Short-term → `CaseState` (full) · Long-term → `core/memory.py` (full) · Episodic → `core/episodes.py` (full) |
+| Agent patterns | ReAct → `react()` thought/action/observation (full) · Planner → executor → `planner` node (full) · Multi-agent orchestration → LangGraph + A2A bus (full) · Context graph traversal → multi-hop paths (full) · Tool selection & routing → orchestrator + permission engine (full) · Reflection → writer self-critique + reviewer (full) |
+| Production & governance | Confidence scoring → `core/confidence.py` (full) · Policy gates → guardrails, hook, finalize + confidence gate (full) · Audit trail → hash chain + signed receipt (full) · Decision reasoning logs → `RunContext.decide` (full) · Eval & observability → notebook + OTLP-JSON spans (full) · Cost / token economics → per-call list-price costing (full) |
+| Frontier | Memory & learning loops → whitelisted hints + bounded boosts (**partial**) · Self-improving agents → prompt-level only (**partial**) · Multi-modal reasoning → `core/multimodal.py` lab image (vision) / PDF (**partial**) · Agentic workflows at scale → `core/batch.py` semaphore + token bucket (**partial**) |
 
 ## Integration of prior capstones
 | Project | Reused concept | In NeuroGuard |
@@ -51,12 +64,19 @@ ends with an **HMAC-SHA256 signed receipt**. Udacity AI Mastery Capstone — Pro
 | Recall / precision at recall-oriented threshold | 0.8 / 0.137 |
 | CV ROC-AUC: logistic / random forest / gradient boosting | 0.838 / 0.835 / 0.822 |
 | Note classifier test F1 (advisory) | 0.31 |
-| Retrieval hit@3 / MRR (12 labelled queries) | 1.0 / 1.0 |
+| Retrieval hit@3 / MRR (12 labelled queries), hybrid | 1.0 / 1.0 |
+| Paraphrase hit@3 (8 queries): sparse / dense LSA / hybrid / OpenAI embeddings | 0.875 / 1.0 / 1.0 / 1.0 |
+| Graph RAG: 49 nodes, 144 edges; factor-query hit@3 / precision@3 | 1.0 / 0.81 |
 | Attacks blocked (8) / normal requests wrongly blocked (8) | 1.0 / 0.0 |
-| Policy-valid routes / LLM route choices accepted | 1.0 / 0.82 |
-| Reports finalized / first-draft pass | 1.0 / 0.875 |
-| Citation coverage / LLM-judged faithfulness / word-overlap support | 1.0 / 1.0 / 0.612 |
-| Mean latency / LLM calls / MCP tool calls | 56.3 s / 17.6 / 8.4 |
+| Plan followed / policy-valid routes / LLM route choices accepted | 1.0 / 1.0 / 0.98 |
+| Re-retrieval rate / final topic coverage / graph traversal used | 0.25 / 1.0 / 0.625 |
+| Writer self-revision rate / reviewer first-draft pass / reports finalized | 0.125 / 0.875 / 1.0 |
+| Citation coverage / LLM-judged faithfulness / word-overlap support | 1.0 / 0.977 / 0.55 |
+| Confidence mean (min) / gate | 0.911 (0.886) / 8 of 8 pass |
+| Mean latency / LLM calls / MCP tool calls / tokens | 87.2 s / 20.4 / 9.8 / 27,840 |
+| Cost per run (list price) / decisions logged / spans | USD 0.0053 / 12.6 / 29.0 |
+| Lab extraction (5 real rows): image (vision) / PDF field accuracy; invented values | 1.0 / 1.0; 0 |
+| Batch of 3 at concurrency 3: wall time / speed-up | 89.3 s / 2.80x |
 | Receipts verify / tampered receipt verifies / audit chains valid | yes / no / yes |
 
 **Documented failure:** an earlier full run finalized only 3/8 reports — the provider's content filter (`finish_reason="content_filter"`) truncated drafts that pasted the CDC BE FAST passage verbatim, and the gate correctly refused them. Fixed by short paraphrased findings and one retry on truncation; a notebook probe did not reproduce it in the final run (0 of 3 isolated prompts filtered), so it is reported as a development observation. See the paper for other limitations.
@@ -75,10 +95,10 @@ python -m venv .venv && source .venv/bin/activate && pip install -r requirements
 cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # add OPENAI_API_KEY (+ OPENAI_API_BASE)
 python scripts/verify_mcp.py          # MCP over stdio: tools/resources/prompts list + calls
 python scripts/smoke_test.py          # one full multi-agent run
-python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + orchestrator decisions
+python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + plan, ReAct, decisions
 streamlit run app.py
 ```
-Tests: `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). Rebuild: `scripts/draw_architecture.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
+Tests: `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
 
 ## Deploy on Streamlit Community Cloud
 New app → repo `sandipdey2/neuroguard-agentic-rag`, branch `main`, file `app.py` → Advanced settings → Secrets:
@@ -92,7 +112,7 @@ NG_RECEIPT_KEY = "a long random string"
 Stroke Prediction Dataset (fedesoriano, Kaggle; educational use — excluded from the product zip), MTSamples (CC0), 30 verbatim CDC/NHLBI excerpts (U.S. public domain).
 
 ## Limitations & ethics
-Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1 minute; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
+Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (the planner, re-retrieval and self-critique added ~31 s versus v2.0.1); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
 
 ## Product
 Gumroad listing draft: [docs/GUMROAD_LISTING.md](docs/GUMROAD_LISTING.md) · buyer guide: [docs/BUYER_SETUP.md](docs/BUYER_SETUP.md) · improvement roadmap: [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) · [CHANGELOG.md](CHANGELOG.md)
