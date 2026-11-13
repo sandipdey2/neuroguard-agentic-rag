@@ -69,16 +69,26 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | Paraphrase hit@3 (8 queries): sparse / dense LSA / hybrid / OpenAI embeddings | 0.875 / 1.0 / 1.0 / 1.0 |
 | Graph RAG: 49 nodes, 144 edges; factor-query hit@3 / precision@3 | 1.0 / 0.81 |
 | Attacks blocked (8) / normal requests wrongly blocked (8) | 1.0 / 0.0 |
-| Plan followed / policy-valid routes / LLM route choices accepted | 1.0 / 1.0 / 0.98 |
-| Re-retrieval rate / final topic coverage / graph traversal used | 0.25 / 1.0 / 0.625 |
-| Writer self-revision rate / reviewer first-draft pass / reports finalized | 0.125 / 0.875 / 1.0 |
-| Citation coverage / LLM-judged faithfulness / word-overlap support | 1.0 / 0.977 / 0.55 |
-| Confidence mean (min) / gate | 0.911 (0.886) / 8 of 8 pass |
-| Mean latency / LLM calls / MCP tool calls / tokens | 87.2 s / 20.4 / 9.8 / 27,840 |
-| Cost per run (list price) / decisions logged / spans | USD 0.0053 / 12.6 / 29.0 |
+| Plan followed / policy-valid routes / LLM route choices accepted | 1.0 / 0.875 / 0.976 |
+| Re-retrieval rate / final topic coverage / graph traversal used | 0.0 / 1.0 / 0.0 |
+| Writer self-revision rate / reviewer first-draft pass / reports finalized | 0.0 / 0.875 / 0.875 (N1 hit the 330 s wall-clock timeout) |
+| Citation coverage / LLM-judged faithfulness / word-overlap support | 1.0 / 1.0 (33 bullets) / 0.552 |
+| Confidence mean (min) / gate | 0.914 (0.893) / 7 of 7 pass |
+| Mean latency (median) / LLM calls / MCP tool calls / tokens | 113.8 s (84.5 s; 82.7 s without the timeout) / 18.1 / 10.1 / 25,023 |
+| Cost per run (list price) / decisions logged / spans | USD 0.0047 / 11.0 / 27.4 |
 | Lab extraction (5 real rows): image (vision) / PDF field accuracy; invented values | 1.0 / 1.0; 0 |
-| Batch of 3 at concurrency 3: wall time / speed-up | 89.3 s / 2.80x |
+| Batch of 3 at concurrency 3: wall time / speed-up | 76.9 s / 2.79x |
+| Context-tool red team: shell injection / SSRF / SQL attacks blocked (hook and server) | 20/20 / 15/15 / 9/9; 5/5 legitimate calls allowed |
 | Receipts verify / tampered receipt verifies / audit chains valid | yes / no / yes |
+
+### RAG modes compared (notebook s.17, 8 normal cases per mode)
+| Mode | hit@3 | Coverage | Citation validity | Faithfulness (LLM judge) | Latency mean | Tokens / run | Evidence-agent context | Finalized |
+|---|---|---|---|---|---|---|---|---|
+| Classical (fixed `semantic_search` before the LLM) | 1.0 | 1.0 | 1.0 | 0.968 | 71.3 s | 21,272 | 913 | 8/8 |
+| Agentic (LLM calls search tools; default) | 0.933 | 0.875 | 1.0 | 1.0 | 113.8 s* | 25,023 | 2,974 | 7/8* |
+| Agentic search (files, skills, SQL, web, memory, shell) | 0.929 | 1.0 | 1.0 | 1.0 | 89.5 s | 49,867 | 5,483 | 7/8 |
+
+\* includes the N1 timeout (82.7 s mean without it). Agentic search used `shell`, `search_files`, `get_memory`, `semantic_search` and `web_search` (11 calls, 21 live CDC/NIH pages with HTTP 200); `load_skill` and `execute_query` were not chosen by the LLM in these runs (exercised in `scripts/verify_mcp.py`). Per-slot token counts: [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). With n = 8 per mode, one-case differences are noise; classical is cheapest and fastest here because the corpus is small and the topics are known in advance.
 
 **Documented failure:** an earlier full run finalized only 3/8 reports — the provider's content filter (`finish_reason="content_filter"`) truncated drafts that pasted the CDC BE FAST passage verbatim, and the gate correctly refused them. Fixed by short paraphrased findings and one retry on truncation; a notebook probe did not reproduce it in the final run (0 of 3 isolated prompts filtered), so it is reported as a development observation. See the paper for other limitations.
 
@@ -113,7 +123,7 @@ NG_RECEIPT_KEY = "a long random string"
 Stroke Prediction Dataset (fedesoriano, Kaggle; educational use — excluded from the product zip), MTSamples (CC0), 30 verbatim CDC/NHLBI excerpts (U.S. public domain).
 
 ## Limitations & ethics
-Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (the planner, re-retrieval and self-critique added ~31 s versus v2.0.1); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
+Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (one eval run hit the 330 s timeout); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process; web search only fetches allowlisted CDC/NIH/WHO source pages and the shell is an allowlist sandbox, not a container. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
 
 ## Product
 Gumroad listing draft: [docs/GUMROAD_LISTING.md](docs/GUMROAD_LISTING.md) · buyer guide: [docs/BUYER_SETUP.md](docs/BUYER_SETUP.md) · improvement roadmap: [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) · [CHANGELOG.md](CHANGELOG.md)
