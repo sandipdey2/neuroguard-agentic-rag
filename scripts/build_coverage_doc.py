@@ -14,18 +14,32 @@ import csv  # noqa: E402
 _rows = list(csv.DictReader((ROOT / "eval" / "results_table.csv").open()))     # per-case table written by the notebook
 THOUGHTS = f"{sum(int(r['react_thoughts_with_text']) for r in _rows)} of {sum(int(r['react_steps']) for r in _rows)}"
 A, R, G, CX, LR, MM, B, KG = S["agent"], S["retrieval"], S["graph_rag"], S["context"], S["learning"], S["multimodal"], S["batch"], S["kg_coverage"]
+RM, RT = {m["mode"]: m for m in S["rag_modes"]["modes"]}, S["redteam_context_tools"]
+SLOTS = S["rag_modes"]["slot_tokens_mean"]
+AS = RM["agentic_search"]
+
+
+def used(tool):
+    return "used in the agentic-search eval runs" if tool in AS["tools_used"] else "not chosen by the LLM in the eval runs (exercised in verify_mcp.py)"
 cmp_ = {r["retriever"]: r for r in R["comparison"]}
 hy, sp, de, oa = (cmp_[k] for k in ("hybrid 0.6/0.4 (served)", "sparse (TF-IDF)", "dense (LSA 24-d)", "OpenAI text-embedding-3-small"))
 
 EVID = {
     "LLM reasoning": f"notebook s.8-9: {A['llm_calls_mean']} LLM calls / run (mean), finalized {A['finalized_rate']}; scripts/live_evidence.py",
     "Prompt patterns": "notebook s.12 (prompt probe); trace `skill_loaded`, `mcp_prompt_get`; skills/*/SKILL.md",
-    "Tool use / function calling": f"live_evidence: finish_reason=tool_calls from bind_tools; {A['tool_calls_mean']} MCP calls / run; verify_mcp.py (11 tools)",
+    "Tool use / function calling": f"live_evidence: finish_reason=tool_calls from bind_tools; {A['tool_calls_mean']} MCP calls / run; verify_mcp.py (19 tools)",
     "Embeddings & vectors": f"notebook s.5b: paraphrase hit@3 sparse {sp['paraphrase_hit@3']} / dense {de['paraphrase_hit@3']} / hybrid {hy['paraphrase_hit@3']} / OpenAI {oa['paraphrase_hit@3']}",
     "Context windows": f"notebook s.5d + s.9: max {A['max_context_tokens']} tokens in any agent context of {CX['model_context_window']:,}; {A['tool_outputs_truncated_total']} tool outputs truncated",
-    "Classical RAG": f"notebook s.5: hit@3 {R['hit_at_3']}, MRR {R['mrr_at_3']} on {R['queries']} labelled queries; citation coverage {A['citation_coverage']}",
+    "Classical RAG": f"notebook s.5: hit@3 {R['hit_at_3']}, MRR {R['mrr_at_3']} on {R['queries']} labelled queries; s.17 classical mode: hit@3 {RM['classical']['hit_at_3']}, coverage {RM['classical']['coverage']}, faithfulness {RM['classical']['faithfulness']}, {RM['classical']['latency_mean_s']} s",
     "Graph RAG": f"notebook s.5c: {G['nodes']} nodes / {G['edges']} edges, factor-query hit@3 {G['hit_at_3']}, precision@3 {G['precision_at_3']}; used in {A['graph_traversal_rate']} of runs",
-    "Agentic RAG": f"notebook s.9: re-retrieval in {A['re_retrieval_rate']} of runs, final topic coverage {A['final_coverage_mean']}; trace `evidence_sufficiency`",
+    "Agentic RAG": f"notebook s.9: re-retrieval in {A['re_retrieval_rate']} of runs, final topic coverage {A['final_coverage_mean']}; s.17: context window {RM['agentic']['evidence_context_tokens_mean']} tokens over 9 slots; trace `context_window`",
+    "Agentic search: file search": f"verify_mcp.py search_files; {used('search_files')}; shell reads of Plan.md: {used('shell')}",
+    "Skill-loading tool": f"verify_mcp.py load_skill; hook refuses skills outside the agent's catalog (s.6b); {used('load_skill')}",
+    "Database tools": f"verify_mcp.py execute_query (GROUP BY hypertension) + DROP refused; s.6b: {RT['sql_attacks']} SQL attacks refused; semantic_search {used('semantic_search')}",
+    "Web search (allowlisted)": f"s.6b: {RT['ssrf_attacks']} SSRF URLs refused by hook and server, live CDC fetch status {RT['live_cdc_fetch_status']}, offline degrade = {RT['offline_degrades']}; s.17: {AS['web_search_calls']} web_search calls, {AS['web_pages_live_200']} live pages (HTTP 200)",
+    "Memory tool": f"verify_mcp.py get_memory; session_id pinned by the hook; {used('get_memory')}",
+    "Shell tool (sandboxed)": f"s.6b: {RT['shell_attacks']} shell-injection attempts refused by hook and server, {RT['positive_controls_allowed']}/{RT['positive_controls']} positive controls allowed; denied in default mode = {RT['shell_denied_for_default_agentic_mode']}",
+    "Context-window inspector": "s.17 per-slot token table and eval/rag_modes.png; app result tab 'Context window'; AppTest renders it on py3.13 and py3.14",
     "Short-term memory": "LangGraph CaseState; every trace event and decision in eval/raw_results.json",
     "Long-term memory": "notebook s.8 case N1 (consent) writes, s.6 hook blocks writes without consent; UI Memory tab",
     "Episodic memory": f"notebook s.13: {LR['episodes_after_eval']} episodes after the evaluation; reruns recalled similar episodes",
@@ -50,6 +64,7 @@ EVID = {
 lines = ["# Agentic-AI knowledge graph -> NeuroGuard coverage", "",
          "**Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/", "",
          "Every node of the agentic-AI knowledge graph (Foundations, Retrieval & Memory, Agent patterns, Production & governance, Frontier) "
+         "plus the RAG-modes diagram (classical RAG, agentic RAG context assembly, agentic search tools) "
          "mapped to the file/function that implements it, how it works, and the evidence/test that shows it working. "
          "This file is generated by `scripts/build_coverage_doc.py` from `core/coverage.py` and `eval/summary.json`, so the numbers "
          "match the executed notebook. The same table, with live evidence from your own run, is the **Knowledge-graph coverage** tab of the app.", "",
@@ -62,6 +77,24 @@ for g, n, st, where, how, note in NODES:
         grp = g
     lim = f" **Limit:** {note}" if note else ""
     lines.append(f"| {n} | {st} | `{where}` | {how}.{lim} | {EVID[n]} |")
+lines += ["", "## RAG modes compared (notebook s.17, same normal cases)", "",
+          "| Mode | Who retrieves | hit@3 | Coverage | Citation validity | Faithfulness (LLM judge) | Latency mean (s) | Tokens / run | Evidence context tokens | Finalized |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
+WHO = {"classical": "fixed pipeline before the LLM", "agentic": "LLM tool calls (search_guidelines, graph_traverse)",
+       "agentic_search": "LLM tool calls over files, skills, DB, web, memory, shell"}
+for m in ("classical", "agentic", "agentic_search"):
+    x = RM[m]
+    lines.append(f"| {m} | {WHO[m]} | {x['hit_at_3']} | {x['coverage']} | {x['citation_validity']} | {x['faithfulness']} | {x['latency_mean_s']} | "
+                 f"{x['tokens_mean']:,} | {x['evidence_context_tokens_mean']} | {x['finalized']}/{x['runs']} |")
+lines += ["", "Mean Evidence Researcher context-window tokens per slot (tiktoken o200k_base):", "",
+          "| Mode | " + " | ".join(sorted({k for v in SLOTS.values() for k in v if k != "total"})) + " | total |",
+          "|---|" + "---|" * (len({k for v in SLOTS.values() for k in v if k != "total"}) + 1)]
+for m, v in SLOTS.items():
+    keys = sorted({k for vv in SLOTS.values() for k in vv if k != "total"})
+    lines.append(f"| {m} | " + " | ".join(str(int(v.get(k, 0))) for k in keys) + f" | {int(v['total'])} |")
+lines += ["", f"Red team for the context tools (s.6b): {RT['attacks_total']} attacks ({RT['shell_attacks']} shell injection, {RT['ssrf_attacks']} SSRF, "
+          f"{RT['sql_attacks']} SQL write/escape) - {RT['hook_blocked']} blocked by the pre-tool-use hook and {RT['server_refused']} refused again inside the "
+          f"server; {RT['positive_controls_allowed']}/{RT['positive_controls']} legitimate calls allowed.", ""]
 lines += ["", "## How the new pieces fit one run", "",
           "1. **Planner** calls MCP `episode_recall` (similar de-identified past episodes + learned hints) and writes a structured plan.",
           "2. **Orchestrator** executes the plan step by step (LLM choice, code-enforced eligibility); every choice goes to the decision log.",
@@ -82,6 +115,12 @@ lines += ["", "## How the new pieces fit one run", "",
           "- The learning loop changes only whitelisted hint texts and bounded retrieval boosts; it never edits code, prompts, the contract or model weights.",
           "- Multi-modal input reads three lab fields; scanned PDFs (no text layer) are refused; it was tested on rendered images of real dataset values, not real scans.",
           "- Batch mode is single-process concurrency for a small cohort, not a distributed queue.",
+          "- Web search is not a general search engine: it ranks the corpus' known CDC / NIH / WHO source pages and fetches them live; "
+          "web text is context, never a citation. On the development box DNS answers come from a fake-IP proxy (198.18.0.0/15), which "
+          "the SSRF guard accepts only when NG_FAKEIP_DNS=1 is set; Streamlit Cloud resolves normally and needs no flag.",
+          "- The shell tool is an argv allowlist sandbox (grep / wc / head / ls, no interpreter, empty env, timeout), not an OS container.",
+          "- In agentic-search mode the harness sends one 'source check' message if the LLM finished without consulting a required source "
+          "class; the LLM still chooses the call. Without it gpt-4o-mini often stopped after semantic_search.",
           ""]
 (ROOT / "docs" / "KNOWLEDGE_GRAPH_COVERAGE.md").write_text("\n".join(lines))
 print("wrote docs/KNOWLEDGE_GRAPH_COVERAGE.md")
