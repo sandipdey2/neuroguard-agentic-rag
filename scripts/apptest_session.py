@@ -40,6 +40,10 @@ for kind, preset_idx, q, note in CASES:
     print(f"- {kind:6s} preset={preset_idx} status={r['status']:13s} risk={(r.get('risk') or {}).get('risk_percent')} "
           f"llm={r['llm_calls']} tools={r['tool_calls']} route={r.get('route')} guard={r['input_guardrail']['reason']} "
           f"phi={r['input_guardrail']['phi_redacted']} failed={(r.get('final') or {}).get('verification', {}).get('failed')} {time.time() - t0:.0f}s")
+    live = [m.value for m in at.markdown if "Orchestrator (turn" in m.value or "-> MCP `" in m.value]
+    print(f"    live progress lines rendered: {len(live)}" + (f" e.g. {live[0][:90]!r}" if live else ""))
+    if kind == "preset" and not live:
+        ok = False
     if kind == "attack" and r["status"] != "blocked":
         ok = False
     if kind == "preset" and r["status"] not in ("finalized", "not_finalized"):

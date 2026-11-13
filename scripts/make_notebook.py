@@ -11,6 +11,9 @@ code = lambda s: cells.append(nbf.v4.new_code_cell(s))  # noqa: E731
 
 md("""# NeuroGuard AI - evaluation notebook
 
+**Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
+
+
 Executed end to end against the **real** gpt-4o-mini endpoint (Vocareum, temperature 0) and the **real** MCP server
 (stdio subprocess). Sections: data pipeline (P1), statistics (P2), risk model (P3), note screening (P4), retrieval,
 harness unit checks (permissions, sandbox, receipt, audit chain), MCP protocol check, end-to-end agent runs on

@@ -1,5 +1,7 @@
 # Gumroad listing draft - NeuroGuard AI
 
+**Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
+
 > Draft copy for the seller to paste into Gumroad. Prices are suggestions. Nothing here has been published.
 > No testimonials, user counts or clinical-outcome claims are made, because none exist.
 
@@ -23,7 +25,7 @@ It is built for developers, AI engineers, health-tech founders and educators who
 pattern for trustworthy agent systems - not a black box.
 
 ## What is inside (feature bullets)
-- **Real MCP server** (stdio): 8 tools, 5 resources (including a URI template), 2 prompts; verification script included.
+- **Real MCP server** (stdio): 8 tools, 4 resources + 1 resource template, 2 prompts; verification script included.
 - **Multi-agent orchestration**: LLM routing with code-enforced eligibility rules, turn cap, revision loop.
 - **A2A-style agent cards** and task/message/artifact objects on an in-process bus (easy to move to HTTP).
 - **Harness contract** (`harness_contract.json`): budgets, timeouts, per-agent tool permissions, required checks.
@@ -41,7 +43,7 @@ pattern for trustworthy agent systems - not a black box.
 - Pinned requirements tested on Python 3.13 and 3.14; one-click Streamlit Community Cloud deployment.
 
 ## What the buyer gets
-- `neuroguard-ai-2.0.0.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
+- `neuroguard-ai-2.0.1.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
   evaluation notebook and results, architecture diagram, technical paper (PDF), buyer setup guide, changelog.
 - A data fetch script for the Stroke Prediction Dataset, which is **not bundled** because its Kaggle terms are
   educational use; bring your own licensed data for commercial deployments.

@@ -1,11 +1,17 @@
-2026-11-13 11:14:26.453 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-13 12:04:52.168 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 python 3.14.10 | app loaded | tabs=4
-- preset preset=4 status=finalized     risk=0.4 llm=17 tools=7 route=['risk_analyst', 'evidence_researcher', 'intake', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 56s
-- attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=prompt_injection phi=[] failed=None 0s
-- preset preset=2 status=finalized     risk=4.9 llm=17 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=['phone'] failed=[] 55s
-- attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=emergency phi=[] failed=None 0s
+- preset preset=4 status=finalized     risk=0.4 llm=17 tools=7 route=['risk_analyst', 'evidence_researcher', 'intake', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 76s
+    live progress lines rendered: 13 e.g. '🧭 Orchestrator (turn 1) -> **risk_analyst** with skill `cohort-comparison` - The risk anal'
+- attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=prompt_injection phi=[] failed=None 1s
+    live progress lines rendered: 0
+- preset preset=2 status=finalized     risk=4.9 llm=17 tools=9 route=['intake', 'risk_analyst', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=['phone'] failed=[] 75s
+    live progress lines rendered: 15 e.g. '🧭 Orchestrator (turn 1) -> **intake** with skill `note-screening` - override: LLM chose cl'
+- attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=emergency phi=[] failed=None 1s
+    live progress lines rendered: 0
 - attack preset=0 status=blocked       risk=None llm=0 tools=0 route=None guard=medication_dosing phi=[] failed=None 0s
-- preset preset=0 status=finalized     risk=15.6 llm=17 tools=11 route=['risk_analyst', 'intake', 'evidence_researcher', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 59s
-approval: APPROVED | receipt re-signed: 00d13dc74e316849
-download widgets rendered: 4 | PDF bytes: 4029 b'%PDF-'
+    live progress lines rendered: 0
+- preset preset=0 status=finalized     risk=15.6 llm=17 tools=11 route=['risk_analyst', 'evidence_researcher', 'intake', 'clinical_writer', 'safety_reviewer', 'FINISH'] guard=ok phi=[] failed=[] 84s
+    live progress lines rendered: 17 e.g. '🧭 Orchestrator (turn 1) -> **risk_analyst** with skill `cohort-comparison` - The clinician'
+approval: APPROVED | receipt re-signed: d8fa0cb40994b5c1
+download widgets rendered: 4 | PDF bytes: 4002 b'%PDF-'
 RESULT: PASS

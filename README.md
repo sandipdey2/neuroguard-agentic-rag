@@ -1,6 +1,6 @@
 # 🧠 NeuroGuard AI — governed multi-agent stroke-risk decision support
 
-**Live demo:** [https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/](https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/) · **Paper:** [module_summary.pdf](module_summary.pdf) · **Evaluation:** [evaluation.ipynb](evaluation.ipynb) · **License:** MIT (code)
+**Repository:** [https://github.com/sandipdey2/neuroguard-agentic-rag](https://github.com/sandipdey2/neuroguard-agentic-rag) · **Live demo:** [https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/](https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/) · **Paper:** [module_summary.pdf](module_summary.pdf) · **Evaluation:** [evaluation.ipynb](evaluation.ipynb) · **License:** MIT (code)
 
 > ⚠️ **Decision support only — not a medical device.** No regulatory clearance. Not for diagnosis, treatment or emergency triage.
 > If someone shows sudden face drooping, arm weakness or speech difficulty, call 9-1-1.
@@ -61,6 +61,13 @@ ends with an **HMAC-SHA256 signed receipt**. Udacity AI Mastery Capstone — Pro
 
 **Documented failure:** an earlier full run finalized only 3/8 reports — the provider's content filter (`finish_reason="content_filter"`) truncated drafts that pasted the CDC BE FAST passage verbatim, and the gate correctly refused them. Fixed by short paraphrased findings and one retry on truncation; a notebook probe did not reproduce it in the final run (0 of 3 isolated prompts filtered), so it is reported as a development observation. See the paper for other limitations.
 
+### Live verification (MCP is real, the workflow is agentic)
+`python scripts/live_evidence.py` records the MCP initialize handshake (protocol version, server name, capabilities), the
+server's separate PID and its secret-free environment, the `tool_calls` gpt-4o-mini itself returns through `bind_tools`
+(executed over MCP), and every orchestrator decision of a full run - see `eval/logs/live_evidence_py314.json`.
+A preliminary subgroup audit (`scripts/fairness_check.py` -> `eval/fairness_preliminary.json`) shows similar AUC by sex
+but strong age dependence (0 of 6 test strokes under 45 flagged); see [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md).
+
 ## Run locally
 ```bash
 git clone https://github.com/sandipdey2/neuroguard-agentic-rag && cd neuroguard-agentic-rag
@@ -68,6 +75,7 @@ python -m venv .venv && source .venv/bin/activate && pip install -r requirements
 cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # add OPENAI_API_KEY (+ OPENAI_API_BASE)
 python scripts/verify_mcp.py          # MCP over stdio: tools/resources/prompts list + calls
 python scripts/smoke_test.py          # one full multi-agent run
+python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + orchestrator decisions
 streamlit run app.py
 ```
 Tests: `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). Rebuild: `scripts/draw_architecture.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
@@ -87,4 +95,4 @@ Stroke Prediction Dataset (fedesoriano, Kaggle; educational use — excluded fro
 Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1 minute; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
 
 ## Product
-Gumroad listing draft: [docs/GUMROAD_LISTING.md](docs/GUMROAD_LISTING.md) · buyer guide: [docs/BUYER_SETUP.md](docs/BUYER_SETUP.md) · [CHANGELOG.md](CHANGELOG.md)
+Gumroad listing draft: [docs/GUMROAD_LISTING.md](docs/GUMROAD_LISTING.md) · buyer guide: [docs/BUYER_SETUP.md](docs/BUYER_SETUP.md) · improvement roadmap: [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) · [CHANGELOG.md](CHANGELOG.md)

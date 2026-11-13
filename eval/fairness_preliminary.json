@@ -1,0 +1,77 @@
+{
+ "split": "held-out test (n=1022, strokes=50)",
+ "threshold": 0.0549,
+ "note": "preliminary; subgroups with < 5 strokes get no AUC; no race/ethnicity field exists in the dataset",
+ "rows": [
+  {
+   "attribute": "gender",
+   "group": "Female",
+   "n": 597,
+   "strokes": 29,
+   "roc_auc": 0.845,
+   "recall_at_threshold": 0.828,
+   "precision_at_threshold": 0.138,
+   "flag_rate": 0.291
+  },
+  {
+   "attribute": "gender",
+   "group": "Male",
+   "n": 425,
+   "strokes": 21,
+   "roc_auc": 0.831,
+   "recall_at_threshold": 0.762,
+   "precision_at_threshold": 0.134,
+   "flag_rate": 0.28
+  },
+  {
+   "attribute": "age_band",
+   "group": "<45",
+   "n": 517,
+   "strokes": 6,
+   "roc_auc": 0.746,
+   "recall_at_threshold": 0.0,
+   "precision_at_threshold": null,
+   "flag_rate": 0.0
+  },
+  {
+   "attribute": "age_band",
+   "group": "45-64",
+   "n": 308,
+   "strokes": 9,
+   "roc_auc": 0.657,
+   "recall_at_threshold": 0.556,
+   "precision_at_threshold": 0.05,
+   "flag_rate": 0.325
+  },
+  {
+   "attribute": "age_band",
+   "group": "65+",
+   "n": 197,
+   "strokes": 35,
+   "roc_auc": 0.673,
+   "recall_at_threshold": 1.0,
+   "precision_at_threshold": 0.181,
+   "flag_rate": 0.98
+  },
+  {
+   "attribute": "Residence_type",
+   "group": "Rural",
+   "n": 480,
+   "strokes": 23,
+   "roc_auc": 0.801,
+   "recall_at_threshold": 0.696,
+   "precision_at_threshold": 0.122,
+   "flag_rate": 0.273
+  },
+  {
+   "attribute": "Residence_type",
+   "group": "Urban",
+   "n": 542,
+   "strokes": 27,
+   "roc_auc": 0.873,
+   "recall_at_threshold": 0.889,
+   "precision_at_threshold": 0.148,
+   "flag_rate": 0.299
+  }
+ ]
+}

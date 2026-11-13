@@ -1,5 +1,7 @@
 # Data sources
 
+**Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
+
 NeuroGuard AI uses **public data only**. No rows, notes or guideline sentences were generated or invented.
 `scripts/fetch_data.py` re-downloads both datasets and checks their MD5 checksums.
 

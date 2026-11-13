@@ -1,6 +1,6 @@
 # NeuroGuard AI: A Governed Multi-Agent System for Stroke-Risk Clinical Decision Support
 
-Sandip Dey · Udacity AI Mastery Capstone, Project 7 (Integrative Industry Synthesis) · Code: https://github.com/sandipdey2/neuroguard-agentic-rag
+Sandip Dey · Udacity AI Mastery Capstone, Project 7 (Integrative Industry Synthesis) · Code: https://github.com/sandipdey2/neuroguard-agentic-rag · Live demo: https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
 ## Overview and Industry Context
 
@@ -33,7 +33,7 @@ Figure 1 shows the architecture as implemented; every box names the file that im
 
 **Multi-agent loop.** A LangGraph orchestrator (an LLM with structured output) chooses the next agent, a skill and an instruction; five specialists—Intake, Risk Analyst, Evidence Researcher, Clinical Writer and Safety Reviewer—return to it after every step. Code enforces eligibility: the three information-gathering agents may run in any order, the writer only after all three, the reviewer after each draft, and FINISH only after the latest draft is reviewed, with one revision allowed. Tool-using agents run a bounded ReAct loop (Yao et al., 2023): context, LLM, tool call, hook, result, back to context. Delegation uses A2A-style Agent Cards and task/message/artifact objects modelled on the Agent2Agent specification (A2A Project, 2025). Honestly scoped, this bus is in-process rather than a networked A2A server, because a network hop would add latency without adding safety in a single deployment.
 
-**Real MCP.** The official SDK server exposes eight tools (risk prediction, factor explanation, cohort statistics, note screening, guideline search, a sandboxed calculator, memory read and memory write), five resources (guideline index and per-excerpt template, model card, dataset card, contract) and two prompts (report template and red-team review). The client strips the API key from the subprocess environment.
+**Real MCP.** The official SDK server exposes eight tools (risk prediction, factor explanation, cohort statistics, note screening, guideline search, a sandboxed calculator, memory read and memory write), four resources (guideline index, model card, dataset card, contract) plus a per-excerpt resource template and two prompts (report template and red-team review). The client strips the API key from the subprocess environment.
 
 **Permissions, memory and skills.** Each agent is bound only to its own tools, and a pre-tool-use hook re-checks every call, clamps arguments, pins the session identifier so no agent can read another session, enforces the tool budget and blocks `memory_write` without consent. Short-term memory is the LangGraph state; long-term memory is a consent-based SQLite table of de-identified summaries with a clear button. Skills are `SKILL.md` files: only their names and descriptions are offered to the orchestrator, and the full body is injected when one is selected (progressive disclosure).
 

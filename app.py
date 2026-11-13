@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 import uuid
 
 import pandas as pd
@@ -14,7 +15,7 @@ from core.data import CATEGORIES, load_stroke, pipeline_log
 from core.harness import verify_receipt
 from core.model import get_model
 from core.notes import get_note_classifier
-from core.pipeline import approve, run_case
+from core.pipeline import approve, describe, start_case
 from core.report import full_markdown, receipt_json, to_pdf
 from core.skills import catalog
 from core.stats import factor_tests
@@ -95,12 +96,30 @@ with tab_run:
         if not key:
             st.error("OPENAI_API_KEY is not configured (Streamlit secrets).")
             st.stop()
-        with st.spinner("Orchestrator delegating to intake, risk, evidence, writer and safety agents over MCP... typically 50-90 s"):
+        events: list = []          # filled from the background event loop (list.append is thread-safe)
+        with st.status("Orchestrator delegating to intake, risk, evidence, writer and safety agents over MCP... typically 50-90 s",
+                       expanded=True) as status:
+            fut = start_case(profile, question, note, audience, SID, consent, progress=events.append)
+            shown, t_start = 0, time.time()
             try:
-                st.session_state["result"] = run_case(profile, question, note, audience, SID, consent)
+                while True:
+                    done = fut.done()
+                    for ev in events[shown:]:
+                        line = describe(ev)
+                        if line:
+                            status.write(line)
+                    shown = len(events)
+                    if done:
+                        break
+                    status.update(label=f"Agents working over MCP... {time.time() - t_start:.0f} s elapsed, {shown} trace events")
+                    time.sleep(0.5)
+                st.session_state["result"] = fut.result(timeout=5)
                 st.session_state["receipt"] = st.session_state["result"]["receipt"]
                 st.session_state["approval"] = None
+                status.update(label=f"Run {st.session_state['result']['status']} in {st.session_state['result']['latency_s']} s",
+                              state="complete", expanded=False)
             except Exception as exc:
+                status.update(label="Run failed", state="error")
                 st.exception(exc)
                 st.stop()
 
@@ -207,7 +226,7 @@ report** for a clinician or patient. It is a demonstration product built on publ
    is loaded and hashed before the first token.
 3. An **LLM orchestrator** (gpt-4o-mini, LangGraph) delegates via **A2A-style tasks** to five agents - Intake, Risk Analyst,
    Evidence Researcher, Clinical Writer, Safety Reviewer - and loops until the reviewer approves or the cap is hit.
-4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 8 tools, 5 resources, 2 prompts.
+4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 8 tools, 4 resources + 1 resource template, 2 prompts.
    A **pre-tool-use hook** enforces least privilege and pins session-scoped arguments.
 5. **Skills** (`skills/*/SKILL.md`) are disclosed progressively: names and descriptions first, the full body only when selected.
 6. The **Safety Reviewer** runs a deterministic **invariant verifier** plus an LLM **red-team pass**; the **finalize gate** refuses
@@ -217,6 +236,8 @@ report** for a clinician or patient. It is a demonstration product built on publ
     st.image("architecture_diagram.png", caption="Architecture as implemented")
     st.markdown("**Data:** Stroke Prediction Dataset (fedesoriano, Kaggle; educational use), MTSamples transcriptions (CC0), "
                 "30 verbatim excerpts from CDC and NHLBI pages (U.S. public domain). See DATA_SOURCES.md.")
+    st.markdown(f"**Source code:** [{REPO}]({REPO}) · **Live demo:** [{LIVE_DEMO}]({LIVE_DEMO}) · "
+                "evaluation notebook, paper (module_summary.pdf) and improvement roadmap (docs/IMPROVEMENTS.md) are in the repo.")
     st.warning(DISCLAIMER)
 
 # --------------------------------------------------------------------------- model & data

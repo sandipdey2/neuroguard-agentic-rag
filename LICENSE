@@ -26,3 +26,6 @@ excerpts under data/ keep their own terms (see DATA_SOURCES.md). In particular
 the Stroke Prediction Dataset is published on Kaggle as "Data files (c) Original
 Authors" for educational use; it is NOT included in the commercial product zip
 built by scripts/build_dist.py. NeuroGuard AI is not a medical device.
+
+Project: https://github.com/sandipdey2/neuroguard-agentic-rag
+Live demo: https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/

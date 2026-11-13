@@ -1,0 +1,365 @@
+{
+ "python": "3.14.10",
+ "at": "2026-11-13T12:12:53+0000",
+ "handshake": {
+  "protocolVersion": "2025-11-25",
+  "serverInfo": {
+   "name": "neuroguard",
+   "title": null,
+   "version": "1.30.0",
+   "websiteUrl": null,
+   "icons": null
+  },
+  "capabilities": [
+   "prompts",
+   "resources",
+   "tools"
+  ],
+  "ms": 1147
+ },
+ "server_process": [
+  {
+   "pid": 200432,
+   "ppid": 200368,
+   "cmdline": "/workspace/ng314/bin/python <repo>/mcp_server/neuroguard_mcp_server.py",
+   "secret_vars_in_child_env": []
+  }
+ ],
+ "client_pid": 200368,
+ "tools_list": [
+  "predict_risk",
+  "explain_factors",
+  "cohort_stats",
+  "screen_note",
+  "search_guidelines",
+  "calculator",
+  "memory_read",
+  "memory_write"
+ ],
+ "llm_tool_choice": {
+  "bound_tools": [
+   "predict_risk",
+   "explain_factors",
+   "cohort_stats",
+   "calculator"
+  ],
+  "model": "gpt-4o-mini-2024-07-18",
+  "finish_reason": "tool_calls",
+  "openai_response_id_prefix": "chatcmpl-EjkRE",
+  "tool_calls": [
+   {
+    "name": "predict_risk",
+    "args": {
+     "age": 67,
+     "gender": "Male",
+     "hypertension": 0,
+     "heart_disease": 1,
+     "ever_married": "Yes",
+     "work_type": "Private",
+     "Residence_type": "Urban",
+     "avg_glucose_level": 228.69,
+     "smoking_status": "formerly smoked",
+     "bmi": 36.6
+    }
+   },
+   {
+    "name": "explain_factors",
+    "args": {
+     "age": 67,
+     "gender": "Male",
+     "hypertension": 0,
+     "heart_disease": 1,
+     "ever_married": "Yes",
+     "work_type": "Private",
+     "Residence_type": "Urban",
+     "avg_glucose_level": 228.69,
+     "smoking_status": "formerly smoked",
+     "bmi": 36.6
+    }
+   },
+   {
+    "name": "cohort_stats",
+    "args": {
+     "age": 67,
+     "hypertension": 0,
+     "heart_disease": 1
+    }
+   }
+  ],
+  "executed_over_mcp": [
+   {
+    "tool": "predict_risk",
+    "mcp_result_preview": "[{\"type\": \"text\", \"text\": \"{\\n \\\"risk_probability\\\": 0.1564,\\n \\\"risk_percent\\\": 15.6,\\n \\\"risk_band\\\": \\\"high\\\",\\n \\\"flag_threshold\\\": 0.0549,\\n \\\"dataset_prevalence\\\": 0.0487,\\n \\\"model\\\": \\\"logistic_regression + sigmo"
+   },
+   {
+    "tool": "explain_factors",
+    "mcp_result_preview": "[{\"type\": \"text\", \"text\": \"{\\n \\\"factors\\\": [\\n  {\\n   \\\"feature\\\": \\\"age\\\",\\n   \\\"patient_value\\\": 67.0,\\n   \\\"log_odds_contribution\\\": 1.971,\\n   \\\"direction\\\": \\\"raises\\\"\\n  },\\n  {\\n   \\\"feature\\\": \\\"avg_glucose_leve"
+   },
+   {
+    "tool": "cohort_stats",
+    "mcp_result_preview": "[{\"type\": \"text\", \"text\": \"{\\n \\\"headline\\\": \\\"Among dataset patients in group 'age 65-74, heart_disease=1', 12 of 76 had a recorded stroke (15.8%, Wilson 95% CI 9.3-25.6%); the whole dataset rate is 4.9%.\\\",\\n \\\"overall"
+   }
+  ]
+ },
+ "server_process_after_close": [],
+ "full_run": {
+  "status": "finalized",
+  "latency_s": 72.6,
+  "llm_calls": 17,
+  "tool_calls": 11,
+  "mcp_tools_listed": [
+   "predict_risk",
+   "explain_factors",
+   "cohort_stats",
+   "screen_note",
+   "search_guidelines",
+   "calculator",
+   "memory_read",
+   "memory_write"
+  ],
+  "route": [
+   "risk_analyst",
+   "evidence_researcher",
+   "intake",
+   "clinical_writer",
+   "safety_reviewer",
+   "FINISH"
+  ],
+  "orchestrator_decisions": [
+   {
+    "turn": 1,
+    "eligible": [
+     "intake",
+     "risk_analyst",
+     "evidence_researcher"
+    ],
+    "next": "risk_analyst",
+    "skill": "cohort-comparison",
+    "reason": "The clinician needs a detailed understanding of the patient's stroke risk in context.",
+    "override": null
+   },
+   {
+    "turn": 2,
+    "eligible": [
+     "intake",
+     "evidence_researcher"
+    ],
+    "next": "evidence_researcher",
+    "skill": "guideline-citation",
+    "reason": "We need to gather evidence-based guidelines to support the clinician's discussion about the patient's stroke risk.",
+    "override": null
+   },
+   {
+    "turn": 3,
+    "eligible": [
+     "intake"
+    ],
+    "next": "intake",
+    "skill": "note-screening",
+    "reason": "The intake agent can help identify any immediate stroke risk indicators from the note.",
+    "override": null
+   },
+   {
+    "turn": 4,
+    "eligible": [
+     "clinical_writer"
+    ],
+    "next": "clinical_writer",
+    "skill": "risk-communication",
+    "reason": "The clinical_writer can synthesize the information from previous agents into a comprehensive report for the clinician.",
+    "override": null
+   },
+   {
+    "turn": 5,
+    "eligible": [
+     "safety_reviewer"
+    ],
+    "next": "safety_reviewer",
+    "skill": "red-team-review",
+    "reason": "The draft is ready for safety review.",
+    "override": null
+   },
+   {
+    "turn": 6,
+    "eligible": [
+     "FINISH"
+    ],
+    "next": "FINISH",
+    "skill": null,
+    "reason": "The safety reviewer is the final step before completion.",
+    "override": null
+   }
+  ],
+  "mcp_tool_calls": [
+   {
+    "agent": "risk_analyst",
+    "tool": "predict_risk",
+    "args": {
+     "age": 67,
+     "gender": "Male",
+     "hypertension": 0,
+     "heart_disease": 1,
+     "ever_married": "Yes",
+     "work_type": "Private",
+     "Residence_type": "Urban",
+     "avg_glucose_level": 228.69,
+     "smoking_status": "formerly smoked",
+     "bmi": 36.6
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 58
+   },
+   {
+    "agent": "risk_analyst",
+    "tool": "explain_factors",
+    "args": {
+     "age": 67,
+     "gender": "Male",
+     "hypertension": 0,
+     "heart_disease": 1,
+     "ever_married": "Yes",
+     "work_type": "Private",
+     "Residence_type": "Urban",
+     "avg_glucose_level": 228.69,
+     "smoking_status": "formerly smoked",
+     "bmi": 36.6
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 8
+   },
+   {
+    "agent": "risk_analyst",
+    "tool": "cohort_stats",
+    "args": {
+     "age": 67,
+     "hypertension": 0,
+     "heart_disease": 1
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 14
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "age stroke risk doubles",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 13
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "heart disease stroke risk",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 5
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "high average glucose stroke risk",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 4
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "obesity stroke risk",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 5
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "smoking stroke risk",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 4
+   },
+   {
+    "agent": "evidence_researcher",
+    "tool": "search_guidelines",
+    "args": {
+     "query": "stroke warning signs BE FAST",
+     "k": 4
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 4
+   },
+   {
+    "agent": "intake",
+    "tool": "screen_note",
+    "args": {
+     "note": "Follow-up visit. Denies weakness or speech problems."
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 76
+   },
+   {
+    "agent": "intake",
+    "tool": "memory_read",
+    "args": {
+     "limit": 3
+    },
+    "decision": "allow",
+    "hook_reason": "allowed by contract",
+    "ms": 5
+   }
+  ],
+  "resources_and_prompts": [
+   "model://risk-card",
+   "guideline://G-05",
+   "guideline://G-06",
+   "guideline://G-07",
+   "guideline://G-08",
+   "guideline://G-10",
+   "guideline://G-12",
+   "clinical_report",
+   "red_team_review"
+  ],
+  "skills_loaded": [
+   "cohort-comparison",
+   "guideline-citation",
+   "note-screening",
+   "risk-communication",
+   "red-team-review"
+  ],
+  "gate": {
+   "agent": "gate",
+   "type": "gate",
+   "status": "finalized",
+   "failed_checks": [],
+   "needs_human_approval": true,
+   "approval_reasons": [
+    "risk_band == high"
+   ],
+   "memory": {
+    "skipped": "write blocked: user has not consented to case-history storage"
+   },
+   "ms": 1
+  },
+  "receipt_signature_prefix": "974396a26408d6ba"
+ }
+}

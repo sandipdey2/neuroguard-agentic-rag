@@ -1,11 +1,13 @@
 # NeuroGuard AI - buyer setup guide
 
+**Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/ (try it before installing)
+
 Time needed: about 15 minutes. You need Python 3.13 or 3.14, a GitHub account (for Streamlit Community Cloud)
 and an OpenAI-compatible API key (OpenAI, or a course gateway such as Vocareum).
 
 ## 1. Unzip and install
 ```bash
-unzip neuroguard-ai-2.0.0.zip && cd neuroguard-ai
+unzip neuroguard-ai-2.0.1.zip && cd neuroguard-ai
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```

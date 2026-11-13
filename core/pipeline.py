@@ -42,7 +42,8 @@ def _receipt(ctx: RunContext, inputs: dict, result: dict) -> dict:
 
 
 async def arun_case(profile: dict, question: str, note: str = "", audience: str = "clinician",
-                    session_id: str = "anonymous", consent: bool = False, llm=None) -> dict:
+                    session_id: str = "anonymous", consent: bool = False, llm=None, progress=None) -> dict:
+    """``progress`` (optional callable) receives each new trace event as the graph runs - used for live UI updates."""
     t0 = time.perf_counter()
     ctx = RunContext(session_id=session_id, consent=consent)        # contract fixed before any LLM token
     gate = check_input(question, note)
@@ -63,10 +64,10 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
     try:
         if llm is None:
             async with httpx.AsyncClient(timeout=httpx.Timeout(ctx.contract["llm_timeout_s"])) as http_client:
-                state = await asyncio.wait_for(_run_graph(inputs, gate, ctx, get_llm(http_async_client=http_client)),
+                state = await asyncio.wait_for(_run_graph(inputs, gate, ctx, get_llm(http_async_client=http_client), progress),
                                                timeout=ctx.contract["budget"]["wall_clock_timeout_s"] + 30)
         else:
-            state = await asyncio.wait_for(_run_graph(inputs, gate, ctx, llm), timeout=ctx.contract["budget"]["wall_clock_timeout_s"] + 30)
+            state = await asyncio.wait_for(_run_graph(inputs, gate, ctx, llm, progress), timeout=ctx.contract["budget"]["wall_clock_timeout_s"] + 30)
         status = state["final"]["status"]
     except asyncio.TimeoutError:
         state, status = {"trace": [{"agent": "harness", "type": "timeout"}]}, "timeout"
@@ -78,7 +79,7 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
     return res
 
 
-async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm) -> dict:
+async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm, progress=None) -> dict:
     async with mcp_session() as session:
         listed = await session.list_tools()
         tools = await load_mcp_tools(session)
@@ -87,7 +88,17 @@ async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm) -> dict:
         init = {"question": inputs["question"], "note": inputs["note"], "audience": inputs["audience"], "profile": inputs["profile"],
                 "turns": 0, "visits": {}, "revisions": 0, "pending_review": False, "retrieved": {}, "evidence_log": [],
                 "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}], "route": []}
-        state = await graph.ainvoke(init, config={"recursion_limit": 80})
+        state, seen = None, 0
+        # astream(values) yields the full state after every node; the last value equals ainvoke's result.
+        async for state in graph.astream(init, config={"recursion_limit": 80}, stream_mode="values"):
+            tr = state.get("trace", [])
+            if progress is not None:
+                for ev in tr[seen:]:
+                    try:
+                        progress(ev)
+                    except Exception:      # a UI callback must never break a run
+                        pass
+            seen = len(tr)
         state["mcp_tools_listed"] = [t.name for t in listed.tools]
         return state
 
@@ -117,10 +128,39 @@ def _background_loop() -> asyncio.AbstractEventLoop:
         return _loop
 
 
+def start_case(profile: dict, question: str, note: str = "", audience: str = "clinician", session_id: str = "anonymous",
+               consent: bool = False, llm=None, progress=None):
+    """Schedule a run on the background loop and return a concurrent.futures.Future (the UI polls it for live progress)."""
+    return asyncio.run_coroutine_threadsafe(arun_case(profile, question, note, audience, session_id, consent, llm, progress),
+                                            _background_loop())
+
+
 def run_case(profile: dict, question: str, note: str = "", audience: str = "clinician", session_id: str = "anonymous",
-             consent: bool = False, llm=None, timeout: float = 400) -> dict:
-    fut = asyncio.run_coroutine_threadsafe(arun_case(profile, question, note, audience, session_id, consent, llm), _background_loop())
-    return fut.result(timeout=timeout)
+             consent: bool = False, llm=None, timeout: float = 400, progress=None) -> dict:
+    return start_case(profile, question, note, audience, session_id, consent, llm, progress).result(timeout=timeout)
+
+
+def describe(ev: dict) -> str | None:
+    """One-line human description of a trace event for the live progress panel (None = not shown)."""
+    t, a = ev.get("type"), ev.get("agent")
+    if t == "route":
+        return f"🧭 Orchestrator (turn {ev['turn']}) -> **{ev['next']}**" + (f" with skill `{ev['skill']}`" if ev.get("skill") else "") + \
+            (f" - override: {ev['override']}" if ev.get("override") else f" - {ev.get('reason', '')}")
+    if t == "mcp_tool_call":
+        return f"🔧 {a} -> MCP `{ev['tool']}` ({ev['decision']}, {ev['ms']} ms)"
+    if t == "mcp_resource_read":
+        return f"📄 {a} read MCP resource `{ev['uri']}`"
+    if t == "mcp_prompt_get":
+        return f"🧾 {a} fetched MCP prompt `{ev['prompt']}`"
+    if t == "skill_loaded":
+        return f"📘 {a} loaded skill `{ev['skill']}`"
+    if t == "review":
+        return f"🔍 Safety review: **{ev['verdict']}**" + (f" (failed: {', '.join(ev['failed_checks'])})" if ev.get("failed_checks") else "")
+    if t == "gate":
+        return f"🚦 Finalize gate: **{ev['status']}**"
+    if t == "warning":
+        return f"⚠️ {a}: {ev.get('detail')}"
+    return None
 
 
 def dumps(result: dict) -> str:
