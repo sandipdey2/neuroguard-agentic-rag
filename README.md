@@ -17,9 +17,9 @@ Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDG
 
 ## How a request flows (as implemented)
 1. **Input guardrails** (`core/guardrails.py`, no LLM): PHI redaction → prompt-injection/tool-misuse block → CDC BE FAST emergency stop ("call 9-1-1") → medication-dosing refusal → out-of-scope refusal.
-2. **Run contract** (`harness_contract.json` v1.1.0) is loaded and SHA-256 hashed before the first token: 9 turns, 36 LLM calls, 32 tool calls, 110k tokens, 300 s, per-agent permissions, 12 required checks, context budgets, confidence policy, list prices, learning and batch limits.
+2. **Run contract** (`harness_contract.json` v1.2.0) is loaded and SHA-256 hashed before the first token: 9 turns, 36 LLM calls, 32 tool calls, 110k tokens, 300 s, per-agent permissions, 12 required checks, context budgets, confidence policy, list prices, learning and batch limits.
 3. **Planner** (LLM) recalls similar de-identified past episodes via MCP `episode_recall` and writes a structured plan; the **orchestrator** (LangGraph) executes it — the LLM picks next agent + skill + instruction; code enforces eligibility, FINISH-only-after-review, one revision, visit/turn caps. Every decision goes to the decision log.
-4. **Specialists** — Intake, Risk Analyst, Evidence Researcher, Clinical Writer, Safety Reviewer — exchange **A2A-style** tasks/messages/artifacts (`core/a2a.py`). Tool users run a **ReAct** loop: thought → tool call → **pre-tool-use hook** → MCP observation (PHI-redacted, token-truncated) → back to context. The Evidence Researcher uses hybrid search and **graph RAG**, and re-retrieves when code finds a required topic uncovered (**agentic RAG**). The writer **self-critiques** and revises once before review.
+4. **Specialists** — Intake, Risk Analyst, Evidence Researcher, Clinical Writer, Safety Reviewer — exchange **A2A-style** tasks/messages/artifacts (`core/a2a.py`). Tool users run a **ReAct** loop: thought → tool call → **pre-tool-use hook** → MCP observation (PHI-redacted, token-truncated) → back to context. The Evidence Researcher runs in one of three **RAG modes** chosen in the sidebar: *classical* (a fixed pipeline calls `semantic_search` before the LLM and injects the docs), *agentic* (default: the LLM calls hybrid search and **graph RAG** itself and re-retrieves when code finds a required topic uncovered) or *agentic search* (MCP context-retrieval tools over local files incl. `knowledge/Plan.md`, skills, the cohort database, allowlisted CDC/NIH/WHO pages, memory and a sandboxed shell). The **Context window** tab lists every slot with its token count. The writer **self-critiques** and revises once before review.
 5. **Finalize gate** re-runs the verifier, then a **confidence score** (calibration, cohort size, coverage, verifier, red team, grounding) refuses below 0.4 and asks for review below 0.7; high-risk or red-flag cases need **clinician sign-off**; one de-identified **episode** is stored for the bounded learning loop; a signed receipt is produced.
 
 ## Coverage of the nine required concepts
@@ -27,8 +27,8 @@ Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDG
 |---|---|---|
 | 1 | Harness: agent loop, fixed contract, gate | `react()` loop in `core/agents.py`; `harness_contract.json` hashed in `core/harness.py`; `gate` node refuses to finalize unless all 12 checks pass |
 | 2 | Memory & state | Short-term: LangGraph `CaseState`. Long-term: SQLite (`core/memory.py`) via MCP `memory_read`/`memory_write`, consent checkbox + clear button |
-| 3 | RAG | `core/rag.py` hybrid TF-IDF + 24-d LSA vectors over 30 verbatim CDC/NHLBI excerpts, `core/graph_rag.py` graph traversal, agentic re-retrieval → `guideline://{id}` resources → writer cites `[G-xx]`; verifier checks citations were retrieved |
-| 4 | MCP | `mcp_server/neuroguard_mcp_server.py`: 11 tools, 5 resources + 1 resource template, 2 prompts; `scripts/verify_mcp.py` |
+| 3 | RAG | three selectable modes (classical / agentic / agentic search, see below); `core/rag.py` hybrid TF-IDF + 24-d LSA vectors over 30 verbatim CDC/NHLBI excerpts, `core/graph_rag.py` graph traversal, agentic re-retrieval → `guideline://{id}` resources → writer cites `[G-xx]`; verifier checks citations were retrieved |
+| 4 | MCP | `mcp_server/neuroguard_mcp_server.py`: 19 tools, 5 resources + 1 resource template, 2 prompts; `scripts/verify_mcp.py` |
 | 5 | Skills | `skills/*/SKILL.md`; `core/skills.py` exposes name+description only; body injected when selected (trace: `skill_loaded`) |
 | 6 | Guardrails & permissions | Input guardrails; permission engine + pre-tool-use hook (`core/permissions.py`); AST-sandboxed calculator; consent for writes; human approval; hash-chained audit log |
 | 7 | Evals | Executed `evaluation.ipynb`, `eval/cases.json`, `eval/summary.json`, `eval/raw_results.json` (traces) |
@@ -36,15 +36,16 @@ Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDG
 | 9 | Multi-agent system | LLM orchestrator + 5 specialists with a genuine graph cycle and caps |
 | + | Verifier, red team, receipt | Deterministic invariants + quote-confirmed LLM red team; HMAC-SHA256 `receipt.json` (download in UI) |
 
-## Agentic-AI knowledge-graph coverage (27 nodes: 23 full, 4 partial)
+## Agentic-AI knowledge-graph coverage (34 nodes: 29 full, 5 partial)
 Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md); live evidence per node for your own run: app tab **🧩 Knowledge-graph coverage**.
 
 | Group | Node → implementation (status) |
 |---|---|
 | Foundations | LLM reasoning → 7 gpt-4o-mini roles (full) · Prompt patterns → role prompts, ReAct format, MCP prompts, skills (full) · Tool use → `bind_tools` + MCP (full) · Embeddings & vectors → `core/vectors.py` LSA + hybrid; OpenAI embeddings compared in the notebook (full) · Context windows → `core/context.py` tiktoken budgets (full) |
-| Retrieval & Memory | Classical RAG → `core/rag.py` (full) · Graph RAG → `core/graph_rag.py`, MCP `graph_traverse` (full) · Agentic RAG → coverage check + re-retrieval (full) · Short-term → `CaseState` (full) · Long-term → `core/memory.py` (full) · Episodic → `core/episodes.py` (full) |
+| Retrieval & Memory | Classical RAG → fixed `semantic_search` before the LLM, docs injected (full) · Graph RAG → `core/graph_rag.py`, MCP `graph_traverse` (full) · Agentic RAG → LLM tool calls, slot-assembled context window, coverage check + re-retrieval (full) · Short-term → `CaseState` (full) · Long-term → `core/memory.py` (full) · Episodic → `core/episodes.py` (full) |
 | Agent patterns | ReAct → `react()` thought/action/observation (full) · Planner → executor → `planner` node (full) · Multi-agent orchestration → LangGraph + A2A bus (full) · Context graph traversal → multi-hop paths (full) · Tool selection & routing → orchestrator + permission engine (full) · Reflection → writer self-critique + reviewer (full) |
 | Production & governance | Confidence scoring → `core/confidence.py` (full) · Policy gates → guardrails, hook, finalize + confidence gate (full) · Audit trail → hash chain + signed receipt (full) · Decision reasoning logs → `RunContext.decide` (full) · Eval & observability → notebook + OTLP-JSON spans (full) · Cost / token economics → per-call list-price costing (full) |
+| RAG modes & agentic search | File search → `search_files` over `knowledge/` (Plan.md) + skills (full) · Skill loading → `load_skill`, own catalog only (full) · Database tools → `semantic_search` + read-only `execute_query` (full) · Web search → CDC/NIH/WHO allowlist, SSRF guard, offline fallback (**partial**: not a general search engine) · Memory tool → `get_memory` (full) · Shell → argv allowlist sandbox (full) · Context-window inspector → app tab + `context_window` trace (full) |
 | Frontier | Memory & learning loops → whitelisted hints + bounded boosts (**partial**) · Self-improving agents → prompt-level only (**partial**) · Multi-modal reasoning → `core/multimodal.py` lab image (vision) / PDF (**partial**) · Agentic workflows at scale → `core/batch.py` semaphore + token bucket (**partial**) |
 
 ## Integration of prior capstones

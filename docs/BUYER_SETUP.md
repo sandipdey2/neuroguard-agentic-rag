@@ -7,7 +7,7 @@ and an OpenAI-compatible API key (OpenAI, or a course gateway such as Vocareum).
 
 ## 1. Unzip and install
 ```bash
-unzip neuroguard-ai-2.1.0.zip && cd neuroguard-ai
+unzip neuroguard-ai-2.2.0.zip && cd neuroguard-ai
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
