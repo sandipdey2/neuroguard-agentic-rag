@@ -6,6 +6,9 @@ resources/read, resources/templates/list, prompts/list, prompts/get).
 
 Tools      predict_risk, explain_factors, cohort_stats, screen_note, search_guidelines (hybrid sparse+dense),
            graph_traverse (graph RAG), calculator, memory_read, memory_write, episode_recall, episode_write
+           + context-retrieval tools for agentic search (core/context_tools.py): semantic_search, search_files,
+           load_skill, execute_query (read-only SQL), web_search / web_fetch (CDC / NIH / WHO allowlist), get_memory,
+           shell (grep / wc / head / ls over the read-only knowledge/ directory)
 Resources  guideline://index, guideline://{id}, model://risk-card, dataset://stroke-card, policy://harness-contract,
            graph://knowledge-graph
 Prompts    clinical_report, red_team_review
@@ -24,7 +27,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
-from core import episodes, memory  # noqa: E402
+from core import context_tools as ct, episodes, memory  # noqa: E402
+from core.skills import catalog as skill_catalog  # noqa: E402
 from core.config import CONTRACT_PATH  # noqa: E402
 from core.data import load_guidelines, pipeline_log, validate_profile  # noqa: E402
 from core.model import get_model  # noqa: E402
@@ -160,6 +164,61 @@ def episode_write(episode_json: str) -> str:
                "review_verdicts", "failed_checks", "red_team_rules", "confidence", "outcome", "cited"}
     ep = {k: v for k, v in ep.items() if k in allowed}
     return _j({"stored_episode_id": episodes.write_episode(ep), "fields": sorted(ep)})
+
+
+# ----------------------------------------------------------------------------- context-retrieval tools (agentic search)
+@mcp.tool()
+def semantic_search(query: str, k: int = 4) -> str:
+    """Database source: semantic (dense LSA + sparse hybrid) search over the 30 guideline excerpts. Returns citable G-xx records."""
+    return _j(get_index().search(query, k=max(1, min(int(k), 5)), mode="hybrid"))
+
+
+@mcp.tool()
+def search_files(query: str, max_results: int = 8) -> str:
+    """Local-files source: keyword search over knowledge/*.md (incl. Plan.md, cohort schema, guideline titles) and skills/*/SKILL.md."""
+    return _j(ct.search_files(query, max(1, min(int(max_results), 10))))
+
+
+@mcp.tool()
+def load_skill(name: str) -> str:
+    """Skill-loading tool: returns the full SKILL.md body of one skill (progressive disclosure on demand)."""
+    meta = skill_catalog().get(name)
+    if meta is None:
+        return _j({"error": f"unknown skill {name!r}", "available": sorted(skill_catalog())})
+    body = Path(meta["path"]).read_text(encoding="utf-8").split("---", 2)[2].strip()
+    return _j({"name": name, "description": meta["description"], "body": body})
+
+
+@mcp.tool()
+def execute_query(sql: str) -> str:
+    """Database source: ONE read-only SELECT/WITH query over table `patients` (cleaned Stroke Prediction Dataset). Max 50 rows."""
+    return _j(ct.execute_query(sql))
+
+
+@mcp.tool()
+def web_search(query: str, k: int = 2) -> str:
+    """Web source: finds the allowlisted CDC / NIH / WHO source page for the query and fetches it live; always returns the
+    local excerpt too, so it degrades gracefully offline. Web text is context only; cite G-xx."""
+    return _j(ct.web_search(query, max(1, min(int(k), 3))))
+
+
+@mcp.tool()
+def web_fetch(url: str) -> str:
+    """Web source: fetch ONE https page on cdc.gov, nih.gov or who.int (redirects re-checked, private addresses refused)."""
+    return _j(ct.web_fetch(url))
+
+
+@mcp.tool()
+def get_memory(session_id: str) -> str:
+    """Long-term memory source: this session's de-identified case summaries plus learned hints from episodic memory."""
+    return _j({"cases": memory.read_cases(session_id, limit=3), "learned_hints": episodes.learned_hints(), "episodes": episodes.stats()})
+
+
+@mcp.tool()
+def shell(command: str) -> str:
+    """Sandboxed shell: grep, wc, head or ls ONLY, run without a shell interpreter inside the read-only knowledge/ directory,
+    no pipes/redirects/globs, no absolute or parent paths, empty environment, 3 s timeout."""
+    return _j(ct.run_shell(command))
 
 
 # ----------------------------------------------------------------------------- resources

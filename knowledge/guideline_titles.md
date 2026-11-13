@@ -1,0 +1,32 @@
+# Guideline excerpts (titles and sources only; full text via semantic_search)
+
+- G-01 | overview | Risk Factors for Stroke - Overview | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-02 | tia | Risk Factors for Stroke - Previous stroke or TIA | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-03 | hypertension | Risk Factors for Stroke - High blood pressure | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-04 | cholesterol | Risk Factors for Stroke - High cholesterol | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-05 | heart_disease | Risk Factors for Stroke - Heart disease | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-06 | glucose | Risk Factors for Stroke - Diabetes | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-07 | bmi | Risk Factors for Stroke - Obesity | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-08 | smoking | Risk Factors for Stroke - Tobacco use | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-09 | lifestyle | Risk Factors for Stroke - Diet, activity and alcohol | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-10 | age | Risk Factors for Stroke - Age | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-11 | demographics | Risk Factors for Stroke - Sex, race and ethnicity | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/risk-factors/index.html
+- G-12 | emergency | Signs and Symptoms of Stroke | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/signs-symptoms/index.html
+- G-13 | emergency | B.E. F.A.S.T. to identify stroke | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/signs-symptoms/index.html
+- G-14 | emergency | When to seek emergency help | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/signs-symptoms/index.html
+- G-15 | tia | Transient ischemic attack (mini-stroke) | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/signs-symptoms/index.html
+- G-16 | lifestyle | Preventing Stroke - Healthy weight and activity | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/prevention/index.html
+- G-17 | smoking | Preventing Stroke - Don't smoke, limit alcohol | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/prevention/index.html
+- G-18 | hypertension | Preventing Stroke - Control blood pressure | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/prevention/index.html
+- G-19 | glucose | Preventing Stroke - Control diabetes | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/prevention/index.html
+- G-20 | heart_disease | Preventing Stroke - Treat heart disease and take medicine as directed | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/prevention/index.html
+- G-21 | overview | Stroke Facts - Fast facts | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/data-research/facts-stats/index.html
+- G-22 | overview | Stroke Facts - Americans at risk | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/data-research/facts-stats/index.html
+- G-23 | overview | About Stroke - What it is | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/about/index.html
+- G-24 | tia | About Stroke - TIA is a warning sign | Centers for Disease Control and Prevention | https://www.cdc.gov/stroke/about/index.html
+- G-25 | hypertension | About High Blood Pressure - Categories | Centers for Disease Control and Prevention | https://www.cdc.gov/high-blood-pressure/about/index.html
+- G-26 | bmi | Adult BMI Categories | Centers for Disease Control and Prevention | https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html
+- G-27 | glucose | Diabetes Testing - Blood sugar tests | Centers for Disease Control and Prevention | https://www.cdc.gov/diabetes/diabetes-testing/index.html
+- G-28 | lifestyle | Stroke Causes and Risk Factors - Controllable factors | National Heart, Lung, and Blood Institute | https://www.nhlbi.nih.gov/health/stroke/causes
+- G-29 | age | Stroke Causes and Risk Factors - Age, family history and other conditions | National Heart, Lung, and Blood Institute | https://www.nhlbi.nih.gov/health/stroke/causes
+- G-30 | demographics | Stroke Causes and Risk Factors - Sex | National Heart, Lung, and Blood Institute | https://www.nhlbi.nih.gov/health/stroke/causes

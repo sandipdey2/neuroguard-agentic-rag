@@ -43,15 +43,23 @@ def _receipt(ctx: RunContext, inputs: dict, result: dict) -> dict:
                                      "spans": len(ctx.spans), "decisions": len(ctx.decisions)},
         "cost_usd": round(ctx.cost_usd, 6), "confidence": (final.get("confidence") or {}).get("score"),
         "confidence_gate": (final.get("confidence") or {}).get("gate"), "decision_log_sha256": sha(ctx.decisions),
-        "latency_s": result.get("latency_s")})
+        "latency_s": result.get("latency_s"), "rag_mode": result.get("rag_mode")})
+
+
+RAG_MODES = ("classical", "agentic", "agentic_search")
 
 
 async def arun_case(profile: dict, question: str, note: str = "", audience: str = "clinician",
-                    session_id: str = "anonymous", consent: bool = False, llm=None, progress=None, limiter=None) -> dict:
+                    session_id: str = "anonymous", consent: bool = False, llm=None, progress=None, limiter=None,
+                    rag_mode: str | None = None) -> dict:
     """``progress`` (optional callable) receives each new trace event as the graph runs - used for live UI updates.
     ``limiter`` (optional, batch mode) is a shared token-bucket rate limiter awaited before every LLM call."""
     t0 = time.perf_counter()
     ctx = RunContext(session_id=session_id, consent=consent, limiter=limiter)        # contract fixed before any LLM token
+    rag_mode = rag_mode or ctx.contract.get("rag_modes", {}).get("default", "agentic")
+    if rag_mode not in RAG_MODES:
+        raise ValueError(f"rag_mode must be one of {RAG_MODES}")
+    ctx.perms.rag_mode = rag_mode                                                    # per-run least-privilege tool set
     gate = check_input(question, note)
     ctx.audit.log("input_guardrail", "check_input", "question+note", "allow" if gate["allowed"] else "block",
                   reason=gate["reason"], phi_redacted=gate["phi_redacted"])
@@ -60,8 +68,8 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
     except ValueError as exc:
         gate = {**gate, "allowed": False, "reason": "invalid_profile", "detail": str(exc)}
         prof = None
-    inputs = {"profile": prof, "question": gate["question"], "note": gate["note"], "audience": audience}
-    base = {"run_id": ctx.run_id, "inputs": inputs, "input_guardrail": gate, "contract_sha256": ctx.contract_sha256}
+    inputs = {"profile": prof, "question": gate["question"], "note": gate["note"], "audience": audience, "rag_mode": rag_mode}
+    base = {"rag_mode": rag_mode, "run_id": ctx.run_id, "inputs": inputs, "input_guardrail": gate, "contract_sha256": ctx.contract_sha256}
     if not gate["allowed"]:
         ctx.decide("input_guardrail", "block", gate["reason"], "input guardrail blocked the request before any LLM call")
         res = {**base, "status": "blocked", "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}],
@@ -96,7 +104,7 @@ async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm, progress=No
         tools = await load_mcp_tools(session)
         ctx.audit.log("harness", "mcp_initialize", "neuroguard", "ok", tools=[t.name for t in listed.tools])
         graph = build_graph(llm, tools, session, ctx)
-        init = {"question": inputs["question"], "note": inputs["note"], "audience": inputs["audience"], "profile": inputs["profile"],
+        init = {"rag_mode": inputs["rag_mode"], "question": inputs["question"], "note": inputs["note"], "audience": inputs["audience"], "profile": inputs["profile"],
                 "turns": 0, "visits": {}, "revisions": 0, "pending_review": False, "retrieved": {}, "evidence_log": [],
                 "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}], "route": [], "self_critique": {}}
         state, seen = None, 0
@@ -144,15 +152,16 @@ def _background_loop() -> asyncio.AbstractEventLoop:
 
 
 def start_case(profile: dict, question: str, note: str = "", audience: str = "clinician", session_id: str = "anonymous",
-               consent: bool = False, llm=None, progress=None):
+               consent: bool = False, llm=None, progress=None, rag_mode: str | None = None):
     """Schedule a run on the background loop and return a concurrent.futures.Future (the UI polls it for live progress)."""
-    return asyncio.run_coroutine_threadsafe(arun_case(profile, question, note, audience, session_id, consent, llm, progress),
+    return asyncio.run_coroutine_threadsafe(arun_case(profile, question, note, audience, session_id, consent, llm, progress,
+                                                      rag_mode=rag_mode),
                                             _background_loop())
 
 
 def run_case(profile: dict, question: str, note: str = "", audience: str = "clinician", session_id: str = "anonymous",
-             consent: bool = False, llm=None, timeout: float = 400, progress=None) -> dict:
-    return start_case(profile, question, note, audience, session_id, consent, llm, progress).result(timeout=timeout)
+             consent: bool = False, llm=None, timeout: float = 400, progress=None, rag_mode: str | None = None) -> dict:
+    return start_case(profile, question, note, audience, session_id, consent, llm, progress, rag_mode).result(timeout=timeout)
 
 
 def describe(ev: dict) -> str | None:
@@ -181,6 +190,12 @@ def describe(ev: dict) -> str | None:
         return f"📚 Evidence round {ev['round']}: coverage {ev['score']}" + (f" - missing {ev['missing']} -> re-retrieve" if ev.get("missing") else " - sufficient")
     if t == "self_critique":
         return f"🪞 Writer self-critique: {'revised' if ev['revised'] else 'kept'} ({len(ev['code_issues'])} check issue(s), {len(ev['llm_problems'])} LLM-flagged)"
+    if t == "context_window":
+        top = sorted(ev["slots"], key=lambda r: -r["tokens"])[:3]
+        return (f"🪟 {a} context window ({ev.get('rag_mode') or 'agent'}): {ev['total_tokens']} tokens in {len(ev['slots'])} slots - "
+                + ", ".join(f"{r['slot'].split(' ')[0]} {r['tokens']}" for r in top))
+    if t == "source_check":
+        return f"🧩 {a} source check: not yet consulted {ev['missing_sources']} -> asked to use them"
     if t == "warning":
         return f"⚠️ {a}: {ev.get('detail')}"
     return None

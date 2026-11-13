@@ -12,12 +12,12 @@ NODES = [
     # group, node, status, where, how, note
     ("Foundations", "LLM reasoning", "full", "core/agents.py::build_graph", "gpt-4o-mini (temperature 0) reasons in 7 LLM roles: planner, orchestrator, 3 gatherers, writer, reviewer", ""),
     ("Foundations", "Prompt patterns", "full", "core/agents.py::SYSTEM, mcp_server prompts, skills/*", "role system prompts, ReAct 'Thought:' format, MCP prompt templates, progressive-disclosure skills, structured output", ""),
-    ("Foundations", "Tool use / function calling", "full", "core/agents.py::react, mcp_server (11 tools)", "bind_tools function calling to real MCP tools over stdio, every call through the pre-tool-use hook", ""),
+    ("Foundations", "Tool use / function calling", "full", "core/agents.py::react, mcp_server (19 tools)", "bind_tools function calling to real MCP tools over stdio, every call through the pre-tool-use hook", ""),
     ("Foundations", "Embeddings & vectors", "full", "core/vectors.py::DenseEncoder, core/rag.py::search", "24-dim LSA dense vectors + TF-IDF sparse, weighted hybrid fusion; notebook compares OpenAI text-embedding-3-small", "MCP server uses local LSA (it holds no API key by design)"),
     ("Foundations", "Context windows", "full", "core/context.py, core/agents.py::react", "tiktoken o200k_base counts, tool output truncation, observation compaction, budgeted writer evidence", ""),
-    ("Retrieval & Memory", "Classical RAG", "full", "core/rag.py::GuidelineIndex.search", "30 public guideline excerpts, top-k retrieval, citations verified against retrieved text", ""),
+    ("Retrieval & Memory", "Classical RAG", "full", "core/rag.py::GuidelineIndex.search, core/agents.py::classical_retrieve", "selectable mode 'classical': a fixed pipeline calls MCP semantic_search once per required topic BEFORE the LLM; the docs are injected into the context (system prompt + user message + docs); one LLM call, no tool calls", "no re-retrieval loop in this mode, by design"),
     ("Retrieval & Memory", "Graph RAG", "full", "core/graph_rag.py::traverse, MCP graph_traverse", "networkx graph of factors, conditions and chunks; weighted multi-hop traversal returns paths", ""),
-    ("Retrieval & Memory", "Agentic RAG", "full", "core/agents.py::evidence_researcher", "agent picks tools/queries, code measures topic coverage, missing topics trigger a reformulated re-retrieval round", ""),
+    ("Retrieval & Memory", "Agentic RAG", "full", "core/agents.py::evidence_researcher, agentic_slots", "default mode: the LLM issues search_guidelines / graph_traverse calls itself; context window assembled from slots (system prompt, skills YAML front matter, tool list, memory file, history, user message, tool calls, tool results); missing topics trigger a re-retrieval round", ""),
     ("Retrieval & Memory", "Short-term memory", "full", "core/agents.py::CaseState", "LangGraph state carries messages, findings, plan and trace across nodes in one run", ""),
     ("Retrieval & Memory", "Long-term memory", "full", "core/memory.py, MCP memory_read/memory_write", "consent-gated, de-identified SQLite case summaries per session", ""),
     ("Retrieval & Memory", "Episodic memory", "full", "core/episodes.py, MCP episode_recall/episode_write", "one de-identified episode per run (plan, route, verdicts, failures, outcome, clinician decision); Jaccard recall", ""),
@@ -33,6 +33,13 @@ NODES = [
     ("Production & governance", "Decision reasoning logs", "full", "core/harness.py::RunContext.decide", "one structured entry per decision: actor, kind, options, chosen, rationale, evidence; hashed into the receipt", ""),
     ("Production & governance", "Eval & observability", "full", "evaluation.ipynb, core/observability.py", "notebook metrics + per-call spans exported as OTLP-JSON", "no live OTLP collector is attached on Streamlit Cloud"),
     ("Production & governance", "Cost / token economics", "full", "core/harness.py::price, cost_summary", "per-call tokens priced with public list rates, per-agent cost, budgets in the contract", "list price; Vocareum billing may differ"),
+    ("RAG modes & agentic search", "Agentic search: file search", "full", "core/context_tools.py::search_files, MCP search_files", "keyword search over the read-only knowledge/ folder (Plan.md, cohort schema, guideline titles) and skills/*/SKILL.md", ""),
+    ("RAG modes & agentic search", "Skill-loading tool", "full", "MCP load_skill, core/permissions.py", "LLM loads a full SKILL.md body on demand; the hook only allows skills in the agent's own catalog", ""),
+    ("RAG modes & agentic search", "Database tools", "full", "core/context_tools.py::execute_query, MCP semantic_search", "semantic_search over guideline vectors + execute_query: one read-only SELECT over the cohort (mode=ro, SQLite authorizer, 50 rows, 2 s)", ""),
+    ("RAG modes & agentic search", "Web search (allowlisted)", "partial", "core/context_tools.py::web_search, web_fetch", "live https fetch of CDC / NIH / WHO pages only; redirects and DNS answers re-checked (SSRF guard); permission-gated, logged, budgeted; offline -> local excerpt", "not a general search engine: ranks the corpus' known source pages; web text is context, never a citation"),
+    ("RAG modes & agentic search", "Memory tool", "full", "MCP get_memory", "this session's de-identified cases + learned hints + episode stats; session_id pinned by the hook", ""),
+    ("RAG modes & agentic search", "Shell tool (sandboxed)", "full", "core/context_tools.py::run_shell, MCP shell", "grep / wc / head / ls via argv (no shell interpreter), metacharacters, absolute and parent paths refused, cwd knowledge/, empty env, 3 s timeout, 8 KB cap, 4 calls per run", "allowlist sandbox, not an OS container"),
+    ("RAG modes & agentic search", "Context-window inspector", "full", "core/agents.py::context_window_event, app.py 'Context window' tab", "every agent's context window listed slot by slot with tiktoken o200k_base counts; bar chart in the UI, context_window events in the trace", ""),
     ("Frontier", "Memory & learning loops", "partial", "core/episodes.py::learned_hints, retrieval_boosts", "recurring reviewer/clinician feedback becomes whitelisted hints and bounded retrieval boosts", "bounded and reversible by design; no weight updates"),
     ("Frontier", "Self-improving agents", "partial", "core/episodes.py + planner + writer", "agents read their own past failures before acting; effect shown in notebook demo", "prompt-level only; no autonomous code or prompt rewriting"),
     ("Frontier", "Multi-modal reasoning", "partial", "core/multimodal.py", "lab image -> gpt-4o-mini vision structured values; PDF -> pypdf text + regex", "3 fields only, no OCR for scanned PDFs, small rendered test set"),
@@ -62,7 +69,15 @@ def evidence(node: str, r: dict | None) -> str:
         "Embeddings & vectors": f"{tools.count('search_guidelines')} hybrid searches (sparse+dense)",
         "Context windows": f"{len(ctxs)} context checks, max {max((c.get('tokens', 0) for c in ctxs), default=0)} tokens of 128k; "
                            f"{sum(c.get('tool_outputs_truncated', 0) for c in ctxs)} tool outputs truncated",
-        "Classical RAG": f"{len(r.get('retrieved') or {})} excerpts retrieved and read",
+        "Classical RAG": f"mode {r.get('rag_mode')}: " + (f"{tools.count('semantic_search')} fixed-pipeline semantic_search calls before the LLM" if r.get("rag_mode") == "classical" else "run with RAG mode = classical to see the fixed pipeline") + f"; {len(r.get('retrieved') or {})} excerpts read",
+        "Agentic search: file search": _tool_ev(ev, ("search_files",)),
+        "Skill-loading tool": _tool_ev(ev, ("load_skill",)),
+        "Database tools": _tool_ev(ev, ("semantic_search", "execute_query")),
+        "Web search (allowlisted)": _tool_ev(ev, ("web_search", "web_fetch")),
+        "Memory tool": _tool_ev(ev, ("get_memory",)),
+        "Shell tool (sandboxed)": _tool_ev(ev, ("shell",)),
+        "Context-window inspector": "; ".join(f"{e['agent']} {e['total_tokens']}" for e in tr if e.get("type") == "context_window"
+                                             and e["agent"] == "evidence_researcher") + " tokens (Evidence Researcher)",
         "Graph RAG": f"{tools.count('graph_traverse')} graph traversals",
         "Agentic RAG": f"{cov.get('rounds', 1)} retrieval round(s), coverage {cov.get('score')}" + (f", missing {cov['missing']}" if cov.get("missing") else ""),
         "Short-term memory": f"{len(r.get('trace', []))} state trace events across {len([x for x in r.get('route', []) if x != 'FINISH'])} agent turns",
@@ -87,6 +102,13 @@ def evidence(node: str, r: dict | None) -> str:
         "Agentic workflows at scale": "see the Cohort batch tab",
     }
     return m.get(node, "")
+
+
+def _tool_ev(ev, names):
+    hits = [e for e in ev if e["tool"] in names]
+    if not hits:
+        return "not used in this run (select RAG mode = agentic search)"
+    return f"{len(hits)} call(s): " + ", ".join(f"{e['tool']}({'allow' if e['allowed'] else 'deny'})" for e in hits[:6])
 
 
 def _chunks(e):

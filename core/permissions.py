@@ -50,9 +50,42 @@ class PermissionEngine:
         self.consent = consent
         self.tool_calls = 0
         self.pinned: dict[str, dict] = {}     # harness-set arguments an agent can never choose itself (per tool)
+        self.rag_mode = contract.get("rag_modes", {}).get("default", "agentic")
+        self.counts: dict[str, int] = {}
 
     def allowed_tools(self, agent: str) -> list[str]:
+        """Least privilege per agent; the Evidence Researcher's tool set depends on the run's RAG mode."""
+        if agent == "evidence_researcher" and "rag_modes" in self.c:
+            if self.rag_mode == "classical":
+                return []                                   # classical RAG: retrieval is done by the fixed pipeline
+            mode = self.c["rag_modes"].get(self.rag_mode, {})
+            if "evidence_researcher_tools" in mode:
+                return list(mode["evidence_researcher_tools"])
         return list(self.c["agents"].get(agent, {}).get("tools", []))
+
+    def _arg_check(self, agent: str, tool: str, args: dict) -> str | None:
+        """Argument checks for the context-retrieval tools; shell and web are the highest-risk (same validators run in the server)."""
+        from . import context_tools as ct
+        lim = self.c["tool_arg_limits"]
+        if tool == "shell":
+            if self.counts.get("shell", 0) >= lim.get("shell_calls_max_per_run", 4):
+                return "shell call budget for this run exhausted"
+            ok, why, _ = ct.check_shell(str(args.get("command", "")))
+            return None if ok else f"shell command refused: {why}"
+        if tool in ("web_fetch", "web_search"):
+            if self.counts.get("web", 0) >= lim.get("web_calls_max_per_run", 3):
+                return "web call budget for this run exhausted"
+            if tool == "web_fetch":
+                ok, why = ct.check_url(str(args.get("url", "")))
+                return None if ok else f"URL refused (SSRF guard): {why}"
+        if tool == "execute_query":
+            ok, why = ct.check_sql(str(args.get("sql", "")))
+            return None if ok else f"SQL refused: {why}"
+        if tool == "load_skill":
+            from .skills import catalog_for
+            if args.get("name") not in {m["name"] for m in catalog_for(agent)}:
+                return f"skill {args.get('name')!r} is not in {agent}'s catalog"
+        return None
 
     def allowed_prompt(self, agent: str, prompt: str) -> bool:
         return prompt in self.c["agents"].get(agent, {}).get("prompts", [])
@@ -74,6 +107,8 @@ class PermissionEngine:
             d = Decision(False, "calculator expression too long", args)
         elif self.c["write_tools"].get(tool) == "requires_user_consent" and not self.consent:
             d = Decision(False, "write blocked: user has not consented to case-history storage", args)
+        elif (why := self._arg_check(agent, tool, args)) is not None:
+            d = Decision(False, why, args)
         else:
             if tool == "search_guidelines":
                 args["k"] = max(1, min(int(args.get("k", 4)), lim["search_guidelines.k_max"]))
@@ -86,6 +121,18 @@ class PermissionEngine:
                 args["k"] = max(1, min(int(args.get("k", 6)), lim["graph_traverse.k_max"]))
             if tool == "episode_recall":
                 args["k"] = max(1, min(int(args.get("k", 3)), lim["episode_recall.k_max"]))
+            if tool == "semantic_search":
+                args["k"] = max(1, min(int(args.get("k", 4)), lim["semantic_search.k_max"]))
+            if tool == "search_files":
+                args["max_results"] = max(1, min(int(args.get("max_results", 8)), lim["search_files.max_results_max"]))
+            if tool == "web_search":
+                args["k"] = max(1, min(int(args.get("k", 2)), lim["web_search.k_max"]))
+            if tool == "get_memory":
+                args["session_id"] = self.session_id          # pinned
+            if tool == "shell":
+                self.counts["shell"] = self.counts.get("shell", 0) + 1
+            if tool in ("web_fetch", "web_search"):
+                self.counts["web"] = self.counts.get("web", 0) + 1
             args.update(self.pinned.get(tool, {}))
             d = Decision(True, "allowed by contract", args)
         if d.allow:

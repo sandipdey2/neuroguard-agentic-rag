@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "description": "Run contract fixed before the first LLM token. Loaded and SHA-256 hashed at the start of every run; the hash is written into the signed receipt.",
   "model": "gpt-4o-mini",
   "temperature": 0,
@@ -86,6 +86,15 @@
         "model://risk-card"
       ],
       "prompts": []
+    },
+    "classical_retriever": {
+      "tools": [
+        "semantic_search"
+      ],
+      "resources": [
+        "guideline://{id}"
+      ],
+      "prompts": []
     }
   },
   "write_tools": {
@@ -98,7 +107,14 @@
     "memory_read.limit_max": 5,
     "graph_traverse.max_hops_max": 3,
     "graph_traverse.k_max": 8,
-    "episode_recall.k_max": 3
+    "episode_recall.k_max": 3,
+    "semantic_search.k_max": 5,
+    "search_files.max_results_max": 10,
+    "web_search.k_max": 3,
+    "web_calls_max_per_run": 3,
+    "shell_calls_max_per_run": 4,
+    "shell.command_max_chars": 200,
+    "execute_query.sql_max_chars": 600
   },
   "required_checks": [
     "risk_in_unit_interval",
@@ -173,5 +189,59 @@
     "max_concurrency": 3,
     "llm_calls_per_minute": 120,
     "max_cases": 6
+  },
+  "rag_modes": {
+    "default": "agentic",
+    "classical": {
+      "description": "fixed retrieval pipeline: the harness calls semantic_search once per required topic BEFORE the LLM; the docs are injected into the context window (system prompt + user message + docs); the LLM makes no tool calls",
+      "retriever_agent": "classical_retriever",
+      "k_per_query": 2,
+      "max_docs": 8
+    },
+    "agentic": {
+      "description": "the LLM issues search tool calls itself (ReAct); context window = system prompt + skills front matter + tool list + memory file + history + user message + tool calls + tool results",
+      "evidence_researcher_tools": [
+        "search_guidelines",
+        "graph_traverse"
+      ]
+    },
+    "agentic_search": {
+      "description": "agentic search in context engineering: MCP context-retrieval tools over local files, database, web and long-term memory",
+      "evidence_researcher_tools": [
+        "semantic_search",
+        "graph_traverse",
+        "search_files",
+        "load_skill",
+        "execute_query",
+        "web_search",
+        "web_fetch",
+        "get_memory",
+        "shell"
+      ],
+      "max_tool_rounds_per_agent": 6,
+      "required_sources": {
+        "local_files": [
+          "search_files",
+          "shell"
+        ],
+        "memory": [
+          "get_memory"
+        ],
+        "database": [
+          "semantic_search",
+          "execute_query"
+        ],
+        "web": [
+          "web_search",
+          "web_fetch"
+        ]
+      }
+    }
+  },
+  "high_risk_tools": {
+    "shell": "argv allowlist grep/wc/head/ls, no metacharacters, no absolute/parent paths, cwd knowledge/, empty env, 3 s timeout (hook + server)",
+    "web_fetch": "https + host allowlist cdc.gov/nih.gov/who.int, no IP literals/ports/credentials, redirects re-checked, private DNS answers refused (hook + server)",
+    "web_search": "allowlisted source pages only; local excerpt always returned (offline-safe)",
+    "execute_query": "single SELECT/WITH, read-only connection + authorizer, 50 rows, 2 s (hook + server)"
   }
 }

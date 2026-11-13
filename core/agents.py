@@ -54,6 +54,7 @@ DEFAULT_SKILL = {"intake": "note-screening", "risk_analyst": "cohort-comparison"
 
 
 class CaseState(TypedDict, total=False):
+    rag_mode: str                      # classical | agentic | agentic_search
     plan: Optional[dict]
     learning: Optional[dict]
     coverage: Optional[dict]
@@ -190,6 +191,18 @@ SYSTEM = {
                             "that are supported by a retrieved excerpt, each with that excerpt's id. Work in ReAct style: before every "
                             "tool call write one short line starting with 'Thought:' that says what you still need and why this call. "
                             "Only cite excerpts that search_guidelines returned to you."),
+    "evidence_researcher_search": ("You are the Evidence Researcher agent in AGENTIC SEARCH mode. You have context-retrieval tools over four "
+                                   "sources: local files (search_files, shell = grep/wc/head/ls in the read-only knowledge/ folder, which "
+                                   "contains Plan.md), skills (load_skill), the database (semantic_search over guideline excerpts, "
+                                   "execute_query = one read-only SELECT over table patients) and the web (web_search / web_fetch, CDC/NIH/WHO "
+                                   "only), plus long-term memory (get_memory). Required order: (1) read the plan with shell command 'head -30 Plan.md'; "
+                                   "(2) call get_memory once; (3) call semantic_search once per required topic; (4) call web_search once for "
+                                   "the highest-risk factor to cross-check the live source page; (5) optionally ONE execute_query for a cohort "
+                                   "count. You are not finished until steps 1-4 are done. Work in ReAct style: before every tool call write one short line starting with 'Thought:'. Cite ONLY G-xx excerpt ids returned by semantic_search, "
+                                   "web_search or graph_traverse; files, SQL rows and web text are context, not citations."),
+    "evidence_researcher_classical": ("You are the Evidence Researcher agent in CLASSICAL RAG mode. A fixed retrieval pipeline already ran "
+                                      "semantic_search BEFORE you; the retrieved documents are below. You have no tools. Return findings "
+                                      "supported by these documents only, each with the document id."),
     "clinical_writer": ("You are the Clinical Writer agent of a decision-support tool. Follow the report template exactly and use only the "
                         "facts and evidence supplied."),
     "safety_reviewer": "You are the Safety Reviewer agent. Follow the review instructions and return a verdict.",
@@ -255,6 +268,18 @@ def coverage_of(topics: list[str], findings: list[dict], retrieved: dict) -> dic
     return {"required": topics, "covered": cov, "missing": miss, "score": round(len(cov) / len(topics), 3) if topics else 1.0}
 
 
+TOPIC_QUERY = {"age": "stroke risk increases with age", "hypertension": "high blood pressure stroke risk",
+               "heart_disease": "heart disease atrial fibrillation stroke", "glucose": "diabetes high blood glucose stroke",
+               "bmi": "obesity overweight BMI stroke", "smoking": "smoking tobacco stroke",
+               "lifestyle": "physical activity healthy diet stroke prevention", "emergency": "stroke warning signs BE FAST call 9-1-1"}
+
+
+def context_window_event(agent: str, mode: Optional[str], slots: list) -> dict:
+    """Context-window inspector event: every slot with its tiktoken count and a short preview."""
+    rows = [{"slot": n, "tokens": count_tokens(t or ""), "chars": len(t or ""), "preview": (t or "")[:160]} for n, t in slots]
+    return {"agent": agent, "type": "context_window", "rag_mode": mode, "slots": rows, "total_tokens": sum(r["tokens"] for r in rows)}
+
+
 def next_required(s: CaseState, max_revisions: int) -> Optional[str]:
     for a in GATHER:
         if not s.get({"intake": "intake", "risk_analyst": "analyst", "evidence_researcher": "evidence"}[a]):
@@ -287,7 +312,15 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         if ctx.limiter is not None:                 # batch mode: shared token-bucket rate limit across runs
             await ctx.limiter.acquire()
         t_start = time.time()
-        out = await runnable.ainvoke(msgs)
+        for attempt in range(3):     # the Vocareum gateway sometimes answers a slow request with HTTP 400 "timed out": retry it
+            try:
+                out = await runnable.ainvoke(msgs)
+                break
+            except Exception as exc:
+                if attempt == 2 or "timed out" not in str(exc).lower():
+                    raise
+                ctx.audit.log(agent, "llm_retry", "gateway_timeout", "retry", attempt=attempt + 1)
+                await __import__("asyncio").sleep(2 * (attempt + 1))
         raw = out["raw"] if isinstance(out, dict) and "raw" in out else out
         ctx.record_llm(agent, raw, t_start, time.time())
         return out
@@ -307,18 +340,30 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             ctx.audit.log(agent, "skill_loaded", skill, "ok", chars=len(body))
         return sys_prompt, tr
 
-    async def react(agent: str, s: CaseState, human: str):
-        """The harness agent loop: context -> LLM -> tool call -> hook -> result -> back to context."""
+    async def react(agent: str, s: CaseState, human: str, extra_slots: list | None = None, base_key: str | None = None):
+        """The harness agent loop: context -> LLM -> tool call -> hook -> result -> back to context.
+        ``extra_slots`` [(slot, text)] are appended to the system message as named sections (explicit context engineering)."""
         t0 = time.perf_counter()
         sys_prompt, trace = system_for(agent, s.get("skill"))
+        if base_key:
+            sys_prompt = SYSTEM[base_key] + sys_prompt[len(SYSTEM[agent]):]
+        base_prompt = SYSTEM[base_key or agent]
+        skill_body = sys_prompt[len(base_prompt):]
+        for slot, text in extra_slots or []:
+            sys_prompt += f"\n\n# {slot.replace('_', ' ').title()}\n{text}"
         allowed = [tool_map[n] for n in ctx.perms.allowed_tools(agent) if n in tool_map]
-        bound = llm.bind_tools(allowed)
+        bound = llm.bind_tools(allowed) if allowed else llm
         task_text = s["task"]["history"][0]["parts"][0]["text"]
-        msgs = [SystemMessage(sys_prompt), HumanMessage(f"TASK FROM ORCHESTRATOR: {task_text}\n\n{human}")]
+        user_msg = f"TASK FROM ORCHESTRATOR: {task_text}\n\n{human}"
+        msgs = [SystemMessage(sys_prompt), HumanMessage(user_msg)]
         evidence = []
         cx = C["context"]
         truncated = compacted = 0
-        for step in range(1, L["max_tool_rounds_per_agent"] + 1):
+        max_rounds = L["max_tool_rounds_per_agent"]
+        if agent == "evidence_researcher":     # agentic search consults more sources, so it gets a larger (still bounded) loop
+            max_rounds = C.get("rag_modes", {}).get(s.get("rag_mode") or "", {}).get("max_tool_rounds_per_agent", max_rounds)
+        nudged = False
+        for step in range(1, max_rounds + 1):
             if not ctx.budget_left():
                 trace.append({"agent": agent, "type": "budget_stop"})
                 break
@@ -333,6 +378,16 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             if not ai.tool_calls:
                 if thought:
                     trace.append({"agent": agent, "type": "react_step", "step": step, "thought": thought[:400], "action": "final_answer"})
+                req = C.get("rag_modes", {}).get(s.get("rag_mode") or "", {}).get("required_sources") if agent == "evidence_researcher" else None
+                used = {e["tool"] for e in evidence if e["allowed"]}
+                missing_src = [k for k, names in (req or {}).items() if not used & set(names)]
+                if missing_src and not nudged and step < max_rounds:      # source-diversity check (one nudge, the LLM still chooses the call)
+                    nudged = True
+                    msgs.append(HumanMessage(f"Source check: you have not consulted these context sources yet: {missing_src}. "
+                                             f"Call the matching tool(s) ({', '.join(n for k in missing_src for n in req[k])}) before finishing."))
+                    trace.append({"agent": agent, "type": "source_check", "missing_sources": missing_src, "step": step})
+                    ctx.decide("harness", "source_check", missing_src, "agentic search: required context sources not yet consulted")
+                    continue
                 break
             for tc in ai.tool_calls:
                 t1, w1 = time.perf_counter(), time.time()
@@ -357,6 +412,11 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
                               "observation": obs[:240]})
         trace.append({"agent": agent, "type": "context", "tokens": messages_tokens(msgs), "budget": cx["agent_context_tokens"],
                       "tool_outputs_truncated": truncated, "observations_compacted": compacted, "window": cx["model_context_window"]})
+        calls = [json.dumps({"name": tc["name"], "args": tc["args"]}) for m in msgs if isinstance(m, AIMessage) for tc in (m.tool_calls or [])]
+        results = [m.content for m in msgs if isinstance(m, ToolMessage)]
+        slots = [("system_prompt", base_prompt), ("skill_body (selected skill)", skill_body)] + list(extra_slots or []) + \
+                [("user_message", user_msg), ("tool_calls", "\n".join(calls)), ("tool_results", "\n".join(results))]
+        trace.append(context_window_event(agent, s.get("rag_mode") if agent == "evidence_researcher" else None, slots))
         msgs.append(HumanMessage("Now return your final answer in the required structure, using only the tool results above."))
         return msgs, evidence, trace, t0
 
@@ -485,13 +545,68 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         trace.append({"agent": "risk_analyst", "type": "agent_output", "output": out, "ms": _ms(t0)})
         return {"analyst": out, "risk": risk, "evidence_log": ev, "trace": trace}
 
+    def agentic_slots(s: CaseState, mode: str) -> list:
+        """Explicit context assembly for agentic RAG: skills front matter, tool list, memory file, history."""
+        skills = "\n".join(f"- name: {m['name']}\n  description: {m['description']}" for m in catalog_for("evidence_researcher"))
+        tools = "\n".join(f"- {n}: {(tool_map[n].description or '').splitlines()[0][:150]}"
+                           for n in ctx.perms.allowed_tools("evidence_researcher") if n in tool_map)
+        lrn = s.get("learning") or {}
+        mem_rows = next((e["output"] for e in s.get("evidence_log", []) if e["tool"] == "memory_read" and e["allowed"]), "")
+        memory_file = ("# MEMORY.md (de-identified)\n## Learned hints\n" + ("\n".join(f"- {h['hint']}" for h in lrn.get("hints", [])) or "- none") +
+                       f"\n## Similar past episodes: {len(lrn.get('similar_episodes', []))}\n" +
+                       "\n".join(f"- factors {e.get('factors')}, outcome {e.get('outcome')}, failed {e.get('failed_checks')}"
+                                  for e in lrn.get("similar_episodes", [])[:3]) +
+                       f"\n## Long-term case memory (this session)\n{mem_rows[:600] or 'none'}")
+        risk = s.get("risk") or {}
+        history = (f"route so far: {' -> '.join(x for x in s.get('route', []) if x != 'FINISH')}\n"
+                   f"intake: {json.dumps(s.get('intake') or {}, default=str)[:500]}\n"
+                   f"risk analyst: risk {risk.get('risk_percent')}% ({risk.get('risk_band')}); "
+                   f"top factors {(s.get('analyst') or {}).get('top_factors', [])}; {(s.get('analyst') or {}).get('cohort_comparison', '')}")
+        return [("skills_frontmatter (YAML, name + description only)", skills), ("tool_list", tools),
+                ("memory_file", memory_file), ("history", history)]
+
+    async def classical_retrieve(s: CaseState, human: str, topics: list):
+        """Classical RAG: a FIXED pipeline runs semantic_search before the LLM; docs are injected into the context window."""
+        t0 = time.perf_counter()
+        rm = C["rag_modes"]["classical"]
+        trace, ev, docs = [], [], {}
+        for t in topics:
+            q = TOPIC_QUERY.get(t, f"{t} stroke risk")
+            d = ctx.perms.pre_tool_use(rm["retriever_agent"], "semantic_search", {"query": q, "k": rm["k_per_query"]})
+            if not d.allow:
+                continue
+            w1, t1 = time.time(), time.perf_counter()
+            out = _text(await tool_map["semantic_search"].ainvoke(d.args))
+            ctx.record_tool_span(rm["retriever_agent"], "semantic_search", w1, time.time(), "allow")
+            ev.append({"agent": rm["retriever_agent"], "tool": "semantic_search", "args": d.args, "output": out, "allowed": True})
+            trace.append({"agent": rm["retriever_agent"], "type": "mcp_tool_call", "tool": "semantic_search", "args": d.args, "decision": "allow",
+                          "hook_reason": d.reason, "phi_redactions": 0, "output_preview": out[:300], "ms": _ms(t1)})
+            for r in json.loads(out):
+                if r["id"] not in docs or r["score"] > docs[r["id"]]["score"]:
+                    docs[r["id"]] = r
+        top = sorted(docs.values(), key=lambda r: -r["score"])[: rm["max_docs"]]
+        docs_text = "\n".join(f"[{r['id']}] {r['title']} ({r['publisher']}): {r['text']}" for r in top)
+        ctx.decide("harness", "classical_retrieval", [r["id"] for r in top], "fixed pipeline: one semantic_search per required topic, before the LLM",
+                   evidence={"queries": len(topics), "docs": len(top)})
+        sys_prompt, tr = system_for("evidence_researcher", s.get("skill"))
+        skill_body = sys_prompt[len(SYSTEM["evidence_researcher"]):]
+        sys_prompt = SYSTEM["evidence_researcher_classical"] + skill_body
+        task_text = s["task"]["history"][0]["parts"][0]["text"]
+        user_msg = f"TASK FROM ORCHESTRATOR: {task_text}\n\n{human}"
+        msgs = [SystemMessage(sys_prompt), HumanMessage(user_msg + "\n\nRETRIEVED DOCUMENTS (fixed pipeline, before the LLM):\n" + docs_text)]
+        trace += tr
+        trace.append(context_window_event("evidence_researcher", "classical", [("system_prompt", SYSTEM["evidence_researcher_classical"]),
+                                                                              ("skill_body (selected skill)", skill_body),
+                                                                              ("user_message", user_msg), ("retrieved_docs", docs_text)]))
+        return msgs, ev, trace, t0
+
     def _returned_ids(ev: list) -> set:
         ids = set()
         for e in ev:
-            if e["allowed"] and e["tool"] in ("search_guidelines", "graph_traverse"):
+            if e["allowed"] and e["tool"] in ("search_guidelines", "graph_traverse", "semantic_search", "web_search"):
                 try:
                     data = json.loads(e["output"])
-                    rows = data["chunks"] if isinstance(data, dict) else data
+                    rows = (data.get("chunks") or data.get("results") or []) if isinstance(data, dict) else data
                     ids |= {r["id"] for r in rows}
                 except (json.JSONDecodeError, TypeError, KeyError):
                     pass
@@ -507,7 +622,17 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             ctx.perms.pinned["search_guidelines"] = {"boost_factors": graph_factors}     # harness-pinned learning boost
             ctx.decide("harness", "retrieval_boost", sorted(boosts), "clinician-approved reports for similar factors cited these excerpts",
                        evidence=boosts)
-        msgs, ev, trace, t0 = await react("evidence_researcher", s, human)
+        mode = s.get("rag_mode") or "agentic"
+        if mode == "agentic_search":
+            human += ("\nAGENTIC SEARCH CHECKLIST (issue these tool calls yourself, you may batch several in one turn): "
+                      "1) shell {\"command\": \"head -30 Plan.md\"}  2) get_memory  3) semantic_search for each required topic  "
+                      "4) web_search for the highest-risk factor  5) optional: one execute_query cohort count.")
+        if mode == "classical":
+            msgs, ev, trace, t0 = await classical_retrieve(s, human, topics)
+        else:
+            slots = agentic_slots(s, mode)
+            msgs, ev, trace, t0 = await react("evidence_researcher", s, human, slots,
+                                              "evidence_researcher_search" if mode == "agentic_search" else None)
         out = (await structured("evidence_researcher", EvidenceOut, msgs)).model_dump()
         all_ev, rounds = list(ev), 1
 
@@ -533,7 +658,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         trace.append({"agent": "evidence_researcher", "type": "evidence_sufficiency", "round": 1, **cov,
                       "action": "re-retrieve" if cov["missing"] else "sufficient"})
         # agentic RAG: insufficient evidence -> the agent reformulates and re-retrieves (bounded)
-        while cov["missing"] and rounds < L["max_retrieval_rounds"] and ctx.budget_left():
+        while mode != "classical" and cov["missing"] and rounds < L["max_retrieval_rounds"] and ctx.budget_left():
             rounds += 1
             ctx.decide("evidence_researcher", "re_retrieve", cov["missing"], "required evidence topics not covered by any cited excerpt",
                        options=["stop", "re_retrieve"], evidence=cov)
@@ -541,7 +666,8 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             human2 = (f"EVIDENCE INSUFFICIENT. Missing topics: {cov['missing']}. Previous queries: {prev_q}.\n"
                       "Reformulate: use different wording or synonyms for each missing topic, or call graph_traverse with those "
                       "factor names, then return findings ONLY for the missing topics.")
-            msgs2, ev2, tr2, _ = await react("evidence_researcher", s, human2)
+            msgs2, ev2, tr2, _ = await react("evidence_researcher", s, human2, agentic_slots(s, mode),
+                                             "evidence_researcher_search" if mode == "agentic_search" else None)
             trace += tr2
             out2 = (await structured("evidence_researcher", EvidenceOut, msgs2)).model_dump()
             all_ev += ev2

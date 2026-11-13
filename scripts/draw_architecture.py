@@ -25,8 +25,10 @@ from core.skills import catalog  # noqa: E402
 SK = catalog()
 from core import graph_rag  # noqa: E402
 GS = graph_rag.stats()
-assert len(TOOLS) == 11 and len(STATIC) == 5 and len(TEMPL) == 1 and len(PROMPTS) == 2 and len(SK) == 6, (TOOLS, RES, PROMPTS, SK)
+assert len(TOOLS) == 19 and len(STATIC) == 5 and len(TEMPL) == 1 and len(PROMPTS) == 2 and len(SK) == 6, (TOOLS, RES, PROMPTS, SK)
 assert {"graph_traverse", "episode_recall", "episode_write"} <= set(TOOLS) and "graph://knowledge-graph" in STATIC
+assert {"semantic_search", "search_files", "load_skill", "execute_query", "web_search", "web_fetch", "get_memory", "shell"} <= set(TOOLS)
+assert set(K["rag_modes"]) >= {"classical", "agentic", "agentic_search"}
 assert "planner" in K["agents"] and K["loop"]["planner"] and "confidence" in K and "batch" in K
 L, B, A, CF = K["loop"], K["budget"], K["agents"], K["confidence"]
 
@@ -64,7 +66,7 @@ ax.text(94, 141.8, f"All LLM roles: {K['model']}, temperature {K['temperature']}
 
 # ---------------- row 1: UI, guardrails, contract, planner, orchestrator, state
 y1, h1 = 116, 21
-box(0, y1, 27, h1, "Streamlit UI (app.py)", "profile form, note, audience, consent\nlab report upload (image / PDF)\nlive progress | 12 result tabs\nKnowledge-graph coverage tab\nCohort batch tab | approve/reject\n.md/.pdf, receipt, OTLP export", C["ui"], bfs=7.0)
+box(0, y1, 27, h1, "Streamlit UI (app.py)", "profile form, note, audience, consent,\nRAG mode | lab report (image / PDF)\nlive progress | 13 result tabs incl.\nContext-window inspector\nKnowledge-graph coverage tab\nCohort batch tab | approve/reject\n.md/.pdf, receipt, OTLP export", C["ui"], bfs=7.0)
 box(30, y1, 28, h1, "Input guardrails\n(core/guardrails.py)", "PHI redaction -> prompt injection\n-> BE FAST emergency (9-1-1)\n-> dosing -> out of scope\n+ profile validation | no LLM\nmulti-modal intake (partial):\ncore/multimodal.py vision / pypdf", C["guard"], bfs=7.0)
 box(61, y1, 28, h1, "Run contract\n(harness_contract.json)", f"SHA-256 hashed before first token\n{B['max_llm_calls']} LLM | {B['max_tool_calls']} tools | {B['max_total_tokens'] // 1000}k tok | {B['wall_clock_timeout_s']} s\n"
     f"per-agent permissions, {len(K['required_checks'])} checks\ncontext, confidence, pricing,\nlearning, batch policies", C["rule"], bfs=7.0)
@@ -84,8 +86,8 @@ arrow(140, 116, 140, 109, "Task + skill", both=True, lx=7)
 # ---------------- specialists
 specs = [("Intake", f"skill: {skills_of('intake')[0]}\nMCP: screen_note, memory_read\n(BE FAST signs, prior cases)\nReAct loop", C["llm"]),
          ("Risk Analyst", f"skill: {skills_of('risk_analyst')[0]}\nMCP: predict_risk, explain_factors,\ncohort_stats, calculator\n+ model://risk-card | ReAct", C["llm"]),
-         ("Evidence Researcher (agentic RAG)", f"skill: {skills_of('evidence_researcher')[0]}\nReAct: search_guidelines (hybrid)\n+ graph_traverse (graph RAG)\ncode coverage check -> missing\n"
-          f"topics -> reformulate, re-retrieve\n(max {L['max_retrieval_rounds']} rounds) | guideline://{{id}}", C["llm"]),
+         ("Evidence Researcher (3 RAG modes)", "classical: fixed semantic_search per\ntopic BEFORE the LLM, docs injected\nagentic (default): LLM calls\nsearch_guidelines + graph_traverse\n"
+          f"agentic search: files, skills, SQL,\nweb, memory, shell | coverage ->\nre-retrieve (max {L['max_retrieval_rounds']}) | context_window", C["llm"]),
          ("Clinical Writer (reflection)", "skills: risk-communication |\npatient-friendly-summary\nprompt clinical_report; evidence\n"
           f"packed to {K['context']['writer_evidence_tokens']} tokens; learned hints\nself-critique: checks + quote-\nverified LLM critique, {L['max_self_revisions']} revision", C["llm"]),
          ("Safety Reviewer", f"skill: {skills_of('safety_reviewer')[0]}\n{len(K['required_checks'])}-check invariant verifier\n(code) + LLM red team (prompt\nred_team_review), quote-\nconfirmed | revise x{L['max_revisions']}", C["rule"])]
@@ -99,9 +101,9 @@ ax.text(94, 73.8, f"Tool-using agents run a ReAct loop: Thought -> LLM tool_call
 
 # ---------------- hook / MCP / gate
 box(0, 50, 38, 19, "Permission engine + pre-tool-use hook", "least privilege per agent (bind_tools +\nre-check); arg clamps (k, limit, hops,\nexpr length); tool budget; session_id\nand learned boost_factors pinned by\n"
-    "harness; memory_write needs consent;\nhash-chained audit log (core/permissions.py)", C["guard"], bfs=7.0)
+    "harness; memory_write needs consent;\nshell argv allowlist, URL SSRF guard,\nread-only SQL, own-catalog skills only\n(re-checked in the server) | audit log", C["guard"], bfs=6.6)
 box(43, 46, 92, 23, "MCP server: official mcp SDK (FastMCP), stdio subprocess",
-    f"{len(TOOLS)} tools: " + ", ".join(TOOLS[:5]) + ",\n" + ", ".join(TOOLS[5:]) + "\n"
+    f"{len(TOOLS)} tools: " + ", ".join(TOOLS[:6]) + ",\n" + ", ".join(TOOLS[6:12]) + ",\n" + ", ".join(TOOLS[12:]) + "\n"
     f"{len(STATIC)} resources: " + ", ".join(STATIC) + f"\n+ {len(TEMPL)} resource template: {TEMPL[0]}   |   {len(PROMPTS)} prompts: " + ", ".join(PROMPTS) +
     "\nclient: core/mcp_client.py + langchain-mcp-adapters (sys.executable)\nOPENAI / NG_RECEIPT / GH keys stripped from the server's environment", C["mcp"], fs=9.0, bfs=7.2)
 arrow(38, 59, 43, 59, both=True)
@@ -123,7 +125,7 @@ ax.text(137.2, 54.3, "write", fontsize=6.4, ha="center", color="#a33")
 # ---------------- governance / observability row
 yg, hg = 27, 15
 box(0, yg, 30, hg, "Skills (skills/, core/skills.py)", f"{len(SK)} SKILL.md; catalog = name +\ndescription only; full body\ninjected when the orchestrator\nselects it (progressive disclosure)", C["state"], fs=8.6, bfs=6.9)
-box(33, yg, 30, hg, "Context windows\n(core/context.py)", f"tiktoken o200k_base counts\ntruncate / compact / pack evidence\nwindow {K['context']['model_context_window'] // 1000}k, budgets per agent", C["obs"], fs=8.6, bfs=6.9)
+box(33, yg, 30, hg, "Context windows\n(core/context.py)", f"tiktoken o200k_base counts\ntruncate / compact / pack evidence\nwindow {K['context']['model_context_window'] // 1000}k, budgets per agent\nslot inspector: system, skills,\ntools, memory, history, user, calls, docs", C["obs"], fs=8.6, bfs=6.9)
 box(66, yg, 38, hg, "Decision log + observability\n(core/harness.py, observability.py)", "RunContext.decide(): actor, options,\nchosen, rationale, evidence | one span\nper LLM / MCP call -> OTLP-JSON export", C["obs"], fs=8.6, bfs=6.9)
 box(107, yg, 32, hg, "Cost / token economics", f"usage per call x list price\nUSD {K['pricing']['input_per_1m']}/1M in, USD {K['pricing']['output_per_1m']}/1M out\nper-agent cost; budgets cap spend", C["obs"], fs=8.6, bfs=6.9)
 box(142, yg, 47, hg, "Signed receipt (core/pipeline.py)", "HMAC-SHA256 over contract, server, inputs,\nreport, trace, decision-log hashes + audit head,\ncost, confidence | clinician decision re-signs it\nand is written back to episodic memory", C["rule"], fs=8.6, bfs=6.9)

