@@ -43,7 +43,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report outlines the stroke risk for a 67-year-old female patient with a history of hypertension and other contributing factors. The findings indicate a high risk for stroke.\n\n## Risk estimate\nThe estimated risk of stroke for this patient is 17.2% (about 17 in 100 patients with this profile in the dataset). This risk is classified as high and is significantly higher compared to a cohort of patients aged 65-74 without heart disease, where 10.4% experienced a stroke.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Hypertension is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Smoking status is associated with higher estimated risk.\n- Residence type is associated with lower estimated risk.\n- Work type is associated with lower estimated risk.\n\n## Guideline evidence\n- High blood pressure is a leading cause of stroke and often has no symptoms. [G-03]\n- Diabetes increases stroke risk by causing sugar buildup in the blood, which can affect the brain. [G-06]\n- Tobacco use, including smoking, significantly raises the risk of having a stroke. [G-08]\n- The risk of having a stroke doubles every 10 years after age 55. [G-10]\n- Call 9-1-1 immediately if you notice symptoms of a stroke, such as sudden confusion or weakness. [G-13]\n\n## Points to discuss with the clinician\nDiscuss the patient's hypertension management and the potential impact of lifestyle changes on stroke risk. Consider evaluating the patient's glucose levels and smoking history. \n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report outlines the stroke risk for a 67-year-old female patient with hypertension and a history of former smoking. The risk estimate is based on a model that considers various health factors.\n\n## Risk estimate\nThe estimated risk of stroke for this patient is 17.2% (about 17 in 100 patients with this profile in the dataset). This is classified as high risk. In comparison, among patients aged 65-74 without heart disease, 10.4% experienced a stroke.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Hypertension is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Former smoking status is associated with higher estimated risk.\n- Living in a rural area is associated with lower estimated risk.\n- Working in a private sector is associated with lower estimated risk.\n\n## Guideline evidence\n- High blood pressure is a leading cause of stroke and often has no symptoms. [G-03]\n- Diabetes increases stroke risk by causing sugar buildup in the blood, which can affect the brain. [G-06]\n- Tobacco use, including smoking, significantly raises the risk of having a stroke. [G-08]\n- The risk of having a stroke doubles every 10 years after age 55. [G-10]\n- If you notice sudden symptoms like weakness or confusion, call 9-1-1 immediately as these may indicate a stroke. [G-13]\n\n## Points to discuss with the clinician\n- The importance of managing hypertension to reduce stroke risk.\n- The potential impact of glucose levels on overall health and stroke risk.\n- Strategies for smoking cessation and its benefits on stroke risk.\n- The significance of regular health check-ups, especially for older adults.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -87,7 +87,7 @@
     "risk_band == high"
    ],
    "memory": {
-    "stored_case_id": 3,
+    "stored_case_id": 1,
     "age_band": "65-74"
    }
   },
@@ -117,7 +117,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2069
+    "ms": 2879
    },
    {
     "agent": "risk_analyst",
@@ -150,7 +150,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.1723,\n \"risk_percent\": 17.2,\n \"risk_band\": \"high\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational ",
-    "ms": 54
+    "ms": 39
    },
    {
     "agent": "risk_analyst",
@@ -172,7 +172,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 67.0,\n   \"log_odds_contribution\": 1.971,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"hypertension\",\n   \"patient_value\": 1,\n   \"log_odds_contribution\": 0.567,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"avg_glucose_level\",\n   \"pat",
-    "ms": 9
+    "ms": 13
    },
    {
     "agent": "risk_analyst",
@@ -187,7 +187,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 65-74, heart_disease=0', 45 of 433 had a recorded stroke (10.4%, Wilson 95% CI 7.9-13.6%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n  ",
-    "ms": 14
+    "ms": 6
    },
    {
     "agent": "risk_analyst",
@@ -207,7 +207,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 65-74, heart_disease=0', 45 of 433 had a recorded stroke (10.4%, Wilson 95% CI 7.9-13.6%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 10212
+    "ms": 9859
    },
    {
     "agent": "orchestrator",
@@ -216,13 +216,13 @@
     "next": "intake",
     "skill": "note-screening",
     "instruction": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit.",
-    "reason": "The risk analyst has already assessed the stroke risk, and now we need to communicate this effectively to the clinician.",
+    "reason": "The risk analyst has completed their analysis, and we need to communicate the findings effectively to the clinician.",
     "override": "LLM chose clinical_writer; not eligible now -> intake skill None not in catalog -> note-screening",
     "eligible": [
      "intake",
      "evidence_researcher"
     ],
-    "ms": 2322
+    "ms": 1854
    },
    {
     "agent": "intake",
@@ -241,7 +241,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": 0.089,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic re",
-    "ms": 66
+    "ms": 2749
    },
    {
     "agent": "intake",
@@ -253,8 +253,8 @@
     "decision": "allow",
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
-    "output_preview": "{\n \"cases\": [\n  {\n   \"case_id\": 2,\n   \"created_at\": \"2026-11-13 10:39\",\n   \"age_band\": \"65-74\",\n   \"risk_probability\": 0.1723,\n   \"risk_band\": \"high\",\n   \"top_factors\": [\n    \"age\",\n    \"hypertension\",\n    \"avg_glucose_level\",\n    \"smoking_status\",\n    \"Residence_type\",\n    \"work_type\"\n   ]\n  }\n ]\n}",
-    "ms": 5
+    "output_preview": "{\n \"cases\": []\n}",
+    "ms": 7
    },
    {
     "agent": "intake",
@@ -262,10 +262,10 @@
     "output": {
      "red_flag_signs": [],
      "neuro_note_probability": 0.089,
-     "prior_cases": "Risk probability: 17.23%, Risk band: high, Factors: age, hypertension, avg_glucose_level, smoking_status, Residence_type, work_type",
-     "summary": "The note indicates no immediate red flags for stroke risk, with findings related to cardiac health. The patient has a previous high stroke risk probability of 17.23%, influenced by factors such as age and hypertension."
+     "prior_cases": "no earlier cases in this session",
+     "summary": "The note indicates a normal left ventricle, moderate biatrial enlargement, mild tricuspid regurgitation, and only a mild increase in right heart pressures."
     },
-    "ms": 17127
+    "ms": 17738
    },
    {
     "agent": "orchestrator",
@@ -279,7 +279,7 @@
     "eligible": [
      "evidence_researcher"
     ],
-    "ms": 2942
+    "ms": 2175
    },
    {
     "agent": "evidence_researcher",
@@ -299,7 +299,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-10\",\n  \"title\": \"Risk Factors for Stroke - Age\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"The older you are, the more likely you are to have a stroke. The chance of having a stroke about dou",
-    "ms": 14
+    "ms": 10
    },
    {
     "agent": "evidence_researcher",
@@ -313,7 +313,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-03\",\n  \"title\": \"Risk Factors for Stroke - High blood pressure\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"High blood pressure is a leading cause of stroke. It occurs when the pressure of the",
-    "ms": 4
+    "ms": 5
    },
    {
     "agent": "evidence_researcher",
@@ -327,7 +327,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-06\",\n  \"title\": \"Risk Factors for Stroke - Diabetes\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Diabetes increases your risk for stroke. Diabetes causes sugars to build up in the blood and pr",
-    "ms": 5
+    "ms": 4
    },
    {
     "agent": "evidence_researcher",
@@ -411,13 +411,13 @@
        "citation_id": "G-08"
       },
       {
-       "claim": "Call 9-1-1 immediately if you notice symptoms of a stroke, such as sudden confusion or weakness.",
+       "claim": "If you notice sudden symptoms like weakness or confusion, call 9-1-1 immediately as these may indicate a stroke.",
        "citation_id": "G-13"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 13378
+    "ms": 11267
    },
    {
     "agent": "orchestrator",
@@ -426,12 +426,12 @@
     "next": "clinical_writer",
     "skill": "risk-communication",
     "instruction": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit.",
-    "reason": "The clinical_writer can synthesize the information from previous agents into a comprehensive report for the clinician.",
+    "reason": "The clinical_writer can effectively communicate the findings and recommendations to the clinician.",
     "override": null,
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 2218
+    "ms": 1963
    },
    {
     "agent": "clinical_writer",
@@ -447,10 +447,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 1858,
+    "chars": 1997,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 7761
+    "ms": 15079
    },
    {
     "agent": "orchestrator",
@@ -458,13 +458,13 @@
     "turn": 5,
     "next": "safety_reviewer",
     "skill": "red-team-review",
-    "instruction": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization.",
+    "instruction": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it.",
     "reason": "The draft is ready for safety review.",
     "override": null,
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1763
+    "ms": 1837
    },
    {
     "agent": "safety_reviewer",
@@ -483,7 +483,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 1582
+    "ms": 1830
    },
    {
     "agent": "orchestrator",
@@ -497,7 +497,7 @@
     "eligible": [
      "FINISH"
     ],
-    "ms": 1827
+    "ms": 1877
    },
    {
     "agent": "gate",
@@ -509,28 +509,28 @@
      "risk_band == high"
     ],
     "memory": {
-     "stored_case_id": 3,
+     "stored_case_id": 1,
      "age_band": "65-74"
     },
-    "ms": 9
+    "ms": 8
    }
   ],
   "a2a": [
    {
-    "ts": 1794567005.578,
+    "ts": 1794567697.01,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "acf3d430440c",
+    "taskId": "e5e12828bc8b",
     "skill": "cohort-comparison",
     "text": "Run the calibrated stroke-risk model for this patient and explain the contributions of various risk factors, comparing the results with cohort statistics."
    },
    {
-    "ts": 1794567015.805,
+    "ts": 1794567715.785,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "acf3d430440c",
+    "taskId": "e5e12828bc8b",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -542,20 +542,20 @@
     ]
    },
    {
-    "ts": 1794567018.128,
+    "ts": 1794567717.64,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "4a219b45ae29",
+    "taskId": "5f577aa37370",
     "skill": "note-screening",
     "text": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit."
    },
    {
-    "ts": 1794567035.258,
+    "ts": 1794567735.381,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "4a219b45ae29",
+    "taskId": "5f577aa37370",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -565,20 +565,20 @@
     ]
    },
    {
-    "ts": 1794567038.2,
+    "ts": 1794567737.557,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "aaa617cff73b",
+    "taskId": "df2bcb37b42b",
     "skill": "guideline-citation",
     "text": "Please retrieve CDC/NHLBI guideline excerpts relevant to the patient's stroke risk factors and provide the cited claims."
    },
    {
-    "ts": 1794567051.58,
+    "ts": 1794567748.826,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "aaa617cff73b",
+    "taskId": "df2bcb37b42b",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -587,20 +587,20 @@
     ]
    },
    {
-    "ts": 1794567053.799,
+    "ts": 1794567750.79,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "22bf1de655f2",
+    "taskId": "9406d1ee5661",
     "skill": "risk-communication",
     "text": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit."
    },
    {
-    "ts": 1794567061.562,
+    "ts": 1794567765.871,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "22bf1de655f2",
+    "taskId": "9406d1ee5661",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -608,20 +608,20 @@
     ]
    },
    {
-    "ts": 1794567063.326,
+    "ts": 1794567767.709,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "ea48e6d67741",
+    "taskId": "a4e6cfd75af3",
     "skill": "red-team-review",
-    "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization."
+    "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it."
    },
    {
-    "ts": 1794567064.909,
+    "ts": 1794567769.543,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "ea48e6d67741",
+    "taskId": "a4e6cfd75af3",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -630,7 +630,7 @@
    }
   ],
   "receipt": {
-   "run_id": "d2bda904567644b687785d8c2565c067",
+   "run_id": "4ea751bb815d474690a93a74f1b51a30",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -638,9 +638,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "933c1f617c6a724dd1e6d96e62d1ce6e15974db3acb47504c28073b3867eac35",
-   "report_sha256": "6632bc755a1dd0a028e0cf3c22b923c0b60b32a42dd143c6a5bc9a3cece37acc",
-   "trace_sha256": "f23bdd5e98e918e5bfb870a6117ad49fdcb1cdda0dc32bc46f7236eb8a972701",
-   "audit_chain_head": "69b87a39cdfeb795947080cb6d1a5c2c02f172fb0b9cb4224d1e49f3e7be3fb5",
+   "report_sha256": "7faba11c0dcb54f0351b6b7a95d30ef87ac9fda45827884aedf83cbc807f5317",
+   "trace_sha256": "cc8e5b054f5daeeff4821109e2a063d76c55fc0f596c7070b87a04b43a0a10e3",
+   "audit_chain_head": "6c1d8a469df7ee91f9d4987f783fcc656fbae8a9ff53094d00f03e4c77b98147",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -662,18 +662,18 @@
    "approval": null,
    "counts": {
     "llm_calls": 17,
-    "tokens": 25071,
+    "tokens": 24931,
     "tool_calls": 11
    },
-   "latency_s": 65.03,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 79.14,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:51:06+0000",
-   "signature": "8652929148f44950cd93f486e1d47e49b388fad94807e9a1df2c0b8db432adae"
+   "signed_at": "2026-11-13T11:02:51+0000",
+   "signature": "07f2ad875693aee8acdb276da427f8f63e2d9e42fd5701fad43cae2db57d5c9d"
   },
   "llm_calls": 17,
   "tool_calls": 11,
-  "latency_s": 65.03
+  "latency_s": 79.14
  },
  {
   "case": {
@@ -719,7 +719,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report provides a stroke risk estimate based on the patient's profile and outlines contributing factors, guideline evidence, and points for discussion with the treating clinician.\n\n## Risk estimate\nThe estimated risk of stroke is 24.6% (about 25 in 100 patients with this profile in the dataset). This is classified as high risk. Among dataset patients in the group 'age 75-119, heart_disease=1', 21.1% had a recorded stroke, compared to a rate of 4.9% in the whole dataset.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Heart disease is associated with higher estimated risk.\n- Residence type is associated with higher estimated risk.\n- Gender is associated with lower estimated risk.\n- Work type is associated with lower estimated risk.\n\n## Guideline evidence\n- Heart disorders significantly increase stroke risk due to blood flow blockage [G-05].\n- Diabetes raises stroke risk by causing high blood sugar levels, which can lead to high blood pressure [G-06].\n- The risk of having a stroke doubles every 10 years after age 55 [G-10].\n- If sudden symptoms like weakness or confusion occur, call 9-1-1 immediately [G-12].\n\n## Points to discuss with the clinician\n- Discuss the implications of the patient's age and heart disease on stroke risk.\n- Consider the impact of glucose levels on overall health and stroke risk.\n- Review lifestyle factors such as residence type and work type that may influence risk.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report provides a stroke risk estimate for a patient profile and outlines contributing factors, guideline evidence, and points for discussion with the treating clinician.\n\n## Risk estimate\nThe estimated risk of stroke is 24.6% (about 25 in 100 patients with this profile in the dataset). This risk is categorized as high. Among dataset patients in the group 'age 75-119, heart_disease=1', 21.1% had a recorded stroke, compared to a rate of 4.9% in the whole dataset.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Heart disease is associated with higher estimated risk.\n- Residence type is associated with higher estimated risk.\n- Gender is associated with lower estimated risk.\n- Work type is associated with lower estimated risk.\n\n## Guideline evidence\n- Heart disease increases the risk of stroke due to conditions like coronary artery disease [G-05].\n- Diabetes raises stroke risk by causing high blood sugar levels, which can lead to complications [G-06].\n- The risk of having a stroke doubles every 10 years after age 55 [G-10].\n- Recognizing stroke warning signs is crucial; call 9-1-1 immediately if they occur [G-13].\n\n## Points to discuss with the clinician\n- Discuss the implications of the patient's age and heart disease on stroke risk.\n- Consider the impact of glucose levels on overall health and stroke risk.\n- Review lifestyle factors such as residence type and work type that may influence risk.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -746,7 +746,7 @@
       "G-05",
       "G-06",
       "G-10",
-      "G-12"
+      "G-13"
      ],
      "ungrounded_numbers": [],
      "dosing_matches": [],
@@ -783,7 +783,7 @@
     "turn": 1,
     "next": "risk_analyst",
     "skill": "cohort-comparison",
-    "instruction": "Run the calibrated stroke-risk model for the current case and explain the contributions of each factor to the stroke risk estimate, comparing it with cohort statistics.",
+    "instruction": "Run the calibrated stroke-risk model for the current case and explain the contributions of various factors to the stroke risk estimate, comparing it with cohort statistics.",
     "reason": "The clinician needs to understand the factors driving the stroke risk estimate.",
     "override": null,
     "eligible": [
@@ -791,7 +791,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2789
+    "ms": 2211
    },
    {
     "agent": "risk_analyst",
@@ -824,7 +824,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.2461,\n \"risk_percent\": 24.6,\n \"risk_band\": \"high\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational ",
-    "ms": 51
+    "ms": 46
    },
    {
     "agent": "risk_analyst",
@@ -846,7 +846,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 78.0,\n   \"log_odds_contribution\": 2.885,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"avg_glucose_level\",\n   \"patient_value\": 219.84,\n   \"log_odds_contribution\": 0.54,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"heart_disease\",\n  ",
-    "ms": 9
+    "ms": 8
    },
    {
     "agent": "risk_analyst",
@@ -861,7 +861,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 75-119, heart_disease=1', 22 of 104 had a recorded stroke (21.1%, Wilson 95% CI 14.4-30.0%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n",
-    "ms": 15
+    "ms": 14
    },
    {
     "agent": "risk_analyst",
@@ -881,7 +881,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 75-119, heart_disease=1', 22 of 104 had a recorded stroke (21.1%, Wilson 95% CI 14.4-30.0%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 9802
+    "ms": 8178
    },
    {
     "agent": "orchestrator",
@@ -896,7 +896,7 @@
      "intake",
      "evidence_researcher"
     ],
-    "ms": 2489
+    "ms": 2077
    },
    {
     "agent": "evidence_researcher",
@@ -916,7 +916,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-10\",\n  \"title\": \"Risk Factors for Stroke - Age\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"The older you are, the more likely you are to have a stroke. The chance of having a stroke about dou",
-    "ms": 13
+    "ms": 15
    },
    {
     "agent": "evidence_researcher",
@@ -930,7 +930,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-05\",\n  \"title\": \"Risk Factors for Stroke - Heart disease\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Common heart disorders can increase your risk for stroke. For example, coronary artery dis",
-    "ms": 5
+    "ms": 4
    },
    {
     "agent": "evidence_researcher",
@@ -951,7 +951,7 @@
     "type": "mcp_tool_call",
     "tool": "search_guidelines",
     "args": {
-     "query": "stroke warning signs BE FAST call 9-1-1",
+     "query": "stroke warning signs BE FAST",
      "k": 4
     },
     "decision": "allow",
@@ -978,7 +978,7 @@
    {
     "agent": "evidence_researcher",
     "type": "mcp_resource_read",
-    "uri": "guideline://G-12"
+    "uri": "guideline://G-13"
    },
    {
     "agent": "evidence_researcher",
@@ -988,7 +988,7 @@
       "age stroke risk doubles",
       "heart disease stroke risk",
       "high average glucose diabetes stroke",
-      "stroke warning signs BE FAST call 9-1-1"
+      "stroke warning signs BE FAST"
      ],
      "findings": [
       {
@@ -996,21 +996,21 @@
        "citation_id": "G-10"
       },
       {
-       "claim": "Heart disorders, such as coronary artery disease, significantly increase stroke risk due to blood flow blockage.",
+       "claim": "Heart disease, including conditions like coronary artery disease, increases the risk of stroke.",
        "citation_id": "G-05"
       },
       {
-       "claim": "Diabetes raises stroke risk by causing high blood sugar levels, which can lead to high blood pressure.",
+       "claim": "Diabetes raises stroke risk by causing high blood sugar levels, which can lead to complications.",
        "citation_id": "G-06"
       },
       {
-       "claim": "If you notice sudden symptoms like weakness or confusion, call 9-1-1 immediately as these may indicate a stroke.",
-       "citation_id": "G-12"
+       "claim": "Recognizing stroke warning signs, such as sudden confusion or weakness, is crucial; call 9-1-1 immediately.",
+       "citation_id": "G-13"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 9262
+    "ms": 8949
    },
    {
     "agent": "orchestrator",
@@ -1024,7 +1024,7 @@
     "eligible": [
      "intake"
     ],
-    "ms": 1748
+    "ms": 2062
    },
    {
     "agent": "intake",
@@ -1043,7 +1043,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": null,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic reg",
-    "ms": 59
+    "ms": 58
    },
    {
     "agent": "intake",
@@ -1065,9 +1065,9 @@
      "red_flag_signs": [],
      "neuro_note_probability": null,
      "prior_cases": "no earlier cases in this session",
-     "summary": "The note screening returned no red-flag signs, and there was no sudden-onset language indicating an emergency. Therefore, it is not considered a possible emergency."
+     "summary": "The screening of the note returned no red-flag signs, and there was no sudden-onset language indicating an emergency. Therefore, it is not considered a possible emergency finding."
     },
-    "ms": 8944
+    "ms": 8872
    },
    {
     "agent": "orchestrator",
@@ -1076,12 +1076,12 @@
     "next": "clinical_writer",
     "skill": "risk-communication",
     "instruction": "Generate the clinician-facing decision-support report that explains the factors driving the stroke risk estimate and includes relevant CDC guidelines.",
-    "reason": "The report needs to communicate the findings effectively to the clinician.",
+    "reason": "The clinician needs a detailed report that communicates the risk factors and guidelines effectively.",
     "override": null,
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 1767
+    "ms": 1962
    },
    {
     "agent": "clinical_writer",
@@ -1097,10 +1097,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 1821,
+    "chars": 1825,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 6766
+    "ms": 6776
    },
    {
     "agent": "orchestrator",
@@ -1114,7 +1114,7 @@
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1693
+    "ms": 1803
    },
    {
     "agent": "safety_reviewer",
@@ -1133,7 +1133,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 949
+    "ms": 2033
    },
    {
     "agent": "orchestrator",
@@ -1141,13 +1141,13 @@
     "turn": 6,
     "next": "FINISH",
     "skill": null,
-    "instruction": "Finalize the decision-support report for the clinician, ensuring all factors driving the stroke risk estimate and CDC guidelines are clearly communicated.",
+    "instruction": "Finalize the decision-support report based on the approved draft and ensure all necessary citations and risk communications are included.",
     "reason": "The draft has been approved and is ready for finalization.",
     "override": null,
     "eligible": [
      "FINISH"
     ],
-    "ms": 1825
+    "ms": 1710
    },
    {
     "agent": "gate",
@@ -1166,20 +1166,20 @@
   ],
   "a2a": [
    {
-    "ts": 1794567070.959,
+    "ts": 1794567775.24,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "42dad9bdd995",
+    "taskId": "5615dc7d9ba3",
     "skill": "cohort-comparison",
-    "text": "Run the calibrated stroke-risk model for the current case and explain the contributions of each factor to the stroke risk estimate, comparing it with cohort statistics."
+    "text": "Run the calibrated stroke-risk model for the current case and explain the contributions of various factors to the stroke risk estimate, comparing it with cohort statistics."
    },
    {
-    "ts": 1794567080.775,
+    "ts": 1794567783.434,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "42dad9bdd995",
+    "taskId": "5615dc7d9ba3",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -1191,20 +1191,20 @@
     ]
    },
    {
-    "ts": 1794567083.266,
+    "ts": 1794567785.511,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "ba6fcc9b765e",
+    "taskId": "403fc96dc16e",
     "skill": "guideline-citation",
     "text": "Please search the CDC/NHLBI guideline corpus for the risk factors associated with stroke and return the relevant claims with their chunk IDs."
    },
    {
-    "ts": 1794567092.53,
+    "ts": 1794567794.463,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "ba6fcc9b765e",
+    "taskId": "403fc96dc16e",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -1213,20 +1213,20 @@
     ]
    },
    {
-    "ts": 1794567094.278,
+    "ts": 1794567796.526,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "b86b97c1af05",
+    "taskId": "474f4abffc98",
     "skill": "note-screening",
     "text": "Please screen the PHI-redacted note using the BE FAST rule and summarize any relevant prior de-identified cases from memory."
    },
    {
-    "ts": 1794567103.224,
+    "ts": 1794567805.4,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "b86b97c1af05",
+    "taskId": "474f4abffc98",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -1236,20 +1236,20 @@
     ]
    },
    {
-    "ts": 1794567104.993,
+    "ts": 1794567807.364,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "65b4711d579f",
+    "taskId": "7115d95c1268",
     "skill": "risk-communication",
     "text": "Generate the clinician-facing decision-support report that explains the factors driving the stroke risk estimate and includes relevant CDC guidelines."
    },
    {
-    "ts": 1794567111.76,
+    "ts": 1794567814.141,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "65b4711d579f",
+    "taskId": "7115d95c1268",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -1257,20 +1257,20 @@
     ]
    },
    {
-    "ts": 1794567113.455,
+    "ts": 1794567815.945,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "48c51f2c6b18",
+    "taskId": "9979b203f8c4",
     "skill": "red-team-review",
     "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization."
    },
    {
-    "ts": 1794567114.406,
+    "ts": 1794567817.98,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "48c51f2c6b18",
+    "taskId": "9979b203f8c4",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -1279,7 +1279,7 @@
    }
   ],
   "receipt": {
-   "run_id": "10c94159597a4385a095683675c3b187",
+   "run_id": "1eeb9bcd511c40f2acec1c4ca79b153a",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -1287,9 +1287,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "7ce3f9d2dd3466172288894ffd726e2bef20a046b0cd618ea926925811aaf90f",
-   "report_sha256": "27117f1c6af9fbd407032dfb8c650652f17c924362cc712e0872274df14f7e4f",
-   "trace_sha256": "3ebd8ebcef7c84806d552dda20f4559420a97f2e6acd33a131d6511b27a04536",
-   "audit_chain_head": "3901ef8c6bc1c1b745e583ac8360377617c6661db9c6e10d914fcc474b26cecf",
+   "report_sha256": "37b0cc1701a6920f8a6ee71412cb3c7929476e702e9a639a716bf227e59db432",
+   "trace_sha256": "74f384d79b0f567d6db37e1df23732aa55b195240aee2ae3f89d10f9d59e357b",
+   "audit_chain_head": "ead2e9969643f5c08c494b852ab9190d2c25da18940f2050018df1145c25b20a",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -1311,18 +1311,18 @@
    "approval": null,
    "counts": {
     "llm_calls": 17,
-    "tokens": 22594,
+    "tokens": 22787,
     "tool_calls": 9
    },
-   "latency_s": 49.5,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 48.15,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:51:56+0000",
-   "signature": "6669ec539abfb2948334c2b9974b87718d0d52112ddccd65bcbc473c501cd4c7"
+   "signed_at": "2026-11-13T11:03:39+0000",
+   "signature": "27b6586c4e4dcbdc685c7f16f44633efca753b8df2dca72b32bb9169b791e974"
   },
   "llm_calls": 17,
   "tool_calls": 9,
-  "latency_s": 49.5
+  "latency_s": 48.15
  },
  {
   "case": {
@@ -1368,7 +1368,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nYour estimated risk of having a stroke is 21.0%. This is considered high. Compared to others in your age group (75-119 years old) without heart disease, 19.3% have had a stroke.\n\n## Risk estimate\nYour risk of stroke is 21.0%, which falls into the high risk band. Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Smoking status is associated with higher estimated risk.\n- Living in an urban area is associated with higher estimated risk.\n- Working in a private job is associated with lower estimated risk.\n- Having high blood pressure is associated with lower estimated risk.\n- Being ever married is associated with lower estimated risk.\n\n## Guideline evidence\n- Smoking tobacco raises your risk for stroke by damaging your heart and blood vessels. [G-08]\n- Being 55 or older increases your chances of having a stroke, and the risk doubles every 10 years after this age. [G-10]\n- If you notice sudden trouble walking or feeling dizzy, call 9-1-1 immediately. [G-12]\n- If you smoke, quitting can significantly lower your risk of having a stroke. [G-17]\n\n## Points to discuss with the clinician\n- Your current smoking status and ways to quit.\n- The impact of your age on stroke risk.\n- Lifestyle changes that could help lower your risk.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset. It is not a diagnosis or a population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset. If you notice sudden face drooping, arm weakness or speech trouble, call 9-1-1.",
+  "report": "## Summary\nYour estimated risk of having a stroke is 21.0%. This is considered high. Compared to others in your age group (75-119 years old) without heart disease, 19.3% have had a stroke.\n\n## Risk estimate\nYour risk of stroke is 21.0%, which falls into the high-risk band. Among dataset patients in the group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Smoking status is associated with higher estimated risk.\n- Living in an urban area is associated with higher estimated risk.\n- Working in a private job is associated with lower estimated risk.\n- Having high blood pressure is associated with lower estimated risk.\n- Being ever married is associated with lower estimated risk.\n\n## Guideline evidence\n- Smoking tobacco raises your risk for stroke by damaging your heart and blood vessels. [G-08]\n- Being 55 or older increases your chances of having a stroke, and the risk doubles every 10 years after this age. [G-10]\n- If you notice sudden balance loss, vision changes, face drooping, arm weakness, or slurred speech, call 9-1-1 immediately. [G-13]\n\n## Points to discuss with the clinician\n- Your current risk factors and how they may affect your health.\n- Lifestyle changes that could help lower your stroke risk.\n- Any symptoms or concerns you may have regarding your health.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset. It is not a diagnosis or a population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -1394,15 +1394,14 @@
      "citations": [
       "G-08",
       "G-10",
-      "G-12",
-      "G-17"
+      "G-13"
      ],
      "ungrounded_numbers": [],
      "dosing_matches": [],
      "diagnosis_matches": [],
      "phi_types": [],
      "red_team_issues": [],
-     "evidence_bullets": 4,
+     "evidence_bullets": 3,
      "numbers_checked": 15
     }
    },
@@ -1440,7 +1439,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2428
+    "ms": 2297
    },
    {
     "agent": "intake",
@@ -1459,7 +1458,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": 0.264,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic re",
-    "ms": 65
+    "ms": 67
    },
    {
     "agent": "intake",
@@ -1481,9 +1480,9 @@
      "red_flag_signs": [],
      "neuro_note_probability": 0.264,
      "prior_cases": "no earlier cases in this session",
-     "summary": "The note indicates a diagnosis of benign rolandic epilepsy, which is generally not associated with a high risk of stroke. There were no signs of an emergency or sudden onset symptoms related to stroke in the note."
+     "summary": "Based on the information provided, there are no immediate signs of stroke risk associated with a diagnosis of benign rolandic epilepsy. This means that, at this time, there are no urgent concerns about having a stroke."
     },
-    "ms": 8217
+    "ms": 7637
    },
    {
     "agent": "orchestrator",
@@ -1498,7 +1497,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 1870
+    "ms": 2074
    },
    {
     "agent": "risk_analyst",
@@ -1531,7 +1530,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.21,\n \"risk_percent\": 21.0,\n \"risk_band\": \"high\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational da",
-    "ms": 44
+    "ms": 46
    },
    {
     "agent": "risk_analyst",
@@ -1553,7 +1552,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 79.0,\n   \"log_odds_contribution\": 2.968,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"smoking_status\",\n   \"patient_value\": \"smokes\",\n   \"log_odds_contribution\": 0.314,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"Residence_type\",\n ",
-    "ms": 9
+    "ms": 8
    },
    {
     "agent": "risk_analyst",
@@ -1568,7 +1567,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n",
-    "ms": 14
+    "ms": 12
    },
    {
     "agent": "risk_analyst",
@@ -1588,7 +1587,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 7784
+    "ms": 8229
    },
    {
     "agent": "orchestrator",
@@ -1602,7 +1601,7 @@
     "eligible": [
      "evidence_researcher"
     ],
-    "ms": 1849
+    "ms": 2143
    },
    {
     "agent": "evidence_researcher",
@@ -1622,7 +1621,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-10\",\n  \"title\": \"Risk Factors for Stroke - Age\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"The older you are, the more likely you are to have a stroke. The chance of having a stroke about dou",
-    "ms": 15
+    "ms": 13
    },
    {
     "agent": "evidence_researcher",
@@ -1643,14 +1642,14 @@
     "type": "mcp_tool_call",
     "tool": "search_guidelines",
     "args": {
-     "query": "BE FAST stroke warning signs",
+     "query": "stroke warning signs BE FAST",
      "k": 4
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-24\",\n  \"title\": \"About Stroke - TIA is a warning sign\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/about/index.html\",\n  \"text\": \"A TIA is a warning sign of a future stroke. A TIA is a medical emergency, just like a major stroke. ",
-    "ms": 4
+    "ms": 6
    },
    {
     "agent": "evidence_researcher",
@@ -1665,12 +1664,7 @@
    {
     "agent": "evidence_researcher",
     "type": "mcp_resource_read",
-    "uri": "guideline://G-12"
-   },
-   {
-    "agent": "evidence_researcher",
-    "type": "mcp_resource_read",
-    "uri": "guideline://G-17"
+    "uri": "guideline://G-13"
    },
    {
     "agent": "evidence_researcher",
@@ -1679,7 +1673,7 @@
      "queries": [
       "age stroke risk doubles",
       "smoking stroke",
-      "BE FAST stroke warning signs"
+      "stroke warning signs BE FAST"
      ],
      "findings": [
       {
@@ -1691,17 +1685,13 @@
        "citation_id": "G-08"
       },
       {
-       "claim": "If you smoke, quitting can significantly lower your risk of having a stroke.",
-       "citation_id": "G-17"
-      },
-      {
-       "claim": "If you notice sudden trouble walking or feeling dizzy, call 9-1-1 immediately.",
-       "citation_id": "G-12"
+       "claim": "If you notice sudden balance loss, vision changes, face drooping, arm weakness, or slurred speech, call 9-1-1 immediately.",
+       "citation_id": "G-13"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 8853
+    "ms": 13474
    },
    {
     "agent": "orchestrator",
@@ -1715,7 +1705,7 @@
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 1664
+    "ms": 2029
    },
    {
     "agent": "clinical_writer",
@@ -1731,10 +1721,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 1795,
+    "chars": 1723,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 7926
+    "ms": 7038
    },
    {
     "agent": "orchestrator",
@@ -1742,13 +1732,13 @@
     "turn": 5,
     "next": "safety_reviewer",
     "skill": "red-team-review",
-    "instruction": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it.",
+    "instruction": "Please review the draft for any unsafe advice, unsupported claims, or biases before finalizing it.",
     "reason": "The draft is ready for safety review.",
     "override": null,
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1544
+    "ms": 1583
    },
    {
     "agent": "safety_reviewer",
@@ -1767,7 +1757,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 1826
+    "ms": 1858
    },
    {
     "agent": "orchestrator",
@@ -1781,7 +1771,7 @@
     "eligible": [
      "FINISH"
     ],
-    "ms": 1768
+    "ms": 1751
    },
    {
     "agent": "gate",
@@ -1800,20 +1790,20 @@
   ],
   "a2a": [
    {
-    "ts": 1794567120.116,
+    "ts": 1794567823.368,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "7f4be8d4cebc",
+    "taskId": "15068651b475",
     "skill": "note-screening",
     "text": "Generate a patient-friendly summary of the stroke risk based on the provided profile, ensuring it is clear and understandable at an 8th-grade reading level."
    },
    {
-    "ts": 1794567128.334,
+    "ts": 1794567831.008,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "7f4be8d4cebc",
+    "taskId": "15068651b475",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -1823,20 +1813,20 @@
     ]
    },
    {
-    "ts": 1794567130.206,
+    "ts": 1794567833.083,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "93eb98dc5a65",
+    "taskId": "771218a1622a",
     "skill": "cohort-comparison",
     "text": "Generate a patient-friendly summary of the stroke risk based on the provided profile, ensuring it is clear and understandable at an 8th-grade reading level."
    },
    {
-    "ts": 1794567138.002,
+    "ts": 1794567841.324,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "93eb98dc5a65",
+    "taskId": "771218a1622a",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -1848,20 +1838,20 @@
     ]
    },
    {
-    "ts": 1794567139.852,
+    "ts": 1794567843.468,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "243f289db5ae",
+    "taskId": "c7c5dc80b517",
     "skill": "guideline-citation",
     "text": "Generate a patient-friendly summary of the stroke risk based on the provided profile, ensuring it is clear and understandable at an 8th-grade reading level."
    },
    {
-    "ts": 1794567148.707,
+    "ts": 1794567856.943,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "243f289db5ae",
+    "taskId": "c7c5dc80b517",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -1870,20 +1860,20 @@
     ]
    },
    {
-    "ts": 1794567150.373,
+    "ts": 1794567858.974,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "ef32c5dccd11",
+    "taskId": "f6d77f7285bb",
     "skill": "patient-friendly-summary",
     "text": "Please generate a patient-friendly summary of the stroke risk for this profile, ensuring it is clear and understandable at an 8th-grade reading level."
    },
    {
-    "ts": 1794567158.3,
+    "ts": 1794567866.013,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "ef32c5dccd11",
+    "taskId": "f6d77f7285bb",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -1891,20 +1881,20 @@
     ]
    },
    {
-    "ts": 1794567159.845,
+    "ts": 1794567867.598,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "521dd4a67699",
+    "taskId": "cbd29f4f3678",
     "skill": "red-team-review",
-    "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it."
+    "text": "Please review the draft for any unsafe advice, unsupported claims, or biases before finalizing it."
    },
    {
-    "ts": 1794567161.672,
+    "ts": 1794567869.458,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "521dd4a67699",
+    "taskId": "cbd29f4f3678",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -1913,7 +1903,7 @@
    }
   ],
   "receipt": {
-   "run_id": "f7327bf3c260423d80714e3b22336f58",
+   "run_id": "7d01dfc29ae94b55bb2ad09ff2e975e9",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -1921,9 +1911,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "a94848700a5fefab70371e431e8622b45af6d7e3b16aa713ad9831f7b09b90d1",
-   "report_sha256": "b051c745b7b5afcac377b549d6cb920f5f3de7a1321e551698cc85be8d5b1ab0",
-   "trace_sha256": "53191b9e2b51495c7cfd0e5a4afc89ebab1a8ddcf6400115cc1a1dd6b068de13",
-   "audit_chain_head": "43b1e23afc49c73e3b2613f9e001e8c9fe337ea54f8e0585ade1dfa956e21842",
+   "report_sha256": "918e95818970da98fe301d21de2f91d2203ad8138d4716b1d3d563ac6cf48794",
+   "trace_sha256": "b4dc273e512294c8cf537d8716b629d639472f2a7e4d225c57dd65268f752582",
+   "audit_chain_head": "729eac9c48ca604f32a94e0382a6c0d270bd28bc0544c9c29ff93277ee84737d",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -1944,19 +1934,19 @@
    "needs_human_approval": true,
    "approval": null,
    "counts": {
-    "llm_calls": 17,
-    "tokens": 21250,
+    "llm_calls": 18,
+    "tokens": 22873,
     "tool_calls": 8
    },
-   "latency_s": 47.21,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 51.54,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:52:43+0000",
-   "signature": "e41dc33bb6c60c9ca4d6154b1b65278057fd9316521e19f2334e3b22876a4407"
+   "signed_at": "2026-11-13T11:04:31+0000",
+   "signature": "7acb688a8daf065f79af790ed25aa79d655a7719ae2a09e6d83f7a47e50d030f"
   },
-  "llm_calls": 17,
+  "llm_calls": 18,
   "tool_calls": 8,
-  "latency_s": 47.21
+  "latency_s": 51.54
  },
  {
   "case": {
@@ -2002,7 +1992,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report provides an assessment of stroke risk for a 38-year-old female patient with no history of hypertension or heart disease. The estimated risk is low.\n\n## Risk estimate\nThe estimated risk of stroke is 1.4% (about 1 in 100 patients with this profile in the dataset). This is lower than the cohort comparison, where 0.5% of patients aged 18-44 with no heart disease had a recorded stroke.\n\n## Main contributing factors\n- Age is associated with lower estimated risk.\n- Former smoking status is associated with higher estimated risk.\n- Living in a rural area is associated with lower estimated risk.\n- Working in a private sector is associated with lower estimated risk.\n- Having no hypertension is associated with lower estimated risk.\n- Being ever married is associated with lower estimated risk.\n\n## Guideline evidence\n- Smoking increases the risk of stroke by damaging the heart and blood vessels and raising blood pressure. [G-08]\n- Recognizing symptoms like sudden numbness, confusion, or severe headache is crucial for stroke response; call 9-1-1 immediately. [G-12]\n- Quitting smoking can significantly lower your risk of having a stroke. [G-17]\n- A transient ischemic attack (TIA) is a warning sign of a potential future stroke and requires immediate medical attention. [G-24]\n\n## Points to discuss with the clinician\nDiscuss the importance of smoking cessation and its impact on stroke risk. Consider evaluating lifestyle factors and preventive measures tailored to the patient's profile.\n\n## Limitations\nThis assessment is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report provides an assessment of stroke risk for a 38-year-old female patient with no history of hypertension or heart disease. The estimated risk is low.\n\n## Risk estimate\nThe estimated risk of stroke is 1.4% (about 1 in 100 patients with this profile in the dataset). This is lower than the cohort comparison, where 0.5% of patients aged 18-44 with no heart disease had a recorded stroke.\n\n## Main contributing factors\n- Age is associated with lower estimated risk.\n- Former smoking status is associated with higher estimated risk.\n- Living in a rural area is associated with lower estimated risk.\n- Working in a private sector is associated with lower estimated risk.\n- Hypertension is associated with lower estimated risk.\n- Being ever married is associated with lower estimated risk.\n\n## Guideline evidence\n- Smoking increases the risk of stroke by damaging the heart and blood vessels and raising blood pressure. [G-08]\n- Recognizing symptoms like sudden weakness, confusion, or severe headache is crucial for stroke response; call 9-1-1 immediately. [G-12]\n- Quitting smoking can significantly lower your risk of having a stroke. [G-17]\n- A transient ischemic attack (TIA) is a warning sign of a potential future stroke and requires immediate medical attention. [G-24]\n\n## Points to discuss with the clinician\nDiscuss the importance of smoking cessation and its impact on stroke risk. Consider evaluating lifestyle factors and preventive measures tailored to the patient's profile.\n\n## Limitations\nThis assessment is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -2065,14 +2055,14 @@
     "next": "risk_analyst",
     "skill": "cohort-comparison",
     "instruction": "Run the calibrated stroke-risk model for this patient and compare the results with cohort statistics to identify relevant prevention topics.",
-    "reason": "The risk analyst can provide insights into the patient's stroke risk in context with similar patients.",
+    "reason": "The risk analyst can provide insights into the patient's stroke risk in relation to similar patients.",
     "override": null,
     "eligible": [
      "intake",
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2096
+    "ms": 2134
    },
    {
     "agent": "risk_analyst",
@@ -2105,7 +2095,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.0141,\n \"risk_percent\": 1.4,\n \"risk_band\": \"low\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational da",
-    "ms": 48
+    "ms": 67
    },
    {
     "agent": "risk_analyst",
@@ -2126,7 +2116,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 38.0,\n   \"log_odds_contribution\": -0.437,\n   \"direction\": \"lowers\"\n  },\n  {\n   \"feature\": \"smoking_status\",\n   \"patient_value\": \"formerly smoked\",\n   \"log_odds_contribution\": 0.12,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"Residence",
-    "ms": 8
+    "ms": 11
    },
    {
     "agent": "risk_analyst",
@@ -2161,7 +2151,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 18-44, heart_disease=0', 8 of 1670 had a recorded stroke (0.5%, Wilson 95% CI 0.2-0.9%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 8405
+    "ms": 8468
    },
    {
     "agent": "orchestrator",
@@ -2176,7 +2166,7 @@
      "intake",
      "evidence_researcher"
     ],
-    "ms": 1848
+    "ms": 1978
    },
    {
     "agent": "evidence_researcher",
@@ -2196,14 +2186,14 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-08\",\n  \"title\": \"Risk Factors for Stroke - Tobacco use\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Tobacco use increases the risk for stroke. Cigarette smoking can damage the heart and blood ",
-    "ms": 14
+    "ms": 13
    },
    {
     "agent": "evidence_researcher",
     "type": "mcp_tool_call",
     "tool": "search_guidelines",
     "args": {
-     "query": "BE FAST stroke warning signs",
+     "query": "warning signs stroke BE FAST call 9-1-1",
      "k": 4
     },
     "decision": "allow",
@@ -2238,7 +2228,7 @@
     "output": {
      "queries": [
       "smoking stroke",
-      "BE FAST stroke warning signs"
+      "warning signs stroke BE FAST call 9-1-1"
      ],
      "findings": [
       {
@@ -2254,13 +2244,13 @@
        "citation_id": "G-24"
       },
       {
-       "claim": "Recognizing symptoms like sudden numbness, confusion, or severe headache is crucial for stroke response; call 9-1-1 immediately.",
+       "claim": "Recognizing symptoms like sudden weakness, confusion, or severe headache is crucial for stroke response; call 9-1-1 immediately.",
        "citation_id": "G-12"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 8637
+    "ms": 9563
    },
    {
     "agent": "orchestrator",
@@ -2269,12 +2259,12 @@
     "next": "intake",
     "skill": "note-screening",
     "instruction": "Please screen the PHI-redacted note using the BE FAST rule and summarize any relevant prior de-identified cases that may inform the clinician's prevention topics for stroke risk.",
-    "reason": "The intake agent is needed to gather initial information that will guide the risk assessment.",
+    "reason": "The intake agent is needed to gather initial information about the patient's case.",
     "override": null,
     "eligible": [
      "intake"
     ],
-    "ms": 2000
+    "ms": 1923
    },
    {
     "agent": "intake",
@@ -2293,7 +2283,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": null,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic reg",
-    "ms": 63
+    "ms": 56
    },
    {
     "agent": "intake",
@@ -2306,7 +2296,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"cases\": []\n}",
-    "ms": 4
+    "ms": 3
    },
    {
     "agent": "intake",
@@ -2317,7 +2307,7 @@
      "prior_cases": "no earlier cases in this session",
      "summary": "The note screening returned no red-flag signs, and there was no sudden-onset language indicating an emergency. The note's wording does not resemble neurology notes."
     },
-    "ms": 6627
+    "ms": 6830
    },
    {
     "agent": "orchestrator",
@@ -2326,12 +2316,12 @@
     "next": "clinical_writer",
     "skill": "risk-communication",
     "instruction": "Generate the clinician-facing decision-support report that outlines the prevention topics to raise for this patient's stroke risk, incorporating insights from the previous agents' findings.",
-    "reason": "The clinical writer will compile the information into a coherent report for the clinician.",
+    "reason": "The report needs to communicate the relevant prevention topics effectively to the clinician.",
     "override": null,
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 2378
+    "ms": 1878
    },
    {
     "agent": "clinical_writer",
@@ -2347,10 +2337,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 1815,
+    "chars": 1805,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 6354
+    "ms": 7319
    },
    {
     "agent": "orchestrator",
@@ -2364,7 +2354,7 @@
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1774
+    "ms": 2097
    },
    {
     "agent": "safety_reviewer",
@@ -2383,7 +2373,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 2107
+    "ms": 2408
    },
    {
     "agent": "orchestrator",
@@ -2397,7 +2387,7 @@
     "eligible": [
      "FINISH"
     ],
-    "ms": 1629
+    "ms": 2000
    },
    {
     "agent": "gate",
@@ -2414,20 +2404,20 @@
   ],
   "a2a": [
    {
-    "ts": 1794567167.112,
+    "ts": 1794567874.818,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "ec8094ddae4d",
+    "taskId": "8525ea65333e",
     "skill": "cohort-comparison",
     "text": "Run the calibrated stroke-risk model for this patient and compare the results with cohort statistics to identify relevant prevention topics."
    },
    {
-    "ts": 1794567175.533,
+    "ts": 1794567883.299,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "ec8094ddae4d",
+    "taskId": "8525ea65333e",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -2439,20 +2429,20 @@
     ]
    },
    {
-    "ts": 1794567177.382,
+    "ts": 1794567885.279,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "39f0a3020872",
+    "taskId": "94b0b8a2bf87",
     "skill": "guideline-citation",
     "text": "Please search the CDC/NHLBI guideline corpus for relevant prevention topics related to the patient's stroke risk factors and return the cited claims."
    },
    {
-    "ts": 1794567186.021,
+    "ts": 1794567894.844,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "39f0a3020872",
+    "taskId": "94b0b8a2bf87",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -2461,20 +2451,20 @@
     ]
    },
    {
-    "ts": 1794567188.022,
+    "ts": 1794567896.767,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "01e87121d7a5",
+    "taskId": "0026feea6f0f",
     "skill": "note-screening",
     "text": "Please screen the PHI-redacted note using the BE FAST rule and summarize any relevant prior de-identified cases that may inform the clinician's prevention topics for stroke risk."
    },
    {
-    "ts": 1794567194.651,
+    "ts": 1794567903.599,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "01e87121d7a5",
+    "taskId": "0026feea6f0f",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -2484,20 +2474,20 @@
     ]
    },
    {
-    "ts": 1794567197.03,
+    "ts": 1794567905.478,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "ee8e6a752ac6",
+    "taskId": "810f098ec85c",
     "skill": "risk-communication",
     "text": "Generate the clinician-facing decision-support report that outlines the prevention topics to raise for this patient's stroke risk, incorporating insights from the previous agents' findings."
    },
    {
-    "ts": 1794567203.386,
+    "ts": 1794567912.799,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "ee8e6a752ac6",
+    "taskId": "810f098ec85c",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -2505,20 +2495,20 @@
     ]
    },
    {
-    "ts": 1794567205.161,
+    "ts": 1794567914.897,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "30b5f7423d36",
+    "taskId": "46bb52ab64c2",
     "skill": "red-team-review",
     "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization."
    },
    {
-    "ts": 1794567207.269,
+    "ts": 1794567917.307,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "30b5f7423d36",
+    "taskId": "46bb52ab64c2",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -2527,7 +2517,7 @@
    }
   ],
   "receipt": {
-   "run_id": "10b5cc6b77dc4c5c8b7cd7b605b9bf06",
+   "run_id": "19cb370bbd16451ebea1303dfac4778c",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -2535,9 +2525,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "b6dd3d04f4f76d39f8908bbc85860134317f4610f447d11a1008e6b911ecebeb",
-   "report_sha256": "71187c2007ae395970008db75fb27aab1f6c4f299651c13b0064d4b6363dbb48",
-   "trace_sha256": "c8adcf20229c7848d4c25f3ba3a61d08a8ee74933d534130cabdecfbb2808918",
-   "audit_chain_head": "548002a44cc7b755ac40fb4a9baf80d52c29a1034d79bc1c38d3c11a54673148",
+   "report_sha256": "1c7314e83710ff4d3caefdeb93fa1697ee87eca8f98a39926f33bb414299b7a0",
+   "trace_sha256": "bbb2d3d69e4ba3c9505b0b12f52e8cedba565ba2747c8db95215441e1954b82f",
+   "audit_chain_head": "4a9aba10684294d16c3f1cc42d8920f6b23c80a01b810f927dcd2e83a3e4c829",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -2559,18 +2549,18 @@
    "approval": null,
    "counts": {
     "llm_calls": 17,
-    "tokens": 20154,
+    "tokens": 20005,
     "tool_calls": 7
    },
-   "latency_s": 45.54,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 48.12,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:53:29+0000",
-   "signature": "18d0c4c88382f300f6c625d2d926364d5a1a7ff27ba15f1f18ca6e42e85633fe"
+   "signed_at": "2026-11-13T11:05:19+0000",
+   "signature": "0bd02c6502379fc0310bf679301a3211cd3be88edd3a3ab46b5e1826f3f0dec2"
   },
   "llm_calls": 17,
   "tool_calls": 7,
-  "latency_s": 45.54
+  "latency_s": 48.12
  },
  {
   "case": {
@@ -2616,7 +2606,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report outlines the stroke risk for a 79-year-old male patient with specific health factors and provides guidance on discussing this risk with the treating clinician.\n\n## Risk estimate\nThe estimated stroke risk for this patient is 19.0% (about 19 in 100 patients with this profile in the dataset). This risk is categorized as high. In comparison, among patients aged 75-119 with no heart disease, 19.3% experienced a stroke.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Smoking status is associated with lower estimated risk.\n- Residence type is associated with higher estimated risk.\n- Gender is associated with lower estimated risk.\n- Work type is associated with lower estimated risk.\n\n## Guideline evidence\n- The risk of having a stroke doubles every 10 years after age 55 [G-10].\n- Diabetes increases stroke risk by causing high blood sugar levels, which can harm the brain [G-06].\n- High blood pressure is a common issue for people with diabetes and is the leading cause of stroke [G-06].\n- Sudden symptoms like weakness or confusion may indicate a stroke; call 9-1-1 immediately [G-12].\n\n## Points to discuss with the clinician\nDiscuss the patient's high stroke risk and consider monitoring strategies. Evaluate the impact of age and glucose levels on the patient's overall health. Address lifestyle factors, including smoking status and residence type.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report outlines the stroke risk for a 79-year-old male patient with a high estimated risk based on various health factors. \n\n## Risk estimate\nThe estimated risk of stroke for this patient is 19.0% (about 19 in 100 patients with this profile in the dataset). This risk is categorized as high and is comparable to a cohort of patients aged 75-119 with no heart disease, where 19.3% experienced a stroke.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Smoking status is associated with lower estimated risk.\n- Residence type is associated with higher estimated risk.\n- Gender is associated with lower estimated risk.\n- Work type is associated with lower estimated risk.\n\n## Guideline evidence\n- The risk of having a stroke doubles every 10 years after age 55 [G-10].\n- Diabetes increases stroke risk by causing high blood sugar levels that affect blood flow to the brain [G-06].\n- High blood pressure is a leading cause of stroke [G-06].\n- Use the B.E. F.A.S.T. method to identify stroke symptoms and act quickly [G-13].\n- If you notice symptoms of a stroke, call 9-1-1 immediately for emergency care [G-24].\n\n## Points to discuss with the clinician\nDiscuss the patient's high stroke risk and consider monitoring glucose levels and other health factors. Evaluate lifestyle modifications and any necessary interventions.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -2642,14 +2632,15 @@
      "citations": [
       "G-06",
       "G-10",
-      "G-12"
+      "G-13",
+      "G-24"
      ],
      "ungrounded_numbers": [],
      "dosing_matches": [],
      "diagnosis_matches": [],
      "phi_types": [],
      "red_team_issues": [],
-     "evidence_bullets": 4,
+     "evidence_bullets": 5,
      "numbers_checked": 7
     }
    },
@@ -2687,7 +2678,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2168
+    "ms": 1944
    },
    {
     "agent": "risk_analyst",
@@ -2720,7 +2711,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.1898,\n \"risk_percent\": 19.0,\n \"risk_band\": \"high\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational ",
-    "ms": 72
+    "ms": 53
    },
    {
     "agent": "risk_analyst",
@@ -2742,7 +2733,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 79.0,\n   \"log_odds_contribution\": 2.968,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"avg_glucose_level\",\n   \"patient_value\": 198.79,\n   \"log_odds_contribution\": 0.44,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"smoking_status\",\n ",
-    "ms": 11
+    "ms": 9
    },
    {
     "agent": "risk_analyst",
@@ -2757,7 +2748,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n",
-    "ms": 23
+    "ms": 16
    },
    {
     "agent": "risk_analyst",
@@ -2777,7 +2768,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 8613
+    "ms": 9581
    },
    {
     "agent": "orchestrator",
@@ -2786,13 +2777,13 @@
     "next": "intake",
     "skill": "note-screening",
     "instruction": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit.",
-    "reason": "The risk analyst has already assessed the stroke risk, and now we need to communicate this effectively to the clinician.",
+    "reason": "The risk analyst has completed their analysis, and we need to communicate the findings effectively to the clinician.",
     "override": "LLM chose clinical_writer; not eligible now -> intake skill None not in catalog -> note-screening",
     "eligible": [
      "intake",
      "evidence_researcher"
     ],
-    "ms": 1879
+    "ms": 1805
    },
    {
     "agent": "intake",
@@ -2811,7 +2802,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": 0.782,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic re",
-    "ms": 60
+    "ms": 63
    },
    {
     "agent": "intake",
@@ -2824,7 +2815,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"cases\": []\n}",
-    "ms": 5
+    "ms": 4
    },
    {
     "agent": "intake",
@@ -2833,9 +2824,9 @@
      "red_flag_signs": [],
      "neuro_note_probability": 0.782,
      "prior_cases": "no earlier cases in this session",
-     "summary": "The note indicates that the patient has juvenile myoclonic epilepsy and has experienced a recent generalized tonic-clonic seizure. There are no immediate red flags for stroke based on the CDC BE FAST criteria, but the patient's neurological status should be monitored closely."
+     "summary": "The note indicates that the patient has juvenile myoclonic epilepsy and has experienced a recent generalized tonic-clonic seizure. While there are no immediate red flags for stroke, the patient's neurological condition may be relevant to their overall health and potential stroke risk."
     },
-    "ms": 14433
+    "ms": 12651
    },
    {
     "agent": "orchestrator",
@@ -2849,7 +2840,7 @@
     "eligible": [
      "evidence_researcher"
     ],
-    "ms": 2138
+    "ms": 2220
    },
    {
     "agent": "evidence_researcher",
@@ -2883,7 +2874,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-06\",\n  \"title\": \"Risk Factors for Stroke - Diabetes\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Diabetes increases your risk for stroke. Diabetes causes sugars to build up in the blood and pr",
-    "ms": 5
+    "ms": 4
    },
    {
     "agent": "evidence_researcher",
@@ -2912,7 +2903,12 @@
    {
     "agent": "evidence_researcher",
     "type": "mcp_resource_read",
-    "uri": "guideline://G-12"
+    "uri": "guideline://G-13"
+   },
+   {
+    "agent": "evidence_researcher",
+    "type": "mcp_resource_read",
+    "uri": "guideline://G-24"
    },
    {
     "agent": "evidence_researcher",
@@ -2929,7 +2925,7 @@
        "citation_id": "G-10"
       },
       {
-       "claim": "Diabetes increases stroke risk by causing high blood sugar levels, which can harm the brain.",
+       "claim": "Diabetes increases stroke risk by causing high blood sugar levels that affect blood flow to the brain.",
        "citation_id": "G-06"
       },
       {
@@ -2937,13 +2933,17 @@
        "citation_id": "G-06"
       },
       {
-       "claim": "If you notice sudden symptoms like weakness or confusion, call 9-1-1 immediately as these may indicate a stroke.",
-       "citation_id": "G-12"
+       "claim": "If you notice symptoms of a stroke, call 9-1-1 immediately for emergency care.",
+       "citation_id": "G-24"
+      },
+      {
+       "claim": "Use the B.E. F.A.S.T. method to identify stroke symptoms and act quickly.",
+       "citation_id": "G-13"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 9269
+    "ms": 10353
    },
    {
     "agent": "orchestrator",
@@ -2957,7 +2957,7 @@
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 1811
+    "ms": 2017
    },
    {
     "agent": "clinical_writer",
@@ -2973,10 +2973,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 1774,
+    "chars": 1728,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 7063
+    "ms": 6252
    },
    {
     "agent": "orchestrator",
@@ -2990,7 +2990,7 @@
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1712
+    "ms": 1882
    },
    {
     "agent": "safety_reviewer",
@@ -3009,7 +3009,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 1394
+    "ms": 2536
    },
    {
     "agent": "orchestrator",
@@ -3017,13 +3017,13 @@
     "turn": 6,
     "next": "FINISH",
     "skill": null,
-    "instruction": "Finalize the decision-support report for the clinician, ensuring it includes a clear explanation of the patient's stroke risk and discussion points for the next visit.",
+    "instruction": "Finalize the decision-support report for the clinician, ensuring it clearly explains the patient's stroke risk and outlines discussion points for the next visit.",
     "reason": "The draft has been approved and is ready for finalization.",
     "override": null,
     "eligible": [
      "FINISH"
     ],
-    "ms": 2033
+    "ms": 1674
    },
    {
     "agent": "gate",
@@ -3042,20 +3042,20 @@
   ],
   "a2a": [
    {
-    "ts": 1794567212.685,
+    "ts": 1794567922.795,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "47d55b8cca94",
+    "taskId": "0624c34fb400",
     "skill": "cohort-comparison",
     "text": "Run the calibrated stroke-risk model for this patient and explain how their risk compares to similar patients in the cohort statistics."
    },
    {
-    "ts": 1794567221.313,
+    "ts": 1794567932.39,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "47d55b8cca94",
+    "taskId": "0624c34fb400",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -3067,20 +3067,20 @@
     ]
    },
    {
-    "ts": 1794567223.194,
+    "ts": 1794567934.196,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "dcfffe0b5c34",
+    "taskId": "3fbd406d05f3",
     "skill": "note-screening",
     "text": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit."
    },
    {
-    "ts": 1794567237.629,
+    "ts": 1794567946.849,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "dcfffe0b5c34",
+    "taskId": "3fbd406d05f3",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -3090,20 +3090,20 @@
     ]
    },
    {
-    "ts": 1794567239.768,
+    "ts": 1794567949.07,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "5946851766f3",
+    "taskId": "5b1da4127c50",
     "skill": "guideline-citation",
     "text": "Please retrieve CDC/NHLBI guideline excerpts relevant to the patient's stroke risk factors and provide the cited claims."
    },
    {
-    "ts": 1794567249.039,
+    "ts": 1794567959.425,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "5946851766f3",
+    "taskId": "5b1da4127c50",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -3112,20 +3112,20 @@
     ]
    },
    {
-    "ts": 1794567250.851,
+    "ts": 1794567961.443,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "fead81f0a900",
+    "taskId": "18c4c88a79a9",
     "skill": "risk-communication",
     "text": "Generate a clinician-facing decision-support report that explains the patient's stroke risk and outlines discussion points for the next visit."
    },
    {
-    "ts": 1794567257.916,
+    "ts": 1794567967.696,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "fead81f0a900",
+    "taskId": "18c4c88a79a9",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -3133,20 +3133,20 @@
     ]
    },
    {
-    "ts": 1794567259.629,
+    "ts": 1794567969.579,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "88b70adae5fb",
+    "taskId": "a08d4bbc7ec3",
     "skill": "red-team-review",
     "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization."
    },
    {
-    "ts": 1794567261.025,
+    "ts": 1794567972.117,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "88b70adae5fb",
+    "taskId": "a08d4bbc7ec3",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -3155,7 +3155,7 @@
    }
   ],
   "receipt": {
-   "run_id": "c908672e55694a0f9dee8a25cfae75c8",
+   "run_id": "8634d305b33b451db405df7011a319a1",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -3163,9 +3163,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "cd363aa4c42b2aa41ec410e8f6fc550151161c7cb6be8bf325211780fdac193d",
-   "report_sha256": "67af186141dedfbde2df7a9d38ab4253a774ed84fe7cac7c4c4de883a794a07d",
-   "trace_sha256": "d5ec4dd04be558b3e5c9db3bb1cbe3f821bddf178727882ec6d6f8707957b8dc",
-   "audit_chain_head": "805f4851b004344ea0cd9e45e7fcedae951c1c9a6ee52f45e16f624ee4b08600",
+   "report_sha256": "6a17621ddd790dabc35f380207d309596c6cec5784459a766f328f41b7e66cd8",
+   "trace_sha256": "7705e57be30e64e22b2e2a5f7c03f6e49e1d7ebf2da668ace03893b639391d24",
+   "audit_chain_head": "43ef49ab71e5d351ab976765c51eaf13f84d896ec1ae66cb382c10a42ef03a15",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -3187,18 +3187,18 @@
    "approval": null,
    "counts": {
     "llm_calls": 17,
-    "tokens": 21585,
+    "tokens": 21973,
     "tool_calls": 8
    },
-   "latency_s": 54.08,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 54.46,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:54:23+0000",
-   "signature": "4ea3efa70cb3a5819503dc016898526f410342d2a5397eace948b73f96081897"
+   "signed_at": "2026-11-13T11:06:14+0000",
+   "signature": "634363b544f5ba0bbeb4096a0a332fa86c7e08bcec6e4de542801a086d4f05a6"
   },
   "llm_calls": 17,
   "tool_calls": 8,
-  "latency_s": 54.08
+  "latency_s": 54.46
  },
  {
   "case": {
@@ -3232,6 +3232,8 @@
    "intake",
    "clinical_writer",
    "safety_reviewer",
+   "clinical_writer",
+   "safety_reviewer",
    "FINISH"
   ],
   "risk": {
@@ -3244,7 +3246,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report provides a stroke risk estimate based on the patient's profile and outlines contributing factors, guideline evidence, and points for discussion with the treating clinician.\n\n## Risk estimate\nThe estimated risk of stroke is 0.6% (about 1 in 100 patients with this profile in the dataset). This risk is categorized as low. In comparison, among patients aged 0-17 with no heart disease, 0.2% had a recorded stroke.\n\n## Main contributing factors\n- Age is associated with lower estimated risk.\n- Work type is associated with higher estimated risk.\n- Ever married status is associated with higher estimated risk.\n- Residence type is associated with lower estimated risk.\n- Average glucose level is associated with lower estimated risk.\n- Hypertension is associated with lower estimated risk.\n\n## Guideline evidence\n- Understanding and managing risk factors is crucial for stroke prevention, even if some factors like age are unchangeable. [G-01]\n- A history of stroke or TIA increases the risk of subsequent strokes. [G-02]\n- Diets high in saturated fats and low physical activity can elevate stroke risk. [G-09]\n- Sudden symptoms such as confusion or weakness indicate a stroke and require immediate action. [G-12]\n- The B.E. F.A.S.T. method is essential for identifying stroke symptoms and emphasizes calling 9-1-1. [G-13]\n- Maintaining a healthy weight through physical activity is important to reduce stroke risk. [G-16]\n- A TIA is a warning sign for a potential future stroke and requires urgent medical attention. [G-24]\n\n## Points to discuss with the clinician\n- Discuss the implications of the patient's age and marital status on stroke risk.\n- Consider the impact of the patient's work type and lifestyle factors on overall health.\n- Review dietary habits and physical activity levels to identify areas for improvement.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report provides an estimate of stroke risk based on the patient's profile and outlines contributing factors, guideline evidence, and points for discussion with the treating clinician.\n\n## Risk estimate\nThe estimated risk of stroke is 0.6% (about 1 in 100 patients with this profile in the dataset). This risk is categorized as low. In comparison, among patients aged 0-17 with no heart disease, 0.2% had a recorded stroke.\n\n## Main contributing factors\n- Age is associated with lower estimated risk.\n- Work type is associated with higher estimated risk.\n- Being ever married is associated with higher estimated risk.\n- Residence type is associated with lower estimated risk.\n- Average glucose level is associated with lower estimated risk.\n- Hypertension is associated with lower estimated risk.\n\n## Guideline evidence\n- Understanding and controlling your risk factors is essential for stroke prevention. [G-01]\n- Having a previous stroke or TIA increases the likelihood of having another stroke. [G-02]\n- A diet high in saturated fats and low physical activity can elevate stroke risk. [G-09]\n- Sudden confusion, trouble speaking, or severe headache are signs of a stroke, and emergency help should be sought. [G-12]\n- The B.E. F.A.S.T. method helps identify stroke symptoms and emphasizes calling 9-1-1 immediately. [G-13]\n- Being overweight or obese raises your risk for stroke, and physical activity can help mitigate this risk. [G-16]\n- A TIA is a medical emergency that requires immediate attention, as it can indicate a potential future stroke. [G-24]\n\n## Points to discuss with the clinician\n- Discuss the implications of the patient's age and marital status on stroke risk.\n- Consider the impact of lifestyle factors, such as diet and physical activity, on overall risk.\n- Review the importance of recognizing stroke symptoms and the need for emergency response.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -3312,7 +3314,7 @@
     "turn": 1,
     "next": "risk_analyst",
     "skill": "cohort-comparison",
-    "instruction": "Run the calibrated stroke-risk model for the current case and explain the contributions of each factor to the stroke risk estimate, comparing it with cohort statistics.",
+    "instruction": "Run the calibrated stroke-risk model for this case and explain the contributions of various factors to the stroke risk estimate, comparing it with cohort statistics.",
     "reason": "The clinician needs to understand the factors driving the stroke risk estimate.",
     "override": null,
     "eligible": [
@@ -3320,7 +3322,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2024
+    "ms": 2328
    },
    {
     "agent": "risk_analyst",
@@ -3353,7 +3355,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.0057,\n \"risk_percent\": 0.6,\n \"risk_band\": \"low\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational da",
-    "ms": 58
+    "ms": 53
    },
    {
     "agent": "risk_analyst",
@@ -3375,7 +3377,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 14.0,\n   \"log_odds_contribution\": -2.43,\n   \"direction\": \"lowers\"\n  },\n  {\n   \"feature\": \"work_type\",\n   \"patient_value\": \"children\",\n   \"log_odds_contribution\": 0.766,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"ever_married\",\n   \"pa",
-    "ms": 9
+    "ms": 8
    },
    {
     "agent": "risk_analyst",
@@ -3390,7 +3392,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 0-17, heart_disease=0', 2 of 855 had a recorded stroke (0.2%, Wilson 95% CI 0.1-0.9%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n   0.0",
-    "ms": 17
+    "ms": 13
    },
    {
     "agent": "risk_analyst",
@@ -3410,7 +3412,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 0-17, heart_disease=0', 2 of 855 had a recorded stroke (0.2%, Wilson 95% CI 0.1-0.9%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 9209
+    "ms": 8308
    },
    {
     "agent": "orchestrator",
@@ -3418,14 +3420,14 @@
     "turn": 2,
     "next": "evidence_researcher",
     "skill": "guideline-citation",
-    "instruction": "Please retrieve CDC/NHLBI guideline excerpts related to the risk factors driving the stroke risk estimate and provide the cited claims.",
+    "instruction": "Please retrieve CDC/NHLBI guideline excerpts related to the factors driving the stroke risk estimate and provide the cited claims.",
     "reason": "The clinician needs to understand the guidelines associated with the identified risk factors.",
     "override": null,
     "eligible": [
      "intake",
      "evidence_researcher"
     ],
-    "ms": 1998
+    "ms": 1803
    },
    {
     "agent": "evidence_researcher",
@@ -3438,28 +3440,28 @@
     "type": "mcp_tool_call",
     "tool": "search_guidelines",
     "args": {
-     "query": "stroke prevention",
+     "query": "stroke prevention guidelines",
      "k": 4
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-02\",\n  \"title\": \"Risk Factors for Stroke - Previous stroke or TIA\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"If you have already had a stroke or a transient ischemic attack (TIA), also known",
-    "ms": 16
+    "ms": 13
    },
    {
     "agent": "evidence_researcher",
     "type": "mcp_tool_call",
     "tool": "search_guidelines",
     "args": {
-     "query": "warning signs stroke",
+     "query": "warning signs stroke BE FAST call 9-1-1",
      "k": 4
     },
     "decision": "allow",
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-24\",\n  \"title\": \"About Stroke - TIA is a warning sign\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/about/index.html\",\n  \"text\": \"A TIA is a warning sign of a future stroke. A TIA is a medical emergency, just like a major stroke. ",
-    "ms": 6
+    "ms": 5
    },
    {
     "agent": "evidence_researcher",
@@ -3501,8 +3503,8 @@
     "type": "agent_output",
     "output": {
      "queries": [
-      "stroke prevention",
-      "warning signs stroke"
+      "stroke prevention guidelines",
+      "warning signs stroke BE FAST call 9-1-1"
      ],
      "findings": [
       {
@@ -3510,33 +3512,33 @@
        "citation_id": "G-02"
       },
       {
-       "claim": "A diet high in saturated fats, trans fats, and cholesterol can elevate stroke risk, along with insufficient physical activity.",
+       "claim": "A diet high in saturated fats and low physical activity can elevate stroke risk.",
        "citation_id": "G-09"
       },
       {
-       "claim": "Being overweight or obese raises the risk for stroke, and maintaining a healthy weight through physical activity is important.",
+       "claim": "Being overweight or obese raises your risk for stroke, and physical activity can help mitigate this risk.",
        "citation_id": "G-16"
       },
       {
-       "claim": "Understanding and controlling risk factors is essential for stroke prevention, even though some factors like age cannot be changed.",
+       "claim": "Understanding and controlling your risk factors is essential for stroke prevention.",
        "citation_id": "G-01"
       },
       {
-       "claim": "A TIA serves as a warning sign for a potential future stroke, requiring immediate medical attention.",
+       "claim": "A TIA is a warning sign of a potential future stroke and requires immediate medical attention.",
        "citation_id": "G-24"
       },
       {
-       "claim": "Sudden symptoms such as confusion, weakness, or severe headache indicate a stroke and necessitate calling 9-1-1.",
+       "claim": "Sudden confusion, trouble speaking, or severe headache are signs of a stroke, and emergency help should be sought.",
        "citation_id": "G-12"
       },
       {
-       "claim": "The B.E. F.A.S.T. method helps identify stroke symptoms and emphasizes the importance of calling 9-1-1 immediately.",
+       "claim": "The B.E. F.A.S.T. method helps identify stroke symptoms and emphasizes calling 9-1-1 immediately.",
        "citation_id": "G-13"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 12541
+    "ms": 11649
    },
    {
     "agent": "orchestrator",
@@ -3544,13 +3546,13 @@
     "turn": 3,
     "next": "intake",
     "skill": "note-screening",
-    "instruction": "Run the calibrated stroke-risk model to explain the factors driving the stroke risk estimate and compare it with cohort statistics.",
-    "reason": "The clinician needs to understand the contributing factors and their context.",
-    "override": "LLM chose risk_analyst; not eligible now -> intake skill None not in catalog -> note-screening",
+    "instruction": "Retrieve CDC/NHLBI guideline excerpts related to the factors driving the stroke risk estimate and return the cited claims.",
+    "reason": "We need to provide the clinician with evidence-based guidelines on the relevant risk factors.",
+    "override": "LLM chose evidence_researcher; not eligible now -> intake skill None not in catalog -> note-screening",
     "eligible": [
      "intake"
     ],
-    "ms": 1771
+    "ms": 2147
    },
    {
     "agent": "intake",
@@ -3569,7 +3571,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": null,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic reg",
-    "ms": 84
+    "ms": 60
    },
    {
     "agent": "intake",
@@ -3591,9 +3593,9 @@
      "red_flag_signs": [],
      "neuro_note_probability": null,
      "prior_cases": "no earlier cases in this session",
-     "summary": "The note screening returned no red-flag signs, and there was no sudden-onset language indicating an emergency. Therefore, there are no immediate concerns based on the note provided."
+     "summary": "The note screening returned no red-flag signs, and there was no sudden-onset language indicating an emergency. The note's wording does not resemble neurology notes."
     },
-    "ms": 9146
+    "ms": 7274
    },
    {
     "agent": "orchestrator",
@@ -3601,13 +3603,13 @@
     "turn": 4,
     "next": "clinical_writer",
     "skill": "risk-communication",
-    "instruction": "Generate the clinician-facing decision-support report that explains the factors driving the stroke risk estimate and includes relevant CDC guideline citations.",
-    "reason": "The report needs to be prepared for the clinician audience, focusing on risk communication.",
+    "instruction": "Generate the clinician-facing decision-support report that explains the factors driving the stroke risk estimate and includes relevant CDC guidelines.",
+    "reason": "The clinical writer is needed to compile the findings into a coherent report for the clinician.",
     "override": null,
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 1930
+    "ms": 1915
    },
    {
     "agent": "clinical_writer",
@@ -3623,10 +3625,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 2142,
+    "chars": 2169,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 7687
+    "ms": 8033
    },
    {
     "agent": "orchestrator",
@@ -3640,7 +3642,77 @@
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1766
+    "ms": 1523
+   },
+   {
+    "agent": "safety_reviewer",
+    "type": "skill_loaded",
+    "skill": "red-team-review",
+    "chars_injected": 883
+   },
+   {
+    "agent": "safety_reviewer",
+    "type": "mcp_prompt_get",
+    "prompt": "red_team_review"
+   },
+   {
+    "agent": "safety_reviewer",
+    "type": "review",
+    "verdict": "revise",
+    "failed_checks": [
+     "red_team_pass"
+    ],
+    "issues": [
+     "red team: rule 3: \"A TIA is a warning sign of a potential future stroke and requires immediate medical attention. [G-24]\" - This sentence paraphrases the guideline incorrectly by implying that a TIA is a warning sign of a future stroke without stating that it is a medical emergency."
+    ],
+    "ms": 2304
+   },
+   {
+    "agent": "orchestrator",
+    "type": "route",
+    "turn": 6,
+    "next": "clinical_writer",
+    "skill": "risk-communication",
+    "instruction": "Generate the clinician-facing decision-support report incorporating the revised information about stroke risk factors and CDC guidelines, ensuring clarity and accuracy in the language used.",
+    "reason": "The draft needs to be rewritten for clinician use, addressing the previous review's concerns.",
+    "override": null,
+    "eligible": [
+     "clinical_writer"
+    ],
+    "ms": 2069
+   },
+   {
+    "agent": "clinical_writer",
+    "type": "mcp_prompt_get",
+    "prompt": "clinical_report"
+   },
+   {
+    "agent": "clinical_writer",
+    "type": "skill_loaded",
+    "skill": "risk-communication",
+    "chars_injected": 982
+   },
+   {
+    "agent": "clinical_writer",
+    "type": "generation",
+    "chars": 2184,
+    "finish_reason": "stop",
+    "revision": 1,
+    "ms": 8777
+   },
+   {
+    "agent": "orchestrator",
+    "type": "route",
+    "turn": 7,
+    "next": "safety_reviewer",
+    "skill": "red-team-review",
+    "instruction": "Please review the latest draft for any unsafe advice or inaccuracies, particularly regarding the description of TIA as a medical emergency.",
+    "reason": "The last review indicated a need for revision due to incorrect paraphrasing of guidelines.",
+    "override": null,
+    "eligible": [
+     "safety_reviewer"
+    ],
+    "ms": 2072
    },
    {
     "agent": "safety_reviewer",
@@ -3659,21 +3731,21 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 2250
+    "ms": 1931
    },
    {
     "agent": "orchestrator",
     "type": "route",
-    "turn": 6,
+    "turn": 8,
     "next": "FINISH",
     "skill": null,
-    "instruction": "The draft has been approved by the safety reviewer, so finalize the case now.",
-    "reason": "The case is complete and ready for closure.",
+    "instruction": "The draft is ready for final approval. Please review it for any safety concerns before finalizing.",
+    "reason": "The safety reviewer is the final step before completion.",
     "override": null,
     "eligible": [
      "FINISH"
     ],
-    "ms": 1726
+    "ms": 1639
    },
    {
     "agent": "gate",
@@ -3690,20 +3762,20 @@
   ],
   "a2a": [
    {
-    "ts": 1794567266.612,
+    "ts": 1794567977.558,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "19c6875bd0b7",
+    "taskId": "2e0d748d2b39",
     "skill": "cohort-comparison",
-    "text": "Run the calibrated stroke-risk model for the current case and explain the contributions of each factor to the stroke risk estimate, comparing it with cohort statistics."
+    "text": "Run the calibrated stroke-risk model for this case and explain the contributions of various factors to the stroke risk estimate, comparing it with cohort statistics."
    },
    {
-    "ts": 1794567275.834,
+    "ts": 1794567985.877,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "19c6875bd0b7",
+    "taskId": "2e0d748d2b39",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -3715,20 +3787,20 @@
     ]
    },
    {
-    "ts": 1794567277.833,
+    "ts": 1794567987.681,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "b17354fe0636",
+    "taskId": "9369d538fafc",
     "skill": "guideline-citation",
-    "text": "Please retrieve CDC/NHLBI guideline excerpts related to the risk factors driving the stroke risk estimate and provide the cited claims."
+    "text": "Please retrieve CDC/NHLBI guideline excerpts related to the factors driving the stroke risk estimate and provide the cited claims."
    },
    {
-    "ts": 1794567290.375,
+    "ts": 1794567999.332,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "b17354fe0636",
+    "taskId": "9369d538fafc",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -3737,20 +3809,20 @@
     ]
    },
    {
-    "ts": 1794567292.147,
+    "ts": 1794568001.481,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "c4142e224f9a",
+    "taskId": "3ebc64d8790f",
     "skill": "note-screening",
-    "text": "Run the calibrated stroke-risk model to explain the factors driving the stroke risk estimate and compare it with cohort statistics."
+    "text": "Retrieve CDC/NHLBI guideline excerpts related to the factors driving the stroke risk estimate and return the cited claims."
    },
    {
-    "ts": 1794567301.295,
+    "ts": 1794568008.756,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "c4142e224f9a",
+    "taskId": "3ebc64d8790f",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -3760,20 +3832,20 @@
     ]
    },
    {
-    "ts": 1794567303.225,
+    "ts": 1794568010.672,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "1f95e5563217",
+    "taskId": "8166dcc1c656",
     "skill": "risk-communication",
-    "text": "Generate the clinician-facing decision-support report that explains the factors driving the stroke risk estimate and includes relevant CDC guideline citations."
+    "text": "Generate the clinician-facing decision-support report that explains the factors driving the stroke risk estimate and includes relevant CDC guidelines."
    },
    {
-    "ts": 1794567310.914,
+    "ts": 1794568018.707,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "1f95e5563217",
+    "taskId": "8166dcc1c656",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -3781,20 +3853,62 @@
     ]
    },
    {
-    "ts": 1794567312.681,
+    "ts": 1794568020.231,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "4a3064c5e953",
+    "taskId": "e6eefe9c120c",
     "skill": "red-team-review",
     "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization."
    },
    {
-    "ts": 1794567314.933,
+    "ts": 1794568022.537,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "4a3064c5e953",
+    "taskId": "e6eefe9c120c",
+    "artifact": "review",
+    "artifact_keys": [
+     "failed",
+     "verdict"
+    ]
+   },
+   {
+    "ts": 1794568024.607,
+    "event": "task/send",
+    "from": "orchestrator",
+    "to": "clinical_writer",
+    "taskId": "979e4b86503b",
+    "skill": "risk-communication",
+    "text": "Generate the clinician-facing decision-support report incorporating the revised information about stroke risk factors and CDC guidelines, ensuring clarity and accuracy in the language used."
+   },
+   {
+    "ts": 1794568033.385,
+    "event": "task/completed",
+    "from": "clinical_writer",
+    "to": "orchestrator",
+    "taskId": "979e4b86503b",
+    "artifact": "report_draft",
+    "artifact_keys": [
+     "chars",
+     "revision"
+    ]
+   },
+   {
+    "ts": 1794568035.458,
+    "event": "task/send",
+    "from": "orchestrator",
+    "to": "safety_reviewer",
+    "taskId": "298c7f7ebd50",
+    "skill": "red-team-review",
+    "text": "Please review the latest draft for any unsafe advice or inaccuracies, particularly regarding the description of TIA as a medical emergency."
+   },
+   {
+    "ts": 1794568037.39,
+    "event": "task/completed",
+    "from": "safety_reviewer",
+    "to": "orchestrator",
+    "taskId": "298c7f7ebd50",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -3803,7 +3917,7 @@
    }
   ],
   "receipt": {
-   "run_id": "ef9364a6f039465093d202a73e34ef3e",
+   "run_id": "1c42355203a1440aabd155db994f786e",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -3811,9 +3925,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "337a6700decd1b207966eef8e589e3538299e91f911e7c96035de013b3a85e94",
-   "report_sha256": "451f192397259cb2c5ccd46d3280ba152a5916a9d62c3bac969a00811570982d",
-   "trace_sha256": "f90b86685672cf575a94bc5fb42e0b858f8576982c064ea8b78c2f1fc73d5905",
-   "audit_chain_head": "15aba990ffffdf57c0c5960d49c1d1c7edcf913964c78049b17603b155b8b46a",
+   "report_sha256": "033448c572c98491d2d0630de84b9f2688a2f45afb234b25682113df1f5d54f3",
+   "trace_sha256": "696afe1775a8b1bb71e27c8f9c5c9f1f012453740a068c2f394d733a0c642ded",
+   "audit_chain_head": "adb711c33a0db2a359e4afac2f67de820ecebf5e415acf9222d66312491feaf0",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -3834,19 +3948,19 @@
    "needs_human_approval": false,
    "approval": null,
    "counts": {
-    "llm_calls": 17,
-    "tokens": 21987,
+    "llm_calls": 21,
+    "tokens": 29219,
     "tool_calls": 7
    },
-   "latency_s": 53.67,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 65.29,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:55:16+0000",
-   "signature": "e53f690d4fb8eb741345ccf4a0abdcba8974a5348994f58fd2869fc2d948c6c4"
+   "signed_at": "2026-11-13T11:07:19+0000",
+   "signature": "47f8298c6cfe090cc00fe94b1ccc8df13d6087ea16485ec5cbd82149f9e6d121"
   },
-  "llm_calls": 17,
+  "llm_calls": 21,
   "tool_calls": 7,
-  "latency_s": 53.67
+  "latency_s": 65.29
  },
  {
   "case": {
@@ -3892,7 +4006,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report summarizes the stroke risk for a 45-year-old male with a BMI of 39.7, who has never smoked, does not have high blood pressure or heart disease, and lives in a rural area. \n\n## Risk estimate\nThe estimated risk of stroke for this profile is 1.4%, which is considered low. In comparison, among patients aged 45-54 without heart disease, 3.5% had a recorded stroke.\n\n## Main contributing factors\n- Smoking status is associated with lower estimated risk.\n- Average glucose level is associated with lower estimated risk.\n- Age is associated with higher estimated risk.\n- Residence type is associated with lower estimated risk.\n- BMI is associated with higher estimated risk.\n- Gender is associated with lower estimated risk.\n\n## Guideline evidence\n- Obesity is linked to higher \"bad\" cholesterol and lower \"good\" cholesterol, increasing stroke risk. [G-07]\n- If you experience sudden trouble walking, dizziness, or weakness, call 9-1-1 immediately. [G-12]\n- Use B.E. F.A.S.T. to identify stroke symptoms and call 9-1-1 if any signs are present. [G-13]\n- Obesity is one of the leading causes of stroke, along with high blood pressure and high cholesterol. [G-22]\n\n## Points to discuss with the clinician\n- Discuss the implications of the patient's BMI and its association with stroke risk.\n- Consider monitoring glucose levels and overall health due to the patient's profile.\n- Review lifestyle factors, including diet and exercise, that may impact stroke risk.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report summarizes the stroke risk for a 45-year-old male with a BMI of 39.7 and an average glucose level of 65.42. He has never smoked and has no history of high blood pressure or heart disease. \n\n## Risk estimate\nThe estimated risk of stroke for this profile is 1.4%, which falls into the low risk band. Compared to a similar group of patients aged 45-54 with no heart disease, 3.5% had a recorded stroke.\n\n## Main contributing factors\n- Smoking status is associated with lower estimated risk.\n- Average glucose level is associated with lower estimated risk.\n- Age is associated with higher estimated risk.\n- Residence type is associated with lower estimated risk.\n- BMI is associated with higher estimated risk.\n- Gender is associated with lower estimated risk.\n\n## Guideline evidence\n- Obesity increases the risk of stroke due to higher bad cholesterol and blood pressure levels. [G-07]\n- If you notice sudden weakness, trouble speaking, or balance issues, call 9-1-1 immediately. [G-12]\n- Use B.E. F.A.S.T. to identify stroke signs: Balance, Eyes, Face, Arms, Speech, and Time to call for help. [G-13]\n- Obesity is a leading cause of stroke along with high blood pressure and high cholesterol. [G-22]\n\n## Points to discuss with the clinician\n- Discuss the implications of the patient's BMI and its association with stroke risk.\n- Consider lifestyle modifications that may help reduce risk factors.\n- Review the importance of monitoring glucose levels and overall health.\n\n## Limitations\nThis report is based on an association-based estimate from an educational dataset and is not a diagnosis or a population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset. If you notice sudden face drooping, arm weakness or speech trouble, call 9-1-1.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -3927,7 +4041,7 @@
      "phi_types": [],
      "red_team_issues": [],
      "evidence_bullets": 4,
-     "numbers_checked": 4
+     "numbers_checked": 5
     }
    },
    "needs_human_approval": false,
@@ -3962,7 +4076,7 @@
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2480
+    "ms": 2206
    },
    {
     "agent": "risk_analyst",
@@ -3995,7 +4109,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.0144,\n \"risk_percent\": 1.4,\n \"risk_band\": \"low\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational da",
-    "ms": 55
+    "ms": 48
    },
    {
     "agent": "risk_analyst",
@@ -4017,7 +4131,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"smoking_status\",\n   \"patient_value\": \"never smoked\",\n   \"log_odds_contribution\": -0.207,\n   \"direction\": \"lowers\"\n  },\n  {\n   \"feature\": \"avg_glucose_level\",\n   \"patient_value\": 65.42,\n   \"log_odds_contribution\": -0.192,\n   \"direction\": \"lowers\"\n  },\n  {\n   \"featur",
-    "ms": 10
+    "ms": 9
    },
    {
     "agent": "risk_analyst",
@@ -4032,7 +4146,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 45-54, heart_disease=0', 27 of 767 had a recorded stroke (3.5%, Wilson 95% CI 2.4-5.1%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n   0",
-    "ms": 16
+    "ms": 15
    },
    {
     "agent": "risk_analyst",
@@ -4052,7 +4166,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 45-54, heart_disease=0', 27 of 767 had a recorded stroke (3.5%, Wilson 95% CI 2.4-5.1%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 8169
+    "ms": 7837
    },
    {
     "agent": "orchestrator",
@@ -4067,7 +4181,7 @@
      "intake",
      "evidence_researcher"
     ],
-    "ms": 2044
+    "ms": 2019
    },
    {
     "agent": "intake",
@@ -4086,7 +4200,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": 0.808,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic re",
-    "ms": 85
+    "ms": 61
    },
    {
     "agent": "intake",
@@ -4108,9 +4222,9 @@
      "red_flag_signs": [],
      "neuro_note_probability": 0.808,
      "prior_cases": "no earlier cases in this session",
-     "summary": "The MRI report indicates a subacute right thalamic infarct, suggesting a recent stroke affecting the thalamus. This finding is significant as it can impact various neurological functions, and ongoing monitoring and assessment are crucial for this patient."
+     "summary": "The MRI report indicates a subacute right thalamic infarct, suggesting a recent stroke affecting the thalamus. While there are no immediate emergency signs present, the presence of an infarct indicates an increased risk for future strokes."
     },
-    "ms": 11815
+    "ms": 11176
    },
    {
     "agent": "orchestrator",
@@ -4118,13 +4232,13 @@
     "turn": 3,
     "next": "evidence_researcher",
     "skill": "guideline-citation",
-    "instruction": "Generate a clinician-facing decision-support report summarizing the stroke risk for this profile in plain language, ensuring to include calibrated risk language and relevant citations.",
-    "reason": "The clinician needs a clear and accurate summary of the stroke risk to inform their decision-making.",
+    "instruction": "Generate a patient-friendly summary of the stroke risk for the given profile, ensuring it is clear and understandable at an 8th-grade reading level.",
+    "reason": "The clinician needs a summary that can be easily communicated to the patient.",
     "override": "LLM chose clinical_writer; not eligible now -> evidence_researcher skill None not in catalog -> guideline-citation",
     "eligible": [
      "evidence_researcher"
     ],
-    "ms": 1940
+    "ms": 1914
    },
    {
     "agent": "evidence_researcher",
@@ -4144,7 +4258,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-07\",\n  \"title\": \"Risk Factors for Stroke - Obesity\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Obesity is excess body fat. Obesity is linked to higher \\\"bad\\\" cholesterol and triglyceride lev",
-    "ms": 12
+    "ms": 14
    },
    {
     "agent": "evidence_researcher",
@@ -4158,7 +4272,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-24\",\n  \"title\": \"About Stroke - TIA is a warning sign\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/about/index.html\",\n  \"text\": \"A TIA is a warning sign of a future stroke. A TIA is a medical emergency, just like a major stroke. ",
-    "ms": 4
+    "ms": 5
    },
    {
     "agent": "evidence_researcher",
@@ -4190,25 +4304,25 @@
      ],
      "findings": [
       {
-       "claim": "Obesity is linked to higher \"bad\" cholesterol and lower \"good\" cholesterol, increasing stroke risk.",
+       "claim": "Obesity increases the risk of stroke due to higher bad cholesterol and blood pressure levels.",
        "citation_id": "G-07"
       },
       {
-       "claim": "Obesity is one of the leading causes of stroke, along with high blood pressure and high cholesterol.",
+       "claim": "Obesity is a leading cause of stroke along with high blood pressure and high cholesterol.",
        "citation_id": "G-22"
       },
       {
-       "claim": "If you experience sudden trouble walking, dizziness, or weakness, call 9-1-1 immediately.",
+       "claim": "If you notice sudden weakness, trouble speaking, or balance issues, call 9-1-1 immediately.",
        "citation_id": "G-12"
       },
       {
-       "claim": "Use B.E. F.A.S.T. to identify stroke symptoms and call 9-1-1 if any signs are present.",
+       "claim": "Use B.E. F.A.S.T. to identify stroke signs: Balance, Eyes, Face, Arms, Speech, and Time to call for help.",
        "citation_id": "G-13"
       }
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 9918
+    "ms": 10273
    },
    {
     "agent": "orchestrator",
@@ -4216,13 +4330,13 @@
     "turn": 4,
     "next": "clinical_writer",
     "skill": "patient-friendly-summary",
-    "instruction": "Please generate a plain language summary of the stroke risk for the given profile, ensuring it is understandable at an 8th-grade reading level.",
-    "reason": "The audience is a clinician, and a patient-friendly summary will help convey the information clearly.",
+    "instruction": "Generate a plain language summary of the stroke risk for the clinician based on the provided profile.",
+    "reason": "The clinician needs a clear and understandable summary to communicate effectively with the patient.",
     "override": null,
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 1753
+    "ms": 1914
    },
    {
     "agent": "clinical_writer",
@@ -4238,10 +4352,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 1774,
+    "chars": 1848,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 6273
+    "ms": 7666
    },
    {
     "agent": "orchestrator",
@@ -4255,7 +4369,7 @@
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1801
+    "ms": 1583
    },
    {
     "agent": "safety_reviewer",
@@ -4274,7 +4388,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 2358
+    "ms": 2556
    },
    {
     "agent": "orchestrator",
@@ -4288,7 +4402,7 @@
     "eligible": [
      "FINISH"
     ],
-    "ms": 1407
+    "ms": 1616
    },
    {
     "agent": "gate",
@@ -4305,20 +4419,20 @@
   ],
   "a2a": [
    {
-    "ts": 1794567320.688,
+    "ts": 1794568042.723,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "594d9cba52a6",
+    "taskId": "2db4a366280d",
     "skill": "cohort-comparison",
     "text": "Run the calibrated stroke-risk model for this profile and compare the results with cohort statistics to provide context for the stroke risk."
    },
    {
-    "ts": 1794567328.869,
+    "ts": 1794568050.572,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "594d9cba52a6",
+    "taskId": "2db4a366280d",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -4330,20 +4444,20 @@
     ]
    },
    {
-    "ts": 1794567330.915,
+    "ts": 1794568052.592,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "ddabcd36efa7",
+    "taskId": "d7d181827b49",
     "skill": "note-screening",
     "text": "Generate a clinician-facing decision-support report summarizing the stroke risk for this profile in plain language, ensuring to include calibrated risk language and relevant citations."
    },
    {
-    "ts": 1794567342.732,
+    "ts": 1794568063.769,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "ddabcd36efa7",
+    "taskId": "d7d181827b49",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -4353,20 +4467,20 @@
     ]
    },
    {
-    "ts": 1794567344.673,
+    "ts": 1794568065.685,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "744557e420d2",
+    "taskId": "eebf0aa87c2e",
     "skill": "guideline-citation",
-    "text": "Generate a clinician-facing decision-support report summarizing the stroke risk for this profile in plain language, ensuring to include calibrated risk language and relevant citations."
+    "text": "Generate a patient-friendly summary of the stroke risk for the given profile, ensuring it is clear and understandable at an 8th-grade reading level."
    },
    {
-    "ts": 1794567354.592,
+    "ts": 1794568075.959,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "744557e420d2",
+    "taskId": "eebf0aa87c2e",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -4375,20 +4489,20 @@
     ]
    },
    {
-    "ts": 1794567356.347,
+    "ts": 1794568077.874,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "446db0ccd738",
+    "taskId": "ce7c8ee25dfa",
     "skill": "patient-friendly-summary",
-    "text": "Please generate a plain language summary of the stroke risk for the given profile, ensuring it is understandable at an 8th-grade reading level."
+    "text": "Generate a plain language summary of the stroke risk for the clinician based on the provided profile."
    },
    {
-    "ts": 1794567362.622,
+    "ts": 1794568085.542,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "446db0ccd738",
+    "taskId": "ce7c8ee25dfa",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -4396,20 +4510,20 @@
     ]
    },
    {
-    "ts": 1794567364.424,
+    "ts": 1794568087.126,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "9913a1084936",
+    "taskId": "9ac4fb088d42",
     "skill": "red-team-review",
     "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it."
    },
    {
-    "ts": 1794567366.783,
+    "ts": 1794568089.684,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "9913a1084936",
+    "taskId": "9ac4fb088d42",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -4418,7 +4532,7 @@
    }
   ],
   "receipt": {
-   "run_id": "f54c65a989ca4c9c959f50980ca61fec",
+   "run_id": "08927c8f484540908df116a270d32327",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -4426,9 +4540,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "205bdec9385a666456be3853bc23cfcd3d6e1da8f32868ee3fc74e29c54dfbc6",
-   "report_sha256": "21a6095ba178e8298e1b36a00c401127cf269c880c65e970f67be8d50dc9155b",
-   "trace_sha256": "f79ed52065eeff96f0b8eb5e7535d181cdc688c5010f26efb468fd6a3b621ffb",
-   "audit_chain_head": "e30763e2ccca8f4fce60a249cbfce3ae9adb83b53984868a003ac5baae4e89cb",
+   "report_sha256": "6f3babb33c3e05799327b227f006bc7d2ad87e6991d80cfe65f74d840fd88660",
+   "trace_sha256": "65c66fc2006adec202a0aa610f262a2c141027e9180822e0375ee28217b26a2b",
+   "audit_chain_head": "ee4164946a882af840ae6904df94720f4eced11ab66c453939e3b3ef131afdef",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -4450,18 +4564,18 @@
    "approval": null,
    "counts": {
     "llm_calls": 17,
-    "tokens": 20799,
+    "tokens": 20648,
     "tool_calls": 7
    },
-   "latency_s": 51.47,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 52.22,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:08+0000",
-   "signature": "b7278e413f0b08df7a38a1fd7feeadf073a9a248edd905ee380c8371ee57a532"
+   "signed_at": "2026-11-13T11:08:11+0000",
+   "signature": "9687f00ad3e11a650f2c52a1258a212667ee55c13269c08b1628e62af53d2bdc"
   },
   "llm_calls": 17,
   "tool_calls": 7,
-  "latency_s": 51.47
+  "latency_s": 52.22
  },
  {
   "case": {
@@ -4507,7 +4621,7 @@
    "test_roc_auc": 0.84,
    "note": "Association-based estimate from an educational dataset; not a diagnosis or a population incidence."
   },
-  "report": "## Summary\nThis report provides an assessment of stroke risk for a patient based on their profile and relevant clinical guidelines.\n\n## Risk estimate\nThe estimated risk of stroke for this patient is 34.5% (about 35 in 100 patients with this profile in the dataset). This risk is categorized as high. In comparison, among patients aged 75-119 with no heart disease, 19.3% experienced a recorded stroke.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Hypertension is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Work type is associated with lower estimated risk.\n- Residence type is associated with higher estimated risk.\n- Ever married status is associated with lower estimated risk.\n\n## Guideline evidence\n- High blood pressure is a leading cause of stroke and often has no symptoms, making regular checks essential. [G-03]\n- Diabetes raises the risk of stroke by causing sugar buildup in the blood, which can affect brain health. [G-06]\n- Obesity is linked to higher cholesterol levels and can lead to high blood pressure and diabetes, increasing stroke risk. [G-07]\n- The risk of having a stroke increases significantly after age 55, doubling approximately every decade. [G-10]\n- Sudden symptoms like confusion, trouble speaking, or weakness on one side of the body indicate a stroke; call 9-1-1 immediately. [G-12]\n\n## Points to discuss with the clinician\n- Discuss the importance of monitoring and managing hypertension.\n- Consider the implications of the patient's average glucose level on stroke risk.\n- Evaluate lifestyle modifications to address obesity and its associated risks.\n- Review the patient's living situation and work type for potential risk factors.\n\n## Limitations\nThis assessment is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
+  "report": "## Summary\nThis report provides an assessment of stroke risk for a patient based on their profile and relevant clinical guidelines.\n\n## Risk estimate\nThe estimated risk of stroke for this patient is 34.5% (about 35 in 100 patients with this profile in the dataset). This risk is categorized as high. In comparison, among patients aged 75-119 with no heart disease, 19.3% experienced a stroke.\n\n## Main contributing factors\n- Age is associated with higher estimated risk.\n- Hypertension is associated with higher estimated risk.\n- Average glucose level is associated with higher estimated risk.\n- Work type is associated with lower estimated risk.\n- Residence type is associated with higher estimated risk.\n- Ever married status is associated with lower estimated risk.\n\n## Guideline evidence\n- High blood pressure is a leading cause of stroke and often has no symptoms, making regular checks essential. [G-03]\n- Diabetes raises the risk of stroke by causing sugar buildup in the blood, which can affect brain health. [G-06]\n- Obesity is linked to higher cholesterol levels and can lead to high blood pressure and diabetes, increasing stroke risk. [G-07]\n- The risk of stroke increases significantly after age 55, doubling approximately every decade. [G-10]\n- Sudden symptoms like confusion, trouble speaking, or weakness on one side of the body indicate a stroke; call 9-1-1 immediately. [G-12]\n\n## Points to discuss with the clinician\nDiscuss the patient's hypertension management and the importance of regular blood pressure monitoring. Consider lifestyle modifications to address obesity and glucose levels. Evaluate the patient's overall cardiovascular health and risk factors.\n\n## Limitations\nThis assessment is based on an association-based estimate from an educational dataset and does not constitute a diagnosis or reflect population incidence.\n\n## Disclaimer\nThis is decision support, not a medical device, not a diagnosis, and it was generated from an educational dataset.",
   "final": {
    "status": "finalized",
    "verification": {
@@ -4573,14 +4687,14 @@
     "next": "risk_analyst",
     "skill": "cohort-comparison",
     "instruction": "Run the calibrated stroke-risk model for this patient and compare the results with cohort statistics to identify relevant prevention topics.",
-    "reason": "The risk analyst can provide insights on stroke risk factors that should be addressed.",
+    "reason": "The risk analyst can provide insights into the patient's stroke risk in context with similar patients.",
     "override": null,
     "eligible": [
      "intake",
      "risk_analyst",
      "evidence_researcher"
     ],
-    "ms": 2181
+    "ms": 2121
    },
    {
     "agent": "risk_analyst",
@@ -4613,7 +4727,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"risk_probability\": 0.3449,\n \"risk_percent\": 34.5,\n \"risk_band\": \"high\",\n \"flag_threshold\": 0.0549,\n \"dataset_prevalence\": 0.0487,\n \"model\": \"logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)\",\n \"test_roc_auc\": 0.84,\n \"note\": \"Association-based estimate from an educational ",
-    "ms": 50
+    "ms": 60
    },
    {
     "agent": "risk_analyst",
@@ -4635,7 +4749,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"factors\": [\n  {\n   \"feature\": \"age\",\n   \"patient_value\": 80.0,\n   \"log_odds_contribution\": 3.051,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"hypertension\",\n   \"patient_value\": 1,\n   \"log_odds_contribution\": 0.567,\n   \"direction\": \"raises\"\n  },\n  {\n   \"feature\": \"avg_glucose_level\",\n   \"pat",
-    "ms": 8
+    "ms": 11
    },
    {
     "agent": "risk_analyst",
@@ -4650,7 +4764,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"headline\": \"Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.\",\n \"overall\": {\n  \"group\": \"all patients\",\n  \"n\": 5109,\n  \"strokes\": 249,\n  \"rate\": 0.0487,\n  \"wilson_ci95\": [\n   0.0432,\n",
-    "ms": 15
+    "ms": 18
    },
    {
     "agent": "risk_analyst",
@@ -4670,7 +4784,7 @@
      "cohort_comparison": "Among dataset patients in group 'age 75-119, heart_disease=0', 80 of 414 had a recorded stroke (19.3%, Wilson 95% CI 15.8-23.4%); the whole dataset rate is 4.9%.",
      "calculations": []
     },
-    "ms": 7713
+    "ms": 8194
    },
    {
     "agent": "orchestrator",
@@ -4678,14 +4792,14 @@
     "turn": 2,
     "next": "evidence_researcher",
     "skill": "guideline-citation",
-    "instruction": "Please search the CDC/NHLBI guideline corpus for relevant prevention topics related to stroke risk factors for this patient and return the cited claims.",
-    "reason": "We need to gather evidence-based prevention topics to inform the clinician.",
+    "instruction": "Please search the CDC/NHLBI guideline corpus for relevant prevention topics related to the patient's stroke risk factors and return the cited claims.",
+    "reason": "We need to gather evidence-based prevention topics for the clinician to discuss.",
     "override": null,
     "eligible": [
      "intake",
      "evidence_researcher"
     ],
-    "ms": 1726
+    "ms": 1927
    },
    {
     "agent": "evidence_researcher",
@@ -4705,7 +4819,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-10\",\n  \"title\": \"Risk Factors for Stroke - Age\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"The older you are, the more likely you are to have a stroke. The chance of having a stroke about dou",
-    "ms": 13
+    "ms": 18
    },
    {
     "agent": "evidence_researcher",
@@ -4733,7 +4847,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-06\",\n  \"title\": \"Risk Factors for Stroke - Diabetes\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Diabetes increases your risk for stroke. Diabetes causes sugars to build up in the blood and pr",
-    "ms": 4
+    "ms": 5
    },
    {
     "agent": "evidence_researcher",
@@ -4747,7 +4861,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "[\n {\n  \"id\": \"G-07\",\n  \"title\": \"Risk Factors for Stroke - Obesity\",\n  \"publisher\": \"Centers for Disease Control and Prevention\",\n  \"url\": \"https://www.cdc.gov/stroke/risk-factors/index.html\",\n  \"text\": \"Obesity is excess body fat. Obesity is linked to higher \\\"bad\\\" cholesterol and triglyceride lev",
-    "ms": 4
+    "ms": 5
    },
    {
     "agent": "evidence_researcher",
@@ -4801,7 +4915,7 @@
      ],
      "findings": [
       {
-       "claim": "The risk of having a stroke increases significantly after age 55, doubling approximately every decade.",
+       "claim": "The risk of stroke increases significantly after age 55, doubling approximately every decade.",
        "citation_id": "G-10"
       },
       {
@@ -4823,7 +4937,7 @@
      ],
      "dropped_uncited_or_unretrieved": []
     },
-    "ms": 12125
+    "ms": 12773
    },
    {
     "agent": "orchestrator",
@@ -4831,13 +4945,13 @@
     "turn": 3,
     "next": "intake",
     "skill": "note-screening",
-    "instruction": "Please screen the PHI-redacted note using the BE FAST rule and summarize any relevant prior de-identified cases that may inform the clinician's prevention topics for stroke risk.",
-    "reason": "The intake agent is needed to gather initial information that will guide the risk assessment.",
+    "instruction": "Please screen the clinical note using the BE FAST rule and summarize any relevant prior de-identified cases that may inform the prevention topics for the clinician.",
+    "reason": "The intake agent can provide insights from prior cases that may help identify prevention topics for stroke risk.",
     "override": null,
     "eligible": [
      "intake"
     ],
-    "ms": 1727
+    "ms": 2108
    },
    {
     "agent": "intake",
@@ -4856,7 +4970,7 @@
     "hook_reason": "allowed by contract",
     "phi_redactions": 0,
     "output_preview": "{\n \"signs\": [],\n \"sudden_onset_language\": false,\n \"possible_emergency\": false,\n \"rule_source\": \"CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)\",\n \"neuro_note_probability\": null,\n \"classifier_test_f1\": 0.31,\n \"classifier_note\": \"TF-IDF + logistic reg",
-    "ms": 56
+    "ms": 77
    },
    {
     "agent": "intake",
@@ -4878,9 +4992,9 @@
      "red_flag_signs": [],
      "neuro_note_probability": null,
      "prior_cases": "no earlier cases in this session",
-     "summary": "The note screening returned no red-flag signs, and there was no sudden-onset language indicating an emergency. The note's wording does not resemble neurology notes."
+     "summary": "The note did not contain any signs of stroke or sudden-onset language, indicating no emergency findings. Additionally, there are no earlier cases in this session to inform prevention topics."
     },
-    "ms": 6383
+    "ms": 7372
    },
    {
     "agent": "orchestrator",
@@ -4888,13 +5002,13 @@
     "turn": 4,
     "next": "clinical_writer",
     "skill": "risk-communication",
-    "instruction": "Generate the clinician-facing decision-support report that outlines the prevention topics to raise for this patient's stroke risk, incorporating insights from the previous agents' findings.",
-    "reason": "The clinical_writer can synthesize the information into a comprehensive report for the clinician.",
+    "instruction": "Generate the clinician-facing decision-support report that outlines the prevention topics to raise for this patient's stroke risk, incorporating insights from the risk analyst and evidence researcher.",
+    "reason": "The clinical writer can synthesize the findings into a comprehensive report for the clinician.",
     "override": null,
     "eligible": [
      "clinical_writer"
     ],
-    "ms": 1846
+    "ms": 2098
    },
    {
     "agent": "clinical_writer",
@@ -4910,10 +5024,10 @@
    {
     "agent": "clinical_writer",
     "type": "generation",
-    "chars": 2065,
+    "chars": 1982,
     "finish_reason": "stop",
     "revision": 0,
-    "ms": 7038
+    "ms": 7099
    },
    {
     "agent": "orchestrator",
@@ -4921,13 +5035,13 @@
     "turn": 5,
     "next": "safety_reviewer",
     "skill": "red-team-review",
-    "instruction": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization.",
+    "instruction": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it.",
     "reason": "The draft is ready for safety review.",
     "override": null,
     "eligible": [
      "safety_reviewer"
     ],
-    "ms": 1749
+    "ms": 1759
    },
    {
     "agent": "safety_reviewer",
@@ -4946,7 +5060,7 @@
     "verdict": "approve",
     "failed_checks": [],
     "issues": [],
-    "ms": 1821
+    "ms": 2462
    },
    {
     "agent": "orchestrator",
@@ -4960,7 +5074,7 @@
     "eligible": [
      "FINISH"
     ],
-    "ms": 1619
+    "ms": 1811
    },
    {
     "agent": "gate",
@@ -4974,25 +5088,25 @@
     "memory": {
      "skipped": "write blocked: user has not consented to case-history storage"
     },
-    "ms": 1
+    "ms": 2
    }
   ],
   "a2a": [
    {
-    "ts": 1794567371.803,
+    "ts": 1794568094.84,
     "event": "task/send",
     "from": "orchestrator",
     "to": "risk_analyst",
-    "taskId": "b45556a43beb",
+    "taskId": "39ac32388107",
     "skill": "cohort-comparison",
     "text": "Run the calibrated stroke-risk model for this patient and compare the results with cohort statistics to identify relevant prevention topics."
    },
    {
-    "ts": 1794567379.529,
+    "ts": 1794568103.046,
     "event": "task/completed",
     "from": "risk_analyst",
     "to": "orchestrator",
-    "taskId": "b45556a43beb",
+    "taskId": "39ac32388107",
     "artifact": "risk_assessment",
     "artifact_keys": [
      "calculations",
@@ -5004,20 +5118,20 @@
     ]
    },
    {
-    "ts": 1794567381.257,
+    "ts": 1794568104.974,
     "event": "task/send",
     "from": "orchestrator",
     "to": "evidence_researcher",
-    "taskId": "a392053fd392",
+    "taskId": "aff2fddbc88b",
     "skill": "guideline-citation",
-    "text": "Please search the CDC/NHLBI guideline corpus for relevant prevention topics related to stroke risk factors for this patient and return the cited claims."
+    "text": "Please search the CDC/NHLBI guideline corpus for relevant prevention topics related to the patient's stroke risk factors and return the cited claims."
    },
    {
-    "ts": 1794567393.384,
+    "ts": 1794568117.749,
     "event": "task/completed",
     "from": "evidence_researcher",
     "to": "orchestrator",
-    "taskId": "a392053fd392",
+    "taskId": "aff2fddbc88b",
     "artifact": "cited_findings",
     "artifact_keys": [
      "dropped_uncited_or_unretrieved",
@@ -5026,20 +5140,20 @@
     ]
    },
    {
-    "ts": 1794567395.112,
+    "ts": 1794568119.858,
     "event": "task/send",
     "from": "orchestrator",
     "to": "intake",
-    "taskId": "114da93614c7",
+    "taskId": "52bd809455ae",
     "skill": "note-screening",
-    "text": "Please screen the PHI-redacted note using the BE FAST rule and summarize any relevant prior de-identified cases that may inform the clinician's prevention topics for stroke risk."
+    "text": "Please screen the clinical note using the BE FAST rule and summarize any relevant prior de-identified cases that may inform the prevention topics for the clinician."
    },
    {
-    "ts": 1794567401.498,
+    "ts": 1794568127.231,
     "event": "task/completed",
     "from": "intake",
     "to": "orchestrator",
-    "taskId": "114da93614c7",
+    "taskId": "52bd809455ae",
     "artifact": "intake_summary",
     "artifact_keys": [
      "neuro_note_probability",
@@ -5049,20 +5163,20 @@
     ]
    },
    {
-    "ts": 1794567403.345,
+    "ts": 1794568129.33,
     "event": "task/send",
     "from": "orchestrator",
     "to": "clinical_writer",
-    "taskId": "baa7aaf3be59",
+    "taskId": "08f6a5e487d1",
     "skill": "risk-communication",
-    "text": "Generate the clinician-facing decision-support report that outlines the prevention topics to raise for this patient's stroke risk, incorporating insights from the previous agents' findings."
+    "text": "Generate the clinician-facing decision-support report that outlines the prevention topics to raise for this patient's stroke risk, incorporating insights from the risk analyst and evidence researcher."
    },
    {
-    "ts": 1794567410.384,
+    "ts": 1794568136.431,
     "event": "task/completed",
     "from": "clinical_writer",
     "to": "orchestrator",
-    "taskId": "baa7aaf3be59",
+    "taskId": "08f6a5e487d1",
     "artifact": "report_draft",
     "artifact_keys": [
      "chars",
@@ -5070,20 +5184,20 @@
     ]
    },
    {
-    "ts": 1794567412.134,
+    "ts": 1794568138.191,
     "event": "task/send",
     "from": "orchestrator",
     "to": "safety_reviewer",
-    "taskId": "fbbb8d2e6478",
+    "taskId": "2bad3dde781b",
     "skill": "red-team-review",
-    "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalization."
+    "text": "Please review the latest draft for any unsafe advice, unsupported claims, or biases before finalizing it."
    },
    {
-    "ts": 1794567413.956,
+    "ts": 1794568140.655,
     "event": "task/completed",
     "from": "safety_reviewer",
     "to": "orchestrator",
-    "taskId": "fbbb8d2e6478",
+    "taskId": "2bad3dde781b",
     "artifact": "review",
     "artifact_keys": [
      "failed",
@@ -5092,7 +5206,7 @@
    }
   ],
   "receipt": {
-   "run_id": "88f54fdf0720430bacd1d35b481a8413",
+   "run_id": "a089d1789746416db8041a79d7b0758e",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5100,9 +5214,9 @@
    "temperature": 0,
    "mcp_server_sha256": "e80dbfd43f297e5e337db3fe03226949c8779ada1ecc4a11363b8791f109fc6a",
    "inputs_sha256": "5670332421e97eaa1e248ee58e4219307398bddc1b64f1be477898d21fe65e55",
-   "report_sha256": "c760171f6301df17d1c43359952a3e13cbeb4028f8aa869322a3d982ea357d76",
-   "trace_sha256": "76d8b99c1e067da217645a3eb502ee38b5d148ac9ce2d6757188218470847128",
-   "audit_chain_head": "6c68d0ac4d12414daeb49d749a6e242ad45d6494f79caba8de7f188c725f3130",
+   "report_sha256": "29092393acabb84573c37389df12a0282fe910043dd9cd7657b97f992a35d09f",
+   "trace_sha256": "6386aa9b2da463f994e97b96856a75c85d0faf31d99be97c8169e49b52caa373",
+   "audit_chain_head": "be645aab68de694256ee11d3b6552e58b2e622f2b0f71723b88e5b94c3af5640",
    "audit_chain_valid": true,
    "status": "finalized",
    "checks": {
@@ -5124,18 +5238,18 @@
    "approval": null,
    "counts": {
     "llm_calls": 17,
-    "tokens": 23866,
+    "tokens": 23930,
     "tool_calls": 10
    },
-   "latency_s": 47.41,
-   "key_id": "ephemeral:b42e4a62",
+   "latency_s": 51.22,
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "4abcae2a79131a28599c6f564dcf79e4654e0843e529841f40d1d2036890ba42"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "62611a1162f9f55316b3cd674b7f04c7afeadfe04f27e59fce8e9fa824c3e871"
   },
   "llm_calls": 17,
   "tool_calls": 10,
-  "latency_s": 47.41
+  "latency_s": 51.22
  },
  {
   "case": {
@@ -5178,7 +5292,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "db3322bf6dd54916b96a7cced01c003d",
+   "run_id": "016a7f0c1aba488e8c41ceb15081ec87",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5188,7 +5302,7 @@
    "inputs_sha256": "54aa271bf80446ba54ffacdb3e53b6cac1e3a42b913ccfb89dbff9646fb48d8d",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "d6feb8e529adb667f70d384cee445888e04a8b76a7987f79e9e1dab7866b061a",
-   "audit_chain_head": "88db28c8dd64dc6bbd942f8e1d4e2aa3290c5afa5e2a7eb9f0a648be79770895",
+   "audit_chain_head": "f1c1756b141248c653fa880c5371a8a279dfa2f486a07a77e5a32dadf1adb625",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5201,10 +5315,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "cb96fbc3fd9093aaaf2c81d5c4862c60e48df90805b9889c2b191ab8499bdb30"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "db6cacee9d35b4dc92a2e16c7929352c98b9298eaf21842ba756730a710f3ef1"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5251,7 +5365,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "f30262fc2a0741368a600e7eb3056686",
+   "run_id": "fd605575c95e4971a423a04c2fe0d07d",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5261,7 +5375,7 @@
    "inputs_sha256": "885cb7ed3f1afafe7db01c78d0176408a2097fa8fb62c9f38cfc9fbdc4b9e256",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "f2c84965427e652f7091ceb8d6130c5555106be4c13b33afb903694e96fbd6c4",
-   "audit_chain_head": "5f6769cca87c6a9901c28ce3e5122e3450905190caacab4e189138392ffcc1ed",
+   "audit_chain_head": "f1c1756b141248c653fa880c5371a8a279dfa2f486a07a77e5a32dadf1adb625",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5274,10 +5388,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "7e57ce277fda6156de9d9ac7db1ef0993db821f1f7ce9dc07942b7bbd436a638"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "4313459bca8df6035a1362ecee74ffa4870bcacf8ee582bc1798f7063e5ac65f"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5324,7 +5438,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "2e248773be724918a2e7d78872a24569",
+   "run_id": "163de71f24ea4ba1bfb4de9400d505ca",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5334,7 +5448,7 @@
    "inputs_sha256": "f51b8e6d93d350768bba5d9c868d6e5a0605c20570cba5c0287dd4d4a6c81e9f",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "53ba9d5c53d5da05f40a2971c3c803b083fb7fdf43e919df91f7628a292b6fcd",
-   "audit_chain_head": "5f6769cca87c6a9901c28ce3e5122e3450905190caacab4e189138392ffcc1ed",
+   "audit_chain_head": "1536f353b1e5496fc53db395b495cad292aea243c03175964763981c9a3efb8e",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5347,10 +5461,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "af273ca813130b4c99ac6da4d4e6738af12fbe90b1aed144e281df24e96fa924"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "e49ed37a56b8ff09dc1642b54c45554a2cfbbb1a7ed9bbb58872df4350355d3b"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5411,7 +5525,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "bc6892428e2f4068806c8c30b8d157b3",
+   "run_id": "10aa55f4e04e44e4ad965963d9df0765",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5421,7 +5535,7 @@
    "inputs_sha256": "6a347a364a36a0bac607184cddf9047f0424122b2feea9cf158c15fb891d0966",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "ac31e7597f7a22e319c2c94445103ebbc94451450f9572ef4d2824aa4cf79c3e",
-   "audit_chain_head": "816f8619f1d064c0de234b890bc020bb56a4d8f1e3ba003f85962b15c241f7e6",
+   "audit_chain_head": "3b2e6edbd5f6bcb5238a1409e4b7ac8b2528d71adfe30f8951d46a6718467e96",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5434,10 +5548,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "a4a6f60e45db1673d4a4d9c553e3577ff9713b687f9bb5a20a61e6bb2d80b7af"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "20e756907db5480db5d9d5fe1f9073ef26c2345cda2acf03ce25dc8d0dc3f790"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5494,7 +5608,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "2c761e3a2a3b4ec09b35107ff07685c1",
+   "run_id": "86c62d449ad44b7cb1fabb4bbb1ebd2a",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5504,7 +5618,7 @@
    "inputs_sha256": "666ab2dd3eb5321b876089a15e318eb99cda3a3ed941309191ee8f2aaee94ea9",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "7099663c70bf8e4db31df17b07e8e2ef55af05e98c92aa4f99b72629f3fe32d9",
-   "audit_chain_head": "0c7b897e789671c997ab9a55b23621bdc68dbb769c20b64081bb30cf81e48ec5",
+   "audit_chain_head": "3b2e6edbd5f6bcb5238a1409e4b7ac8b2528d71adfe30f8951d46a6718467e96",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5517,10 +5631,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "817d676ceee414c22573a2c31367b0b9b8341aa5bbaf981aaf9c4700b3143055"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "e539bc1c5da6cf44e7a093828cfd6d85eae355b1f6809686dbee6e23e54a23b9"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5567,7 +5681,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "3751df37006243f1a783fcce43e40a9c",
+   "run_id": "adf7d3316e30411eb6c253798ad4f13f",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5577,7 +5691,7 @@
    "inputs_sha256": "300ddbb3e6a6638dae4d46f2b4da88de83af1c164cb3de2480dd19ced926bb94",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "64bc10ed42414fe42d309e0743c11b0c32758db1b6fe72b6382db8a23226a7c2",
-   "audit_chain_head": "539286501f6d308a7786b3c94ca08f098f2a7208afd4a1c0dcf1ca92d4703cf2",
+   "audit_chain_head": "d1ecd2eb621dcbf3d35f69cb294876e5a8cb6bcd1f8abb16660d380d67659eb7",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5590,10 +5704,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "2bf77485e66081cf9ee86c66b4ff65f47ef6a729af714a87c679bf4d33f702b9"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "b4505c7f952de8be96ceaf4a3a46f96e432fa6629ed0e814e79864b974c0bdf9"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5640,7 +5754,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "e7aa65b590754c6b9abae60c7624f58f",
+   "run_id": "ee801184744348929d2d1825a760cacd",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5650,7 +5764,7 @@
    "inputs_sha256": "9cfa158f8375e07ca14f67911aca8ee481731d75633867265884e762e86cb7d5",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "3701e652888f243de2d1e6558e7bd506fe00869428e5540ec5cf407f4a591195",
-   "audit_chain_head": "365f4229ec2a12ae7832903727dabad0fca8eac4eea333b9226c6a2fb5ec5e45",
+   "audit_chain_head": "bef2332075192789328e5850e4691894b02eb2176cfb8046890d199e8b6496cc",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5663,10 +5777,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "7e69dc242dc2333ff59353be09a7180987d41ab4a6a675594a0224f764703279"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "945f11163ab048f53bb05fc33d1bc36a0424391bf5285f2bd0e888c095380254"
   },
   "llm_calls": 0,
   "tool_calls": 0,
@@ -5713,7 +5827,7 @@
   ],
   "a2a": [],
   "receipt": {
-   "run_id": "2015519cfb054723a4f6f2a72f9d2b19",
+   "run_id": "64a21a53121946b4be28859c8e824997",
    "product": "NeuroGuard AI",
    "contract_version": "1.0.0",
    "contract_sha256": "e4e93ec9edfcad4f192659253f2558cf1f91c8ae48879748e4a4864b05b3e1ee",
@@ -5723,7 +5837,7 @@
    "inputs_sha256": "af1ef358e6e33c7994b679a14751ffb40edfd107469f980320894c18db41527a",
    "report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "trace_sha256": "079a2af58c22e4216725109308f8b7d7966c7695aae9f5e73df3979bf329b3b7",
-   "audit_chain_head": "290a72cd512763d05b0be7b46a2ca1f070cdd222dd41c1be667339b6f08508d8",
+   "audit_chain_head": "475b0703c2811d328ae0e226a94aee0085b9d6ee9afd4e501ad243c07b686294",
    "audit_chain_valid": true,
    "status": "blocked",
    "checks": {},
@@ -5736,10 +5850,10 @@
     "tool_calls": 0
    },
    "latency_s": 0.0,
-   "key_id": "ephemeral:b42e4a62",
+   "key_id": "ephemeral:585970e7",
    "algorithm": "HMAC-SHA256",
-   "signed_at": "2026-11-13T10:56:55+0000",
-   "signature": "30a357f5ec36cab91a26a599de667bddb4b12d76aeeeed42d43e10348e7b7d0e"
+   "signed_at": "2026-11-13T11:09:02+0000",
+   "signature": "08245ad569386ce829f973d97cd2cc468bb5dcb142882b185df5e00b0b43c796"
   },
   "llm_calls": 0,
   "tool_calls": 0,

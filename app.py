@@ -21,7 +21,7 @@ from core.stats import factor_tests
 
 st.set_page_config(page_title="NeuroGuard AI - stroke-risk decision support", page_icon="🧠", layout="wide")
 REPO = "https://github.com/sandipdey2/neuroguard-agentic-rag"
-LIVE_DEMO = "https://neuroguard-agentic-rag.streamlit.app"  # replace with the URL Streamlit Cloud assigns
+LIVE_DEMO = ""  # paste the URL Streamlit Cloud assigns after deployment
 CONTRACT = load_contract()
 DISCLAIMER = ("**Decision support only - not a medical device.** NeuroGuard AI has no regulatory clearance and must not be "
               "used to diagnose, treat or triage real patients. If someone shows sudden face drooping, arm weakness or speech "
@@ -41,7 +41,7 @@ SID = st.session_state["session_id"]
 
 st.markdown("<h1 style='margin-bottom:0'>🧠 NeuroGuard AI</h1>", unsafe_allow_html=True)
 st.caption("Multi-agent stroke-risk decision support: LLM orchestrator + 5 specialist agents, real MCP server, guideline RAG "
-           f"with citations, guardrails, invariant verifier and signed run receipts. [Source]({REPO}) · [Live demo]({LIVE_DEMO})")
+           f"with citations, guardrails, invariant verifier and signed run receipts. [Source]({REPO})" + (f" · [Live demo]({LIVE_DEMO})" if LIVE_DEMO else ""))
 st.warning(DISCLAIMER, icon="⚠️")
 
 with st.sidebar:

@@ -1,9 +1,9 @@
 case,status,route_valid,route_overrides,route_decisions,revisions,first_draft_pass,failed_checks,needs_approval,llm_calls,tool_calls,tokens,latency_s,receipt_verifies,audit_chain_valid,skills_loaded,resource_reads,a2a_messages,writer_truncations,red_team_dropped
-N1,finalized,True,1,6,0,True,[],True,17,11,25071,65.03,True,True,5,6,10,0,1
-N2,finalized,True,0,6,0,True,[],True,17,9,22594,49.5,True,True,5,5,10,0,0
-N3,finalized,True,4,6,0,True,[],True,17,8,21250,47.21,True,True,5,5,10,0,2
-N4,finalized,True,0,6,0,True,[],False,17,7,20154,45.54,True,True,5,5,10,0,2
-N5,finalized,True,1,6,0,True,[],True,17,8,21585,54.08,True,True,5,4,10,0,0
-N6,finalized,True,1,6,0,True,[],False,17,7,21987,53.67,True,True,5,8,10,0,2
-N7,finalized,True,2,6,0,True,[],False,17,7,20799,51.47,True,True,5,5,10,0,2
-N8,finalized,True,0,6,0,True,[],True,17,10,23866,47.41,True,True,5,6,10,0,1
+N1,finalized,True,1,6,0,True,[],True,17,11,24931,79.14,True,True,5,6,10,0,2
+N2,finalized,True,0,6,0,True,[],True,17,9,22787,48.15,True,True,5,5,10,0,1
+N3,finalized,True,4,6,0,True,[],True,18,8,22873,51.54,True,True,5,4,10,0,2
+N4,finalized,True,0,6,0,True,[],False,17,7,20005,48.12,True,True,5,5,10,0,2
+N5,finalized,True,1,6,0,True,[],True,17,8,21973,54.46,True,True,5,5,10,0,2
+N6,finalized,True,1,8,1,False,[],False,21,7,29219,65.29,True,True,7,8,14,0,1
+N7,finalized,True,2,6,0,True,[],False,17,7,20648,52.22,True,True,5,5,10,0,2
+N8,finalized,True,0,6,0,True,[],True,17,10,23930,51.22,True,True,5,6,10,0,2

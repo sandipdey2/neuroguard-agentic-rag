@@ -1,0 +1,17 @@
+server: neuroguard_mcp_server.py transport: stdio (subprocess)
+tools/list -> ['predict_risk', 'explain_factors', 'cohort_stats', 'screen_note', 'search_guidelines', 'calculator', 'memory_read', 'memory_write']
+resources/list -> ['guideline://index', 'model://risk-card', 'dataset://stroke-card', 'policy://harness-contract']
+resources/templates/list -> ['guideline://{chunk_id}']
+prompts/list -> ['clinical_report', 'red_team_review']
+tools/call predict_risk isError=False -> {  "risk_probability": 0.1564,  "risk_percent": 15.6,  "risk_band": "high",  "flag_threshold": 0.0549,  "dataset_prevalence": 0.0487,  "model": "logistic_regression + sigmoid calibration (CalibratedClassifierCV, cv=5)",  "test_roc_auc": 0.84,  "note": "Associa
+tools/call explain_factors isError=False -> {  "factors": [   {    "feature": "age",    "patient_value": 67.0,    "log_odds_contribution": 1.971,    "direction": "raises"   },   {    "feature": "avg_glucose_level",    "patient_value": 228.69,    "log_odds_contribution": 0.582,    "direction": "raises"  
+tools/call cohort_stats isError=False -> {  "headline": "Among dataset patients in group 'age 65-74, heart_disease=1', 12 of 76 had a recorded stroke (15.8%, Wilson 95% CI 9.3-25.6%); the whole dataset rate is 4.9%.",  "overall": {   "group": "all patients",   "n": 5109,   "strokes": 249,   "rate": 0
+tools/call screen_note isError=False -> {  "signs": [],  "sudden_onset_language": false,  "possible_emergency": false,  "rule_source": "CDC Signs and Symptoms of Stroke / BE FAST (https://www.cdc.gov/stroke/signs-symptoms/index.html)",  "neuro_note_probability": 0.422,  "classifier_test_f1": 0.31,  
+tools/call search_guidelines isError=False -> [  {   "id": "G-03",   "title": "Risk Factors for Stroke - High blood pressure",   "publisher": "Centers for Disease Control and Prevention",   "url": "https://www.cdc.gov/stroke/risk-factors/index.html",   "text": "High blood pressure is a leading cause of st
+tools/call calculator isError=False -> {  "expression": "round(0.1498 / 0.0487, 2)",  "result": 3.08 }
+tools/call calculator isError=False -> {  "expression": "__import__('os')",  "error": "disallowed expression element: Call" }
+tools/call memory_read isError=False -> {  "cases": [] }
+resources/read guideline://G-13 -> {  "id": "G-13",  "title": "B.E. F.A.S.T. to identify stroke",  "publisher": "Centers for Disease Control and Prevention",  "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",  "accessed": 
+resources/read model://risk-card -> {  "data": {   "rows": 5109,   "train": 4087,   "test": 1022,   "prevalence": 0.0487,   "test_positives": 50,   "sha256": "644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420"  },  "compa
+resources/read dataset://stroke-card -> {  "name": "Stroke Prediction Dataset (fedesoriano, Kaggle)",  "license_note": "Kaggle: 'Data files (c) Original Authors'; source described as confidential, for educational use only",  "pipeline_log":
+prompts/get clinical_report -> Write a stroke-risk decision-support report for a clinician reader in Markdown. Use exactly these level-2 headings in this order: ## Summary ## Risk estimate ##

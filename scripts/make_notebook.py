@@ -222,13 +222,15 @@ ax[0].barh(keys + ["ragas_faithfulness"], vals, color="#4a7ab7"); ax[0].set_xlim
 for i, v in enumerate(vals): ax[0].text(v + 0.01, i, f"{v:.2f}", va="center", fontsize=8)
 ax[1].bar(pc.case, pc.latency_s, color="#7ab77a"); ax[1].set_title("Latency per case (s)")
 plt.tight_layout(); plt.savefig("eval/agent_metrics.png", dpi=120); plt.show()""")
-md("""## 12. Reproducing the content-filter failure found during development
-An earlier full run of this notebook (before the fix) finalized only 3 of 8 reports: the writer pasted the long
+md("""## 12. Probing the content-filter failure found during development
+During development, an earlier full run of this notebook (before the fix; its outputs were overwritten and are not retained) finalized only 3 of 8 reports: the writer pasted the long
 CDC BE FAST passage verbatim and the provider stopped generation with `finish_reason="content_filter"`, so the
 truncated drafts lost their Guideline-evidence citation and Disclaimer and the finalize gate refused them.
 The fix (short paraphrased findings in the `guideline-citation` / `risk-communication` skills and the report
-prompt, plus one automatic retry on a truncated generation) is what the runs above use. This cell reproduces the
-failure mode directly: it asks for the old verbatim behaviour three times and records the finish reasons.""")
+prompt, plus one automatic retry on a truncated generation) is what the runs above use. This cell tries to reproduce the
+failure mode: it asks for the old verbatim behaviour three times and records the finish reasons. **Result in the
+final run: 0 of 3 probes were stopped**, so the filter did not trigger on this isolated prompt (it appears to depend on
+the full agent context and is not deterministic). The development observation is therefore reported, not reproduced.""")
 code("""from langchain_core.messages import HumanMessage
 from core.data import load_guidelines
 G = {d["id"]: d for d in load_guidelines()}

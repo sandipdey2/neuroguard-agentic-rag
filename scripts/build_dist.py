@@ -36,7 +36,7 @@ def main():
         for p in files():
             rel = p.relative_to(ROOT).as_posix()
             data = p.read_bytes()
-            for marker in ("voc-1", "sk-proj", "ghp_", "github_pat_"):
+            for marker in ("voc" + "-1", "sk" + "-proj", "gh" + "p_", "github" + "_pat_"):  # split so this file does not match itself
                 assert marker.encode() not in data, f"possible secret in {rel}"
             z.writestr(f"neuroguard-ai/{rel}", data)
             manifest.append(f"{hashlib.sha256(data).hexdigest()}  {rel}")
