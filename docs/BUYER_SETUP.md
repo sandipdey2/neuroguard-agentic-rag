@@ -7,7 +7,7 @@ and an OpenAI-compatible API key (OpenAI, or a course gateway such as Vocareum).
 
 ## 1. Unzip and install
 ```bash
-unzip neuroguard-ai-2.2.0.zip && cd neuroguard-ai
+unzip neuroguard-ai-2.3.0.zip && cd neuroguard-ai
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -41,8 +41,24 @@ streamlit run app.py
 3. In **Advanced settings > Secrets** paste the contents of your `secrets.toml`. Python 3.13 or 3.14 both work.
 4. Deploy. The first start trains the models (about 20 s); later runs take roughly 70-120 s each (mean 87.2 s in the evaluation).
 
-## 6. Customise
-- Budgets, turn caps, per-agent tool permissions and required checks: `harness_contract.json`.
+## 6. Optional: REST API, workers, chat and Slack (v2.3)
+```bash
+pip install -r requirements-api.txt                     # FastAPI, uvicorn, redis, psycopg
+export NG_API_KEY=PASTE_A_LONG_RANDOM_API_KEY_HERE NG_WEBHOOK_SECRET=PASTE_A_LONG_RANDOM_WEBHOOK_SECRET_HERE
+uvicorn api.main:app --port 8000                        # OpenAPI docs: http://localhost:8000/docs
+python scripts/scheduled_batch.py --rows 9046 31112     # cron trigger; add to crontab for nightly cohorts
+```
+- Web or mobile clients: see `docs/MOBILE_CLIENT.md` (curl, JS `fetch`, CORS via `NG_CORS_ORIGINS`). There is no native mobile app.
+- Shared storage: set `DATABASE_URL` (PostgreSQL) and/or `REDIS_URL`; without them everything falls back to local SQLite and an in-process cache.
+- **Slack bot:** create a Slack app, enable Socket Mode, add the slash command `/neuroguard` and the `commands` + `chat:write` scopes,
+  install it to your workspace, then `pip install -r requirements-bots.txt` and
+  `export SLACK_BOT_TOKEN=xoxb-PASTE_YOUR_TOKEN_HERE SLACK_APP_TOKEN=xapp-PASTE_YOUR_TOKEN_HERE` and run `python -m bots.slack_bot`.
+- **Docker Compose / Kubernetes:** `cp .env.example .env`, fill in the placeholders, `docker compose up -d --build`; manifests in `deploy/k8s/`. See `docs/DEPLOYMENT.md`.
+  Streamlit Community Cloud hosts only the UI, not the API, worker or bot.
+- Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). To run CI on GitHub, copy `ci/github-actions-ci.yml` to `.github/workflows/ci.yml`.
+
+## 7. Customise
+- Budgets, turn caps, per-agent tool permissions, required checks and success criteria: `harness_contract.json` (re-run `python scripts/success_report.py` after an evaluation).
 - Agent behaviour: `skills/*/SKILL.md` (front matter = catalog entry; body = instructions loaded on demand).
 - Guideline corpus: `data/guidelines.json` (keep `id`, `url`, `license` for every chunk).
 - Report template and red-team prompt: MCP prompts in `mcp_server/neuroguard_mcp_server.py`.

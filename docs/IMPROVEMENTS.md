@@ -16,6 +16,18 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.3.0 (12 audit gaps closed; live end-to-end runs, 79 pytest tests)
+| Change | Evidence |
+|---|---|
+| top-p in contract, LLM call and receipt; 11 success criteria with a target-vs-observed report | `eval/success_criteria.md` (11/11 met) |
+| PubMed E-utilities MCP tool, server-side MCP policy engine, `registry://tools` | `scripts/verify_mcp.py`, `tests/test_server_policy.py` |
+| FAISS vector store, Redis cache, PostgreSQL backend switch | `tests/test_rag_vector.py`, `tests/test_cache_db.py` (real PostgreSQL 16 and Redis 6 on the dev box) |
+| Durable queue + workers, FastAPI API, HMAC webhook, cron trigger | `tests/test_queue.py`, `tests/test_api.py`, `tests/test_triggers.py`; live API run in `eval/logs/e2e_v23.json` |
+| Chat tab + Slack bot with conversation memory; evidence agent as a tool | `tests/test_slack_chat.py`, `tests/test_agent_as_tool.py`; live follow-ups 14.3 s / 29.9 s |
+| Docker Compose, Kubernetes manifests, optional vLLM profile | `eval/logs/deploy_validation.log` (kubeconform 18/18, compose config valid); not applied to a live cluster |
+
+Still open from this list: networked A2A (item 10; events now reach the durable queue but agents still run in one process), OIDC auth (12), HIPAA readiness (13), parallel gathering (7). Item 11 is partly done: PostgreSQL is supported, row-level security and WORM audit storage are not. The CI workflow ships as `ci/github-actions-ci.yml` and runs once it is copied to `.github/workflows/`.
+
 ## Done in v2.1.0 (agentic-AI knowledge-graph coverage; notebook re-executed)
 | Change | Effect (eval/summary.json) |
 |---|---|
@@ -61,7 +73,7 @@ Regression: mean latency rose from 56.3 s to 87.2 s and LLM calls from 17.6 to 2
    * run Intake, Risk Analyst and Evidence Researcher in parallel (they are independent; LangGraph fan-out) - estimated, not yet measured:
      roughly 35-40% less wall-clock time;
    * allow parallel tool calls within a round (already returned by the model; execute with `asyncio.gather`);
-   * stream the writer's tokens to the UI; cache `search_guidelines` results per factor set;
+   * stream the writer's tokens to the UI (v2.3 added a cache for `search_guidelines` / `semantic_search` results, Redis-backed when `REDIS_URL` is set);
    * keep the MCP subprocess warm across runs instead of one spawn per run (~1.2 s handshake each).
 8. **Grounding metric** - word-overlap support is 0.55 while LLM-judged faithfulness is 0.977 (one mis-cited bullet); add an NLI / entailment
    check per evidence bullet and report it alongside the LLM judge (an LLM judging an LLM is weak evidence).

@@ -2,6 +2,24 @@
 
 **Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
+## 2.3.0 - 2026-11-14
+Closes the 12 gaps of the "How to Build an AI Agent" audit (37/37 items now mapped as full) and maps a LangGraph + MCP reference architecture (15 full, 1 partial, 1 optional).
+- **top_p** (1.0) in the contract, `get_llm` and the signed receipt. Contract v1.3.0.
+- **Success criteria**: 11 targets in `harness_contract.json`; `scripts/success_report.py` writes `eval/success_criteria.json/.md` (11/11 met).
+- **PubMed E-utilities** MCP tool `pubmed_search` (keyless, fixed host, 3 req/s, cache, then live, then a snapshot of real responses); literature is context, never a `[G-xx]` citation.
+- **Agent as a tool**: `consult_evidence_researcher` (`core/agent_tools.py`) wraps an evidence sub-agent ReAct loop; used by the chat follow-up agent and traced on the A2A bus.
+- **Conversation memory** (`core/chat_memory.py`): PHI-redacted, bounded, persisted only with consent; **💬 Chat** tab in the app (`st.chat_input`) and `core/chat.py`.
+- **Vector DB**: FAISS `IndexFlatIP` persisted with a corpus fingerprint (`core/vector_store.py`), used by hybrid search.
+- **Triggers + durable queue**: FastAPI (`api/main.py`: `/v1/cases`, `/v1/receipts/{id}/verify`, `/v1/chat`, HMAC `/v1/webhooks/case`, `/v1/events/{topic}`, CORS, API key), `scripts/scheduled_batch.py` (cron), `core/job_queue.py` (SQLite WAL / PostgreSQL SKIP LOCKED / Redis) with leases and retries, `core/worker.py`; A2A events are published to the queue.
+- **Server-side MCP policy engine** (`core/server_policy.py`): allowlist, clamps, validators, quotas and session pin re-checked inside the server for all 20 tools; tool registry resource `registry://tools`. MCP server: 20 tools, 6 resources + 1 template, 2 prompts.
+- **Optional backends**: Redis cache (`REDIS_URL`, `core/cache.py`) and PostgreSQL (`DATABASE_URL`, `core/db.py`) with SQLite / in-process fallbacks.
+- **Slack bot** (`bots/slack_bot.py`, Bolt socket mode, `/neuroguard`); optional untested Discord sketch.
+- **Deployment**: Dockerfile, Procfile, Docker Compose (api, worker, ui, slack-bot, postgres, redis; optional vllm profile), `deploy/k8s` (namespace, ConfigMap, secret template, Deployments, Services, StatefulSet, HPA, Ingress). vLLM is an optional on-prem path only, never used in tests or evaluations.
+- **LangGraph state machine phases**: planner, then executor (orchestrator + specialists), then validator (safety reviewer + gate) (`NODE_ROLES`, `phase` in `CaseState`).
+- **Tests**: 79 pytest tests (`tests/`), CI workflow file `ci/github-actions-ci.yml` (Python 3.13 + 3.14).
+- Responsive Streamlit layout; a blocked request no longer stops the remaining tabs from rendering.
+- Live e2e (gpt-4o-mini): pipeline finalized in 59.6 s (USD 0.0057); API agentic search finalized in 69.0 s (USD 0.0077); webhook classical finalized in 52.4 s (USD 0.0038).
+
 ## 2.2.0 - 2026-11-13
 Three selectable RAG modes plus agentic-search context tools; knowledge-graph coverage now 34 nodes (29 full, 5 partial).
 - **Classical RAG**: a fixed pipeline calls MCP `semantic_search` once per required topic before the LLM; docs are injected (system + user + docs).

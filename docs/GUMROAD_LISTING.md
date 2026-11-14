@@ -25,7 +25,10 @@ It is built for developers, AI engineers, health-tech founders and educators who
 pattern for trustworthy agent systems - not a black box.
 
 ## What is inside (feature bullets)
-- **Real MCP server** (stdio): 19 tools (incl. graph RAG traversal, episodic memory and 8 agentic-search context tools: files, skills, read-only SQL, allowlisted web, memory, sandboxed shell), 5 resources + 1 resource template, 2 prompts; verification script included.
+- **Real MCP server** (stdio): 20 tools (incl. graph RAG traversal, episodic memory, a keyless PubMed literature search and 8 agentic-search context tools: files, skills, read-only SQL, allowlisted web, memory, sandboxed shell), 6 resources (incl. a tool registry) + 1 resource template, 2 prompts; a server-side policy engine re-checks every call; verification script included.
+- **Service layer (v2.3)**: FastAPI REST API (OpenAPI docs, API key, CORS, HMAC webhook), a cron batch trigger, a durable job queue with workers (SQLite / PostgreSQL / Redis), a chat tab and a Slack bot with conversation memory, and an evidence sub-agent exposed as a tool.
+- **Deployment kit**: Dockerfile, Docker Compose (api, worker, UI, Postgres, Redis, Slack bot), Kubernetes manifests with HPA and a secret template, plus an optional, unevaluated vLLM on-prem profile.
+- **79 pytest tests** (no API key needed) and a GitHub Actions workflow file, plus measurable success criteria with a target-vs-observed report (11/11 met).
 - **Agentic-AI knowledge-graph coverage**: planner -> executor, ReAct traces, hybrid sparse + dense retrieval, graph RAG, agentic re-retrieval, writer self-critique, confidence policy gate, decision reasoning log, OTLP-JSON spans, per-run cost, episodic memory with a bounded learning loop, lab-report image/PDF intake (partial) and a cohort batch runner (partial) - see docs/KNOWLEDGE_GRAPH_COVERAGE.md.
 - **Multi-agent orchestration**: LLM routing with code-enforced eligibility rules, turn cap, revision loop.
 - **A2A-style agent cards** and task/message/artifact objects on an in-process bus (easy to move to HTTP).
@@ -37,15 +40,16 @@ pattern for trustworthy agent systems - not a black box.
 - **Skills with progressive disclosure** (`SKILL.md` files) you can edit without touching code.
 - **Explainable ML**: calibrated logistic regression compared with random forest and gradient boosting, exact
   per-factor contributions, cohort statistics with confidence intervals, model card resource.
-- **Consent-based memory** (SQLite) with a one-click clear.
+- **Consent-based memory** (SQLite, or PostgreSQL via `DATABASE_URL`) with a one-click clear; FAISS vector store for retrieval.
 - **Polished Streamlit UI**: live trace, A2A log, MCP calls, citations, charts, clinician approval, PDF/Markdown
   report and signed receipt downloads.
 - **Executed evaluation notebook** with real results, including documented failure cases.
 - Pinned requirements tested on Python 3.13 and 3.14; one-click Streamlit Community Cloud deployment.
 
 ## What the buyer gets
-- `neuroguard-ai-2.2.0.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
-  evaluation notebook and results, architecture diagram, technical paper (PDF), buyer setup guide, changelog.
+- `neuroguard-ai-2.3.0.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
+  evaluation notebook and results, architecture diagram, technical paper (PDF), buyer setup guide, changelog, tests, API, bots and deployment manifests.
+- No native mobile app: the REST API is mobile-ready (see docs/MOBILE_CLIENT.md).
 - A data fetch script for the Stroke Prediction Dataset, which is **not bundled** because its Kaggle terms are
   educational use; bring your own licensed data for commercial deployments.
 - No API key is included. You need your own OpenAI-compatible key.
