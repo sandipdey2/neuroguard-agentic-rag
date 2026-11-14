@@ -1,7 +1,7 @@
 """Queue worker: takes case jobs off the durable queue and runs them through the multi-agent pipeline.
 
 Used by the FastAPI service (an in-process worker thread, ``NG_API_INLINE_WORKER=1`` default), by
-``python -m core.worker`` (a separate worker container in docker-compose / Kubernetes) and by the scheduled batch CLI.
+``python -m core.worker`` (a separate local worker process) and by the scheduled batch CLI.
 Stores only the de-identified case summary, the report markdown and the signed receipt as the job result.
 """
 from __future__ import annotations

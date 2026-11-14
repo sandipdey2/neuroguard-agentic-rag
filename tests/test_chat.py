@@ -1,5 +1,4 @@
-"""Slack handler, chat routing, conversation memory and case-request parsing (LLM pipeline mocked)."""
-from bots import slack_bot
+"""Chat routing, conversation memory and case-request parsing (LLM pipeline mocked)."""
 from core.chat import case_summary, handle_message, parse_case_request, summary_text
 from core.chat_memory import ConversationMemory
 
@@ -46,29 +45,3 @@ def test_handle_message_case_then_followup(fake_run):
 def test_summary_text_blocked():
     s = case_summary({"status": "blocked", "input_guardrail": {"reason": "emergency"}, "receipt": {"signature": "f" * 64}})
     assert "blocked" in summary_text(s)
-
-
-def test_slack_help_and_case(fake_run):
-    assert "neuroguard" in slack_bot.build_reply("help", "slack-T-U")["text"]
-    msg = slack_bot.build_reply("row 9046", "slack-T-U", run=fake_run)
-    assert "15.0%" in msg["text"] and msg["response_type"] == "ephemeral"
-    assert msg["blocks"][-1]["elements"][0]["text"].startswith("Signed receipt")
-    assert slack_bot._last_case["slack-T-U"]["risk_band"] == "high"
-
-
-def test_slack_command_acks_then_responds(fake_run):
-    acks, responses = [], []
-    slack_bot.handle_command(acks.append, {"text": "row 9046", "team_id": "T1", "user_id": "U1"}, responses.append,
-                             run=fake_run, background=False)
-    assert acks and "working" in acks[0]["text"]
-    assert responses and "15.0%" in responses[0]["text"]
-    assert fake_run.calls[-1]["session_id"] == "slack-T1-U1"
-
-
-def test_slack_error_is_reported():
-    responses = []
-
-    def boom(*a, **k):
-        raise RuntimeError("gateway down")
-    slack_bot.handle_command(lambda *_: None, {"text": "row 9046"}, responses.append, run=boom, background=False)
-    assert "gateway down" in responses[0]["text"]

@@ -1,4 +1,4 @@
-# HTTP API (FastAPI), queue worker and optional Redis / PostgreSQL backends - containers only, NOT needed on Streamlit Cloud.
+# HTTP API (FastAPI), queue worker and optional Redis / PostgreSQL backends - run locally with uvicorn, NOT needed on Streamlit Cloud.
 # Wheels verified on Python 3.13.5 and 3.14.10 (Linux x86_64).
 -r requirements.txt
 fastapi==0.162.7

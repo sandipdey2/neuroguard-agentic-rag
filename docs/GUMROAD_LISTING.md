@@ -26,8 +26,8 @@ pattern for trustworthy agent systems - not a black box.
 
 ## What is inside (feature bullets)
 - **Real MCP server** (stdio): 20 tools (incl. graph RAG traversal, episodic memory, a keyless PubMed literature search and 8 agentic-search context tools: files, skills, read-only SQL, allowlisted web, memory, sandboxed shell), 6 resources (incl. a tool registry) + 1 resource template, 2 prompts; a server-side policy engine re-checks every call; verification script included.
-- **Service layer (v2.3)**: FastAPI REST API (OpenAPI docs, API key, CORS, HMAC webhook), a cron batch trigger, a durable job queue with workers (SQLite / PostgreSQL / Redis), a chat tab and a Slack bot with conversation memory, and an evidence sub-agent exposed as a tool.
-- **Deployment kit**: Dockerfile, Docker Compose (api, worker, UI, Postgres, Redis, Slack bot), Kubernetes manifests with HPA and a secret template, plus an optional, unevaluated vLLM on-prem profile.
+- **Service layer (v2.3)**: FastAPI REST API (OpenAPI docs, API key, CORS, HMAC webhook), a cron batch trigger, a durable job queue with workers (SQLite / PostgreSQL / Redis), a chat tab with conversation memory, and an evidence sub-agent exposed as a tool.
+- **Simple to run**: one-click Streamlit Community Cloud deploy for the UI; the API runs locally with `uvicorn api.main:app`.
 - **79 pytest tests** (no API key needed) and a GitHub Actions workflow file, plus measurable success criteria with a target-vs-observed report (11/11 met).
 - **Agentic-AI knowledge-graph coverage**: planner -> executor, ReAct traces, hybrid sparse + dense retrieval, graph RAG, agentic re-retrieval, writer self-critique, confidence policy gate, decision reasoning log, OTLP-JSON spans, per-run cost, episodic memory with a bounded learning loop, lab-report image/PDF intake (partial) and a cohort batch runner (partial) - see docs/KNOWLEDGE_GRAPH_COVERAGE.md.
 - **Multi-agent orchestration**: LLM routing with code-enforced eligibility rules, turn cap, revision loop.
@@ -47,9 +47,8 @@ pattern for trustworthy agent systems - not a black box.
 - Pinned requirements tested on Python 3.13 and 3.14; one-click Streamlit Community Cloud deployment.
 
 ## What the buyer gets
-- `neuroguard-ai-2.3.0.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
-  evaluation notebook and results, architecture diagram, technical paper (PDF), buyer setup guide, changelog, tests, API, bots and deployment manifests.
-- No native mobile app: the REST API is mobile-ready (see docs/MOBILE_CLIENT.md).
+- `neuroguard-ai-2.4.0.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
+  evaluation notebook and results, architecture diagram, technical paper (PDF), buyer setup guide, changelog, tests and the REST API.
 - A data fetch script for the Stroke Prediction Dataset, which is **not bundled** because its Kaggle terms are
   educational use; bring your own licensed data for commercial deployments.
 - No API key is included. You need your own OpenAI-compatible key.

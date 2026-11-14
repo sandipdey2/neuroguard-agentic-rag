@@ -32,7 +32,7 @@ BODY = {"profile": {"age": 67, "gender": "Male", "hypertension": 0, "heart_disea
 
 def test_health_and_openapi(api):
     h = api.get("/health").json()
-    assert h["status"] == "ok" and h["version"] == "2.3.0" and h["queue"]["backend"] == "sqlite" and h["auth"] == "api-key"
+    assert h["status"] == "ok" and h["version"] == "2.4.0" and h["queue"]["backend"] == "sqlite" and h["auth"] == "api-key"
     spec = api.get("/openapi.json").json()
     assert {"/v1/cases", "/v1/cases/{job_id}", "/v1/receipts/{job_id}/verify", "/v1/webhooks/case"} <= set(spec["paths"])
     assert api.get("/docs").status_code == 200
@@ -85,7 +85,7 @@ def test_webhook_signature(api):
     assert get_queue().get(r.json()["job_id"])["source"] == "webhook"
 
 
-def test_cors_for_mobile_web_clients(api):
+def test_cors_for_browser_clients(api):
     r = api.options("/v1/cases", headers={"Origin": "https://app.example.org", "Access-Control-Request-Method": "POST",
                                           "Access-Control-Request-Headers": "X-API-Key,Content-Type"})
     assert r.headers.get("access-control-allow-origin") == "https://app.example.org"

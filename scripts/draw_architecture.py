@@ -59,21 +59,21 @@ def arrow(x1, y1, x2, y2, label="", both=False, color="#333", ls="-", rad=0.0, l
                 bbox=dict(fc="white", ec="none", pad=0.3))
 
 
-ax.text(94, 172, "NeuroGuard AI v2.3 - architecture as implemented (app.py, core/*.py, mcp_server/neuroguard_mcp_server.py)",
+ax.text(94, 172, "NeuroGuard AI v2.4 - architecture as implemented (app.py, core/*.py, mcp_server/neuroguard_mcp_server.py)",
         ha="center", va="top", fontsize=13.5, weight="bold")
 ax.text(94, 168.8, f"All LLM roles: {K['model']}, temperature {K['temperature']}, OpenAI-compatible Vocareum endpoint   |   contract v{K['contract_version']}   |   "
         "colour: blue UI, red guard, yellow LLM agent, green deterministic code, purple MCP, cyan observability, grey data", ha="center", va="top", fontsize=8.4, color="#444")
 
-# ---------------- row 0 (v2.3): clients -> API gateway -> durable queue -> workers (LangGraph + MCP reference architecture)
+# ---------------- row 0 (v2.4, simplified): clients -> API gateway -> durable queue -> workers (LangGraph + MCP reference architecture)
 y0, h0 = 143, 20
-box(0, y0, 40, h0, "Clients", "Web UI: Streamlit app.py (form + Chat tab:\nst.chat_input, conversation memory)\nMobile / web apps: REST + CORS + OpenAPI\n(docs/MOBILE_CLIENT.md; no native app)\n"
-    "Slack bot: bots/slack_bot.py (/neuroguard,\nBolt socket mode) | Discord (optional)", C["ui"], bfs=6.9)
+box(0, y0, 40, h0, "Clients", "Web UI: Streamlit app.py\n(assess form + Chat tab: st.chat_input,\nconversation memory)\nlive on Streamlit Community Cloud\n\n"
+    "HTTP clients: REST + OpenAPI /docs", C["ui"], bfs=7.4)
 box(44, y0, 40, h0, "API gateway: FastAPI (api/main.py)", "POST /v1/cases  GET /v1/cases/{id}\nGET /v1/receipts/{id}/verify   POST /v1/chat\nPOST /v1/webhooks/case (HMAC signature)\n"
     "X-API-Key auth, pydantic validation, CORS\ntriggers: API, webhook, cron CLI\n(scripts/scheduled_batch.py)", C["guard"], bfs=6.9)
 box(88, y0, 40, h0, "Durable message queue (core/job_queue.py)", "jobs + events tables: SQLite (WAL) default,\nPostgreSQL (SKIP LOCKED) or Redis optional\nleases, retries, crash recovery\n"
-    "A2A bus events published (topic a2a)\nworkers: core/worker.py (N replicas, HPA)", C["rule"], bfs=6.9)
-box(132, y0, 57, h0, "Data & memory layer + deployment", "Vector store: FAISS IndexFlatIP, persisted (core/vector_store.py)\nPostgreSQL via DATABASE_URL | SQLite default (core/db.py)\n"
-    "Redis cache via REDIS_URL: retrieval, PubMed, opt-in LLM (core/cache.py)\nDocker Compose: api, worker, ui, slack-bot, redis, postgres\nKubernetes: deploy/k8s (HPA, Secret template) | vLLM: optional\nprofile only, not used - LLM = gpt-4o-mini via Vocareum", C["data"], bfs=6.8)
+    "A2A bus events published (topic a2a)\nworkers: core/worker.py", C["rule"], bfs=6.9)
+box(132, y0, 57, h0, "Data & memory layer", "Vector store: FAISS IndexFlatIP, persisted (core/vector_store.py)\nSQLite default | PostgreSQL via DATABASE_URL (core/db.py)\n"
+    "In-process cache | Redis via REDIS_URL (core/cache.py)\n\nRun: Streamlit Cloud (UI) + uvicorn locally (API)\nLLM = gpt-4o-mini via Vocareum", C["data"], bfs=7.2)
 arrow(40, 153, 44, 153); arrow(84, 153, 88, 153); arrow(128, 153, 132, 153, both=True, ls="--")
 arrow(13, 143, 13, 137, label="UI / chat", lx=6)
 arrow(100, 143, 44, 137, color="#2a7")

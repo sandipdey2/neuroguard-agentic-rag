@@ -43,7 +43,7 @@ Figure 1 shows the architecture as implemented; every box names the file that im
 
 **Learning, modality and scale (partial).** Each run stores a de-identified episode; reviewer feedback becomes whitelisted hints and clinician approvals become retrieval boosts capped at 0.06, so learning is bounded and reversible. Lab values can be read from an image or a text PDF.
 
-**Service layer (v2.3).** A FastAPI service, an HMAC webhook and a cron script feed a durable queue (SQLite, PostgreSQL or Redis) drained by workers. A chat tab and a Slack bot keep a redacted conversation memory; follow-ups call an evidence sub-agent exposed as a tool. Docker Compose and Kubernetes manifests are validated but not cluster-tested. `docs/KNOWLEDGE_GRAPH_COVERAGE.md` maps 34 concepts (29 full, 5 partial) and two architecture checklists to code.
+**Service layer (simplified in v2.4).** A FastAPI service run locally with uvicorn, an HMAC webhook and a cron script feed a durable queue (SQLite by default, PostgreSQL or Redis optional) drained by workers. A chat tab keeps a redacted conversation memory; follow-ups call an evidence sub-agent exposed as a tool. The live demo runs on Streamlit Community Cloud; extra packaging layers were removed to keep the capstone focused. `docs/KNOWLEDGE_GRAPH_COVERAGE.md` maps 34 concepts (29 full, 5 partial) and two architecture checklists to code.
 
 ## Ethical Considerations and Responsible AI
 

@@ -1,20 +1,51 @@
-# Deployment profiles
+# Deployment
 
 NeuroGuard is built, evaluated and demoed with **gpt-4o-mini through the Vocareum OpenAI-compatible endpoint**
-(temperature 0, top_p 1.0). Everything below is packaging around that same code.
+(temperature 0, top_p 1.0). v2.4 keeps deployment deliberately simple for the capstone: two ways to run the same code.
 
-| Profile | What runs | Use |
+| Where | What runs | Use |
 |---|---|---|
-| Streamlit Community Cloud | `app.py` only (UI, pipeline, MCP subprocess, in-app chat tab) | the public live demo |
-| Single host, no Docker | `uvicorn api.main:app` (+ inline worker), optional `streamlit run app.py`, `python -m bots.slack_bot` | development, small pilots |
-| Docker Compose | api, worker, ui, redis, postgres (+ `slack` profile; optional `vllm` profile) | one VM / on-prem server |
-| Kubernetes | `deploy/k8s/*.yaml`: namespace + ConfigMap, Secret **template**, api / worker / ui / slack-bot Deployments, Services, PostgreSQL StatefulSet, Redis, HPA, Ingress | clusters |
+| Streamlit Community Cloud (live) | `app.py`: UI, pipeline, MCP server subprocess, 💬 Chat tab | the public live demo: https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/ |
+| Your machine | `uvicorn api.main:app` (FastAPI + inline queue worker), optional `streamlit run app.py` | the REST API, webhook and cron trigger |
 
-**Streamlit Community Cloud cannot host the FastAPI service, the worker or the Slack bot.** It runs a single Streamlit
-process and exposes no other port or background service. The live demo therefore shows the UI and the chat tab. The API runs
-via Docker, Kubernetes, the `Procfile` (Render / Railway / Heroku-style hosts) or any VM.
+**Streamlit Community Cloud cannot host the FastAPI service.** It runs a single Streamlit process and exposes no other
+port. The live demo therefore shows the UI and the chat tab; run the API locally.
 
-## Backends (all optional, with fallbacks)
+## 1. Streamlit Community Cloud (live demo)
+
+1. Fork or push the repo to GitHub.
+2. On https://share.streamlit.io choose **Create app**, pick the repo, branch `main`, main file `app.py`.
+3. In **Advanced settings > Secrets** paste (with your own values):
+   ```toml
+   OPENAI_API_KEY = "PASTE_YOUR_KEY_HERE"
+   OPENAI_API_BASE = "https://openai.vocareum.com/v1"
+   NG_RECEIPT_KEY = "PASTE_A_LONG_RANDOM_STRING"
+   ```
+4. Deploy. The first start trains the models (about 20 s); a full run then takes about 1-2 minutes.
+
+## 2. REST API locally with uvicorn
+
+```bash
+pip install -r requirements-api.txt                       # FastAPI, uvicorn (+ optional redis / psycopg clients)
+export OPENAI_API_KEY=PASTE_YOUR_KEY_HERE OPENAI_API_BASE=https://openai.vocareum.com/v1
+export NG_API_KEY=PASTE_A_LONG_RANDOM_API_KEY_HERE NG_WEBHOOK_SECRET=PASTE_A_LONG_RANDOM_WEBHOOK_SECRET_HERE
+uvicorn api.main:app --port 8000                          # OpenAPI docs: http://localhost:8000/docs
+python -m core.worker                                     # optional extra worker process on the same queue
+python scripts/scheduled_batch.py --rows 9046 31112       # cron trigger; add to crontab for nightly cohorts
+```
+
+Example call:
+
+```bash
+curl -s -X POST "http://localhost:8000/v1/cases?wait=true" -H "X-API-Key: $NG_API_KEY" -H "Content-Type: application/json" \
+     -d '{"profile": {"age": 67, "gender": "Male", "hypertension": 0, "heart_disease": 1, "ever_married": "Yes",
+          "work_type": "Private", "Residence_type": "Urban", "avg_glucose_level": 228.69, "bmi": 36.6,
+          "smoking_status": "formerly smoked"}}'
+```
+
+Browser clients on another origin need `NG_CORS_ORIGINS` (comma-separated allowlist).
+
+## Backends (all optional, SQLite / in-process by default)
 
 | Variable | Effect | Fallback when unset or unreachable |
 |---|---|---|
@@ -23,42 +54,11 @@ via Docker, Kubernetes, the `Procfile` (Render / Railway / Heroku-style hosts) o
 | `NG_QUEUE_URL=redis://...` | job queue on Redis lists (`LMOVE`) instead of SQL | SQL queue |
 | `NG_VECTOR_BACKEND=memory` | skip FAISS | FAISS `IndexFlatIP` persisted under `NG_RUNTIME_DIR/vector_store` |
 
-Tested in this release: SQLite, plus a real PostgreSQL 16.2 server and a real Redis 6.2 server on the development box
-(tests `test_cache_db.py::test_postgres_backend_real` and `test_queue.py::test_redis_queue_real`, enabled with
-`NG_TEST_PG_URL` / `NG_TEST_REDIS_URL`), and fakeredis in CI. The live FastAPI end-to-end run used the PostgreSQL queue and the Redis cache.
-
-## Docker Compose
-
-```bash
-cp .env.example .env        # fill in placeholders; never commit .env
-docker compose up -d --build                     # api :8000, ui :8501, worker, redis, postgres
-docker compose --profile slack up -d slack-bot   # optional Slack bot (socket mode, no public URL needed)
-docker compose up -d --scale worker=3            # more workers on the same queue
-```
-
-## Kubernetes
-
-```bash
-cp deploy/k8s/01-secret.template.yaml /tmp/secret.yaml   # fill in real values OUTSIDE the repo
-kubectl apply -f deploy/k8s/00-namespace-config.yaml -f /tmp/secret.yaml
-kubectl apply -f deploy/k8s/02-app.yaml -f deploy/k8s/03-data.yaml -f deploy/k8s/04-hpa.yaml -f deploy/k8s/05-ingress.yaml
-```
-
-The image is built from the repo `Dockerfile` (python:3.13-slim, non-root user 10001). Push it to your registry and
-set the image name in `02-app.yaml`. The HPA scales the `worker` Deployment (2-8 replicas) and `api` (2-6) on CPU.
-The manifests pass `kubeconform -strict` (18/18 resources) and `docker compose config` passes for every profile; see
-`eval/logs/deploy_validation.log`. They have **not** been applied to a live cluster in this release, and the images were not
-built on the development box (no Docker daemon there).
-
-## Optional on-prem LLM path: vLLM (not the default)
-
-For sites that cannot send de-identified text to a hosted API, `docker-compose.yml` (profile `vllm`) and
-`deploy/k8s/optional/vllm.yaml` describe a self-hosted **vLLM** server with an OpenAI-compatible `/v1` API. It is
-**optional, off by default, and not used in any test, evaluation or the live demo.** To try it, point `OPENAI_API_BASE` at
-`http://vllm:8000/v1`, set the served model name in `harness_contract.json` (this changes the contract hash), and
-**re-run the evaluation notebook** before relying on it: every number in this repo was measured with gpt-4o-mini.
+Tested: SQLite always; a real PostgreSQL 16.2 server and a real Redis 6.2 server on the development box
+(`test_cache_db.py::test_postgres_backend_real`, `test_queue.py::test_redis_queue_real`, enabled with
+`NG_TEST_PG_URL` / `NG_TEST_REDIS_URL`), and fakeredis in CI.
 
 ## Secrets
 
-Only placeholders live in the repo: `.env.example`, `.streamlit/secrets.toml.example`, `deploy/k8s/01-secret.template.yaml`.
+Only placeholders live in the repo: `.env.example` and `.streamlit/secrets.toml.example`.
 The MCP server subprocess never receives `OPENAI_API_KEY`, `NG_RECEIPT_KEY` or GitHub tokens.

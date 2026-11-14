@@ -69,7 +69,7 @@ Every node of the agentic-AI knowledge graph (Foundations, Retrieval & Memory, A
 | Memory & learning loops | partial | `core/episodes.py::learned_hints, retrieval_boosts` | recurring reviewer/clinician feedback becomes whitelisted hints and bounded retrieval boosts. **Limit:** bounded and reversible by design; no weight updates | notebook s.13: learned hints []; 6 boosted excerpts after 3 demo approvals (cap 0.06) |
 | Self-improving agents | partial | `core/episodes.py + planner + writer` | agents read their own past failures before acting; effect shown in notebook demo. **Limit:** prompt-level only; no autonomous code or prompt rewriting | notebook s.13 reruns (n=2, illustrative): hints and recalled episodes reach planner and writer |
 | Multi-modal reasoning | partial | `core/multimodal.py` | lab image -> gpt-4o-mini vision structured values; PDF -> pypdf text + regex. **Limit:** 3 fields only, no OCR for scanned PDFs, small rendered test set | notebook s.14: image field accuracy 1.0, PDF 1.0 on 5 real rows; invented BP values 0 |
-| Agentic workflows at scale | partial | `core/batch.py, core/job_queue.py, core/worker.py, deploy/k8s` | cohort batch with semaphore concurrency and shared token-bucket rate limit; v2.3: durable job queue (SQLite / PostgreSQL / Redis) consumed by N workers, Kubernetes HPA for API and workers. **Limit:** multi-worker path implemented and tested on one machine; not load-tested on a cluster | notebook s.15 / eval/logs/batch_demo.json: 3 cases, concurrency 3, speed-up 2.79x, 3/3 finalized |
+| Agentic workflows at scale | partial | `core/batch.py, core/job_queue.py, core/worker.py` | cohort batch with semaphore concurrency and shared token-bucket rate limit; v2.3: durable job queue (SQLite / PostgreSQL / Redis) consumed by N workers. **Limit:** multi-worker path implemented and tested on one machine; not load-tested on a cluster | notebook s.15 / eval/logs/batch_demo.json: 3 cases, concurrency 3, speed-up 2.79x, 3/3 finalized |
 
 ## RAG modes compared (notebook s.17, same normal cases)
 
@@ -116,7 +116,7 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 
 ## AI Agent build diagram ("How to Build an AI Agent": 8 boxes, 37 items)
 
-**Status (v2.3.0): 37 items - 37 full.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, Slack bot). Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
+**Status (v2.4.0): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
 
 | Box | Item | Status | File / function | How it works |
 |---|---|---|---|---|
@@ -151,16 +151,16 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 | 6 Orchestration | Error handling | full | `core/agents.py::call_llm, core/worker.py, core/cache.py` | gateway retries, tool errors as data, timeouts, job retry + lease recovery, cache / DB fallbacks. |
 | 7 Interface | Chat interface | full | `app.py 'Chat' tab, core/chat.py` | st.chat_input / st.chat_message: run cases and ask follow-ups with conversation memory. |
 | 7 Interface | Web app | full | `app.py (Streamlit Community Cloud)` | live demo with 7 tabs. |
-| 7 Interface | API endpoint | full | `api/main.py (FastAPI)` | POST /v1/cases, GET /v1/cases/{id}, GET /v1/receipts/{id}/verify, webhook, chat, health; API-key auth, CORS, OpenAPI /docs. **Limit:** Streamlit Cloud cannot host it: run with Docker / compose / Kubernetes |
-| 7 Interface | Slack / Discord bot | full | `bots/slack_bot.py (Slack Bolt, socket mode), bots/discord_bot.py` | /neuroguard slash command returns summary + citations + receipt; handler unit-tested. **Limit:** not connected to a live Slack workspace in this project (no tokens); Discord bot optional and untested |
-| 8 Testing | Unit tests | full | `tests/ (pytest), ci/github-actions-ci.yml` | harness, guardrails, permissions, sandbox, SQL authorizer, RAG/vector store, queue, cache, DB, API, Slack, chat memory, agent-as-tool, deploy manifests; CI workflow for 3.13 + 3.14. **Limit:** the CI workflow ships as ci/github-actions-ci.yml; it runs once copied to .github/workflows/ (the push token had no workflow scope) |
+| 7 Interface | API endpoint | full | `api/main.py (FastAPI)` | POST /v1/cases, GET /v1/cases/{id}, GET /v1/receipts/{id}/verify, webhook, chat, health; API-key auth, CORS, OpenAPI /docs. **Limit:** Streamlit Cloud cannot host it: run it locally with uvicorn (docs/DEPLOYMENT.md) |
+| 7 Interface | Slack / Discord bot | out of scope | `-` | removed in v2.4 for capstone simplicity; the Streamlit Chat tab and POST /v1/chat cover chat access. **Limit:** not shipped |
+| 8 Testing | Unit tests | full | `tests/ (pytest), ci/github-actions-ci.yml` | harness, guardrails, permissions, sandbox, SQL authorizer, RAG/vector store, queue, cache, DB, API, chat memory, agent-as-tool, config templates; CI workflow for 3.13 + 3.14. **Limit:** the CI workflow ships as ci/github-actions-ci.yml; it runs once copied to .github/workflows/ (the push token had no workflow scope) |
 | 8 Testing | Latency tests | full | `evaluation.ipynb, eval/logs/e2e_v23.json` | per-run latency in every eval row and receipt; median vs target in success criteria. |
 | 8 Testing | Quality metrics | full | `evaluation.ipynb, eval/summary.json` | attack block rate, finalized rate, citation coverage, faithfulness, hit@3, AUC, Brier. |
 | 8 Testing | Improvement loop | full | `core/episodes.py, docs/IMPROVEMENTS.md` | episodes -> whitelisted hints + bounded retrieval boosts; roadmap from failures. |
 
 ## LangGraph + MCP architecture diagram
 
-**Status: 17 components - 15 full, 1 partial, 1 optional.** Client -> API gateway (FastAPI) -> LangGraph agent system (planner -> executor -> validator state machine) -> MCP server (tool registry, memory access, policy engine) -> data & memory layer (Redis cache, PostgreSQL, vector store) on Docker / Kubernetes. The LLM is gpt-4o-mini via the Vocareum OpenAI-compatible endpoint; vLLM is only an optional, documented on-prem profile that is not used anywhere by default, in tests or in evaluations.
+**Status: 17 components - 13 full, 4 out of scope.** Client -> API gateway (FastAPI) -> LangGraph agent system (planner -> executor -> validator state machine) -> MCP server (tool registry, memory access, policy engine) -> data & memory layer (Redis cache, PostgreSQL, vector store; SQLite and in-process defaults). The LLM is gpt-4o-mini via the Vocareum OpenAI-compatible endpoint. v2.4 removed the native-client, container, cluster and self-hosted-model items for capstone simplicity: they are marked out of scope below.
 
 State-machine mapping (`core/agents.py::NODE_ROLES`, every node writes `phase` into `CaseState`):
 
@@ -173,7 +173,7 @@ State-machine mapping (`core/agents.py::NODE_ROLES`, every node writes `phase` i
 | Layer | Component | Status | File / function | How it works |
 |---|---|---|---|---|
 | Client | Web UI | full | `app.py` | Streamlit app (assess form, chat tab, traces); responsive CSS for narrow screens. |
-| Client | Mobile App | partial | `api/main.py (CORS, OpenAPI), docs/MOBILE_CLIENT.md, app.py responsive CSS` | mobile-ready REST API (CORS allowlist, /docs, curl + JavaScript fetch examples) and a phone-friendly Streamlit layout. **Limit:** no native iOS/Android app is shipped |
+| Client | Mobile App | out of scope | `-` | removed in v2.4 for capstone simplicity; clients use the Streamlit web UI or the REST API. **Limit:** no mobile app or mobile client docs are shipped |
 | Client | API Request | full | `api/main.py` | JSON over HTTPS with X-API-Key; webhook with HMAC signature. |
 | API Gateway | FastAPI | full | `api/main.py` | FastAPI app: auth, validation (pydantic), CORS, queue hand-off, receipt verification. |
 | LangGraph Agent System | Planner Node | full | `core/agents.py::planner` | LLM plan from episodic memory (NODE_ROLES planner). |
@@ -186,6 +186,6 @@ State-machine mapping (`core/agents.py::NODE_ROLES`, every node writes `phase` i
 | Data & Memory Layer | Redis (cache) | full | `core/cache.py` | REDIS_URL -> Redis cache for retrieval, PubMed and opt-in LLM responses; in-process fallback (tested on real Redis 6.2 + fakeredis). **Limit:** optional; Streamlit Cloud uses the in-process cache |
 | Data & Memory Layer | PostgreSQL (database) | full | `core/db.py` | DATABASE_URL -> memory, episodes, chat turns and job queue in PostgreSQL (tested on a real PostgreSQL 16.2 server); SQLite default. **Limit:** optional; Streamlit Cloud uses SQLite |
 | Data & Memory Layer | Vector Store (embeddings) | full | `core/vector_store.py` | persisted FAISS index of the guideline embeddings. |
-| Deployment & LLM Infrastructure | Docker / Compose | full | `Dockerfile, docker-compose.yml` | api + worker + ui + slack-bot + redis + postgres (validated with docker compose config). **Limit:** images not built on the dev box (no Docker daemon) |
-| Deployment & LLM Infrastructure | Kubernetes | full | `deploy/k8s/*.yaml` | Deployments, Services, ConfigMap, Secret template, StatefulSet, HPA, Ingress (kubeconform -strict: valid). **Limit:** not applied to a live cluster |
-| Deployment & LLM Infrastructure | vLLM | optional | `docker-compose.yml profile vllm, deploy/k8s/optional/vllm.yaml, docs/DEPLOYMENT.md` | optional self-hosted OpenAI-compatible endpoint (base_url swap). **Limit:** NOT the default and NOT used in tests or evaluations; the project uses gpt-4o-mini via Vocareum only |
+| Deployment & LLM Infrastructure | Docker / Compose | out of scope | `-` | removed in v2.4 for capstone simplicity; the app runs on Streamlit Community Cloud and the API locally with uvicorn. **Limit:** no container files are shipped |
+| Deployment & LLM Infrastructure | Kubernetes | out of scope | `-` | removed in v2.4 for capstone simplicity. **Limit:** no cluster manifests are shipped |
+| Deployment & LLM Infrastructure | vLLM | out of scope | `-` | removed in v2.4 for capstone simplicity; the only LLM is gpt-4o-mini via the Vocareum OpenAI-compatible endpoint. **Limit:** no self-hosted model profile is shipped |

@@ -13,10 +13,12 @@ self-critique check every draft; a finalize gate and a confidence gate refuse an
 with an **HMAC-SHA256 signed receipt**, a decision reasoning log, OTLP-JSON spans and a cost estimate.
 Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
 
-**v2.3.0** adds a FastAPI service (REST + webhook + cron triggers on a durable queue), a 💬 Chat tab and Slack bot with
-conversation memory, an evidence sub-agent exposed as a tool, a FAISS vector store, a second keyless public API
-(PubMed E-utilities) as an MCP tool, a server-side MCP policy engine, optional Redis / PostgreSQL backends, Docker Compose and
-Kubernetes manifests, explicit success criteria and a pytest suite (79 tests). See [What's new in v2.3](#whats-new-in-v23).
+**v2.4.0 (simplified for the capstone)** keeps everything that runs the agent - a FastAPI service (REST + webhook + cron
+triggers on a durable queue), a 💬 Chat tab with conversation memory, an evidence sub-agent exposed as a tool, a FAISS vector
+store, a second keyless public API (PubMed E-utilities) as an MCP tool, a server-side MCP policy engine, optional Redis /
+PostgreSQL backends (SQLite by default), explicit success criteria and a pytest suite (75 tests) - and drops the extra
+packaging layers. It runs in two places only: Streamlit Community Cloud (live demo) and `uvicorn` on your machine (API).
+See [What's new in v2.3](#whats-new-in-v23) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ![architecture](architecture_diagram.png)
 
@@ -64,10 +66,9 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | Vector database | `core/vector_store.py`: FAISS `IndexFlatIP`, persisted with a corpus fingerprint, used by `core/rag.py` |
 | Triggers | `POST /v1/cases`, HMAC `POST /v1/webhooks/case`, cron CLI `scripts/scheduled_batch.py` |
 | Durable message queue | `core/job_queue.py` (SQLite WAL / PostgreSQL `SKIP LOCKED` / Redis `LMOVE`; leases, retries) + `core/worker.py`; A2A events published to it |
-| Unit tests + CI | `tests/` (79 tests, LLM mocked, MCP real); CI workflow `ci/github-actions-ci.yml` (Python 3.13 + 3.14) |
+| Unit tests + CI | `tests/` (75 tests, LLM mocked, MCP real); CI workflow `ci/github-actions-ci.yml` (Python 3.13 + 3.14) |
 | Chat interface | app tab **💬 Chat** (`st.chat_input`): "row 9046" or `age=67 …` runs a case; other messages are follow-ups |
-| API endpoint | `api/main.py` (FastAPI, OpenAPI at `/docs`, API key, CORS) + `Dockerfile` / `Procfile`; Streamlit Cloud cannot host it (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) |
-| Slack bot | `bots/slack_bot.py` (Bolt, socket mode, `/neuroguard`); optional untested Discord sketch `bots/discord_bot.py` |
+| API endpoint | `api/main.py` (FastAPI, OpenAPI at `/docs`, API key, CORS), run locally with `uvicorn`; Streamlit Cloud cannot host it (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) |
 
 **Live end-to-end (gpt-4o-mini via Vocareum, 2026-11-14):** direct pipeline, agentic mode: finalized, 59.6 s, 19 LLM / 14 tool calls,
 USD 0.0057, receipt valid. FastAPI `POST /v1/cases?wait=true` (agentic search, PostgreSQL queue, Redis cache): finalized, 69.0 s, USD 0.0077,
@@ -83,9 +84,9 @@ recalled "that factor" from conversation memory and called `pubmed_search` live.
 | Risk model ROC-AUC / Brier | ≥ 0.8 / ≤ 0.05 | 0.84 / 0.041 |
 | Receipts verify | true | true |
 | Median latency / cost per run | ≤ 120 s / ≤ USD 0.01 | 84.5 s / USD 0.0077 (highest e2e run) |
-| pytest pass rate | 1.0 | 79/79 |
+| pytest pass rate | 1.0 | 73/73 run (75 collected; 2 real-server PostgreSQL / Redis tests skip without a server) |
 
-### API, chat and Slack
+### API and chat (run locally)
 ```bash
 pip install -r requirements.txt -r requirements-api.txt
 export OPENAI_API_KEY=PASTE_YOUR_KEY_HERE OPENAI_API_BASE=https://openai.vocareum.com/v1 NG_API_KEY=PASTE_A_LONG_RANDOM_API_KEY_HERE
@@ -93,17 +94,15 @@ uvicorn api.main:app --port 8000          # docs at http://localhost:8000/docs
 curl -s -X POST "localhost:8000/v1/cases?wait=true" -H "X-API-Key: $NG_API_KEY" -H "Content-Type: application/json" \
   -d '{"profile": {"age": 67, "hypertension": 1, "avg_glucose_level": 228.7, "bmi": 36.6}}'
 python scripts/scheduled_batch.py --rows 9046 31112 --rag-mode classical     # cron trigger (exit 0 ok / 1 some failed / 2 config)
-pip install -r requirements-bots.txt && python -m bots.slack_bot          # SLACK_BOT_TOKEN + SLACK_APP_TOKEN, /neuroguard row 9046
 ```
-Mobile / web clients: [docs/MOBILE_CLIENT.md](docs/MOBILE_CLIENT.md) (curl + JS `fetch`, CORS). **There is no native mobile app.**
-Deployment (Docker Compose, Kubernetes, optional vLLM on-prem profile): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Deployment (Streamlit Community Cloud for the UI, `uvicorn` locally for the API): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### Two more architecture checklists, mapped to code
-* **"How to Build an AI Agent" (8 boxes, 37 items): 37/37 full** after v2.3 (v2.2: 25 full, 9 partial, 3 missing). Table: [docs/KNOWLEDGE_GRAPH_COVERAGE.md#ai-agent-build-diagram](docs/KNOWLEDGE_GRAPH_COVERAGE.md).
-* **LangGraph + MCP architecture (17 components): 15 full, 1 partial (mobile app: API-ready, no native app), 1 optional (vLLM).**
+* **"How to Build an AI Agent" (8 boxes, 37 items): 36 full, 1 out of scope** (the chat-platform bot item, removed in v2.4 for capstone simplicity; the 💬 Chat tab and `POST /v1/chat` cover chat). Table: [docs/KNOWLEDGE_GRAPH_COVERAGE.md#ai-agent-build-diagram](docs/KNOWLEDGE_GRAPH_COVERAGE.md).
+* **LangGraph + MCP architecture (17 components): 13 full, 4 out of scope** (the native-client, container, cluster and self-hosted-model boxes, removed in v2.4 for capstone simplicity).
   Client → API gateway (FastAPI) → LangGraph state machine: **Planner** = `planner`, **Executor** = `orchestrator` + intake / risk analyst /
   evidence researcher / clinical writer, **Validator** = `safety_reviewer` + `gate` (`core/agents.py::NODE_ROLES`) → MCP server
-  (tool registry `registry://tools`, memory tools, server-side policy engine) → Redis cache / PostgreSQL / FAISS → Docker / Kubernetes.
+  (tool registry `registry://tools`, memory tools, server-side policy engine) → Redis cache / PostgreSQL / FAISS (SQLite and in-process defaults).
 
 ## Integration of prior capstones
 | Project | Reused concept | In NeuroGuard |
@@ -166,7 +165,7 @@ python scripts/smoke_test.py          # one full multi-agent run
 python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + plan, ReAct, decisions
 streamlit run app.py
 ```
-Tests: `pip install -r requirements-dev.txt && pytest` (79 tests; real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
+Tests: `pip install -r requirements-dev.txt && pytest` (75 tests; real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
 
 ## Deploy on Streamlit Community Cloud
 New app → repo `sandipdey2/neuroguard-agentic-rag`, branch `main`, file `app.py` → Advanced settings → Secrets:
@@ -180,7 +179,7 @@ NG_RECEIPT_KEY = "a long random string"
 Stroke Prediction Dataset (fedesoriano, Kaggle; educational use — excluded from the product zip), MTSamples (CC0), 30 verbatim CDC/NHLBI excerpts (U.S. public domain).
 
 ## Limitations & ethics
-Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (one eval run hit the 330 s timeout); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process (its events are also published to the durable queue); the queue, Compose and Kubernetes setup were tested on one machine and validated with kubeconform, not load-tested on a cluster; the Slack bot is unit-tested, not connected to a live workspace in this release; vLLM is an optional on-prem profile that is not used or evaluated; web search only fetches allowlisted CDC/NIH/WHO source pages and the shell is an allowlist sandbox, not a container. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
+Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (one eval run hit the 330 s timeout); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process (its events are also published to the durable queue); the queue and workers were tested on one machine, not load-tested; the API is not hosted publicly (run it locally); web search only fetches allowlisted CDC/NIH/WHO source pages and the shell is an allowlist sandbox, not a container. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
 
 ## Product
 Gumroad listing draft: [docs/GUMROAD_LISTING.md](docs/GUMROAD_LISTING.md) · buyer guide: [docs/BUYER_SETUP.md](docs/BUYER_SETUP.md) · improvement roadmap: [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) · [CHANGELOG.md](CHANGELOG.md)

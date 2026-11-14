@@ -3,7 +3,7 @@
 Every store (long-term case memory, episodic memory, conversation memory, durable job queue) opens its connection
 through ``connect(sqlite_path)``. Without ``DATABASE_URL`` that is a plain ``sqlite3`` connection on the store's own
 file (the Streamlit Cloud default - nothing to install). With ``DATABASE_URL=postgresql://user:pass@host:5432/db``
-(docker-compose / Kubernetes profile) it returns a thin wrapper over ``psycopg`` 3 that accepts the same SQLite-style
+(optional, set in the environment) it returns a thin wrapper over ``psycopg`` 3 that accepts the same SQLite-style
 statements, so the stores need no second code path:
 
 * ``?`` placeholders -> ``%s``; ``INTEGER PRIMARY KEY AUTOINCREMENT`` -> ``BIGSERIAL PRIMARY KEY``; ``REAL`` -> ``DOUBLE PRECISION``

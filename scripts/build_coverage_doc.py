@@ -132,10 +132,11 @@ lines += ["", "## How the new pieces fit one run", "",
 from collections import Counter  # noqa: E402
 _ab = Counter(r[2] for r in AGENT_BUILD)
 lines += ["", "## AI Agent build diagram (\"How to Build an AI Agent\": 8 boxes, 37 items)", "",
-          f"**Status (v2.3.0): {len(AGENT_BUILD)} items - " + ", ".join(f"{n} {k}" for k, n in _ab.items()) + ".** "
+          f"**Status (v2.4.0): {len(AGENT_BUILD)} items - " + ", ".join(f"{n} {k}" for k, n in _ab.items()) + ".** "
           "v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, "
           "agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, "
-          "API endpoint, Slack bot). Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.", "",
+          "API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. "
+          "Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.", "",
           "| Box | Item | Status | File / function | How it works |", "|---|---|---|---|---|"]
 for b, i, st, where, how, note in AGENT_BUILD:
     lines.append(f"| {b} | {i} | {st} | `{where}` | {how}." + (f" **Limit:** {note}" if note else "") + " |")
@@ -143,9 +144,9 @@ _lg = Counter(r[2] for r in LANGGRAPH_MCP)
 lines += ["", "## LangGraph + MCP architecture diagram", "",
           f"**Status: {len(LANGGRAPH_MCP)} components - " + ", ".join(f"{n} {k}" for k, n in _lg.items()) + ".** "
           "Client -> API gateway (FastAPI) -> LangGraph agent system (planner -> executor -> validator state machine) -> MCP server "
-          "(tool registry, memory access, policy engine) -> data & memory layer (Redis cache, PostgreSQL, vector store) on Docker / "
-          "Kubernetes. The LLM is gpt-4o-mini via the Vocareum OpenAI-compatible endpoint; vLLM is only an optional, documented "
-          "on-prem profile that is not used anywhere by default, in tests or in evaluations.", "",
+          "(tool registry, memory access, policy engine) -> data & memory layer (Redis cache, PostgreSQL, vector store; SQLite and "
+          "in-process defaults). The LLM is gpt-4o-mini via the Vocareum OpenAI-compatible endpoint. v2.4 removed the native-client, "
+          "container, cluster and self-hosted-model items for capstone simplicity: they are marked out of scope below.", "",
           "State-machine mapping (`core/agents.py::NODE_ROLES`, every node writes `phase` into `CaseState`):", "",
           "| Reference node | NeuroGuard LangGraph nodes |", "|---|---|",
           "| Planner Node | `planner` (LLM plan from episodic memory + learned hints) |",

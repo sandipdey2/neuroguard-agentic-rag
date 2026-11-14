@@ -23,8 +23,7 @@ The core evaluation numbers were **not** changed by these items (no model, promp
 | PubMed E-utilities MCP tool, server-side MCP policy engine, `registry://tools` | `scripts/verify_mcp.py`, `tests/test_server_policy.py` |
 | FAISS vector store, Redis cache, PostgreSQL backend switch | `tests/test_rag_vector.py`, `tests/test_cache_db.py` (real PostgreSQL 16 and Redis 6 on the dev box) |
 | Durable queue + workers, FastAPI API, HMAC webhook, cron trigger | `tests/test_queue.py`, `tests/test_api.py`, `tests/test_triggers.py`; live API run in `eval/logs/e2e_v23.json` |
-| Chat tab + Slack bot with conversation memory; evidence agent as a tool | `tests/test_slack_chat.py`, `tests/test_agent_as_tool.py`; live follow-ups 14.3 s / 29.9 s |
-| Docker Compose, Kubernetes manifests, optional vLLM profile | `eval/logs/deploy_validation.log` (kubeconform 18/18, compose config valid); not applied to a live cluster |
+| Chat tab with conversation memory; evidence agent as a tool | `tests/test_chat.py`, `tests/test_agent_as_tool.py`; live follow-ups 14.3 s / 29.9 s |
 
 Still open from this list: networked A2A (item 10; events now reach the durable queue but agents still run in one process), OIDC auth (12), HIPAA readiness (13), parallel gathering (7). Item 11 is partly done: PostgreSQL is supported, row-level security and WORM audit storage are not. The CI workflow ships as `ci/github-actions-ci.yml` and runs once it is copied to `.github/workflows/`.
 

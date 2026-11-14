@@ -69,7 +69,7 @@ def _get(endpoint: str, params: dict) -> dict:
     import httpx
     _rate_limit()
     with httpx.Client(timeout=TIMEOUT_S, follow_redirects=False,
-                      headers={"User-Agent": "NeuroGuard-AI/2.3 (+https://github.com/sandipdey2/neuroguard-agentic-rag)"}) as cl:
+                      headers={"User-Agent": "NeuroGuard-AI/2.4 (+https://github.com/sandipdey2/neuroguard-agentic-rag)"}) as cl:
         r = cl.get(BASE + endpoint, params={**params, "retmode": "json", "tool": "neuroguard"})
         r.raise_for_status()
         return r.json()

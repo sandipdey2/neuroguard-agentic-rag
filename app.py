@@ -393,11 +393,16 @@ with tab_cov:
         st.markdown(f"**{grp}**")
         st.dataframe(cov[cov["group"] == grp].drop(columns=["group"]), width="stretch", hide_index=True)
     from core.coverage import agent_build_rows, langgraph_mcp_rows
-    st.markdown("**\"How to Build an AI Agent\" diagram - 37 items** (v2.3 closed the 12 gaps of the v2.2 audit)")
-    st.dataframe(pd.DataFrame(agent_build_rows()), width="stretch", hide_index=True)
-    st.markdown("**LangGraph + MCP architecture diagram** - planner → executor → validator state machine, MCP tool registry / "
-                "memory / policy engine, Redis / PostgreSQL / vector store, Docker / Kubernetes (vLLM optional, not used)")
-    st.dataframe(pd.DataFrame(langgraph_mcp_rows()), width="stretch", hide_index=True)
+    from collections import Counter
+    _ab, _lg = agent_build_rows(), langgraph_mcp_rows()
+    _fmt = lambda rows: ", ".join(f"{n} {k}" for k, n in Counter(r["status"] for r in rows).items())
+    st.markdown(f"**\"How to Build an AI Agent\" diagram - {len(_ab)} items: {_fmt(_ab)}** "
+                "(v2.4 simplified: the chat-platform bot item is out of scope)")
+    st.dataframe(pd.DataFrame(_ab), width="stretch", hide_index=True)
+    st.markdown(f"**LangGraph + MCP architecture diagram - {len(_lg)} components: {_fmt(_lg)}** - planner → executor → "
+                "validator state machine, MCP tool registry / memory / policy engine, Redis / PostgreSQL / vector store "
+                "(mobile app, container, cluster and self-hosted-model items removed in v2.4 for capstone simplicity)")
+    st.dataframe(pd.DataFrame(_lg), width="stretch", hide_index=True)
     gs = graph_rag.stats()
     st.caption(f"Knowledge graph used by Graph RAG: {gs['nodes']} nodes ({gs['node_kinds']}), {gs['edges']} edges ({gs['edge_relations']}).")
     st.caption("Episodic memory now: " + json.dumps(episodes.stats()))

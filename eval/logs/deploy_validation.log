@@ -1,7 +1,0 @@
-# Deployment manifest validation (2026-11-14 10:28 UTC)
-## kubeconform v0.8.0 -strict
-Summary: 18 resources found in 7 files - Valid: 18, Invalid: 0, Errors: 0, Skipped: 0
-## docker compose 5.7.1 config (all profiles)
-docker-compose.yml: valid
-vllm postgres redis worker api slack-bot ui 
-default services (no profile): postgres redis api ui worker 

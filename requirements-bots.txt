@@ -1,5 +1,0 @@
-# Chat-platform bots. Slack Bolt (socket mode) is tested; discord.py is optional and untested end-to-end.
--r requirements.txt
-slack-bolt==1.30.0
-slack-sdk==3.47.0
-# discord.py==2.6.4   # optional: uncomment for bots/discord_bot.py

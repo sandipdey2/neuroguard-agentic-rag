@@ -1,6 +1,6 @@
 """Chat interface back end: run a case from a chat message, then answer follow-up questions with conversation memory.
 
-``handle_message`` is shared by the Streamlit chat tab, the HTTP API and the Slack bot:
+``handle_message`` is shared by the Streamlit chat tab, and the HTTP API:
 * a case request ("assess row 9046", or "age=67 gender=Male hypertension=1 glucose=228 ...") runs the full multi-agent
   pipeline (core/pipeline.py) and replies with a de-identified summary + receipt;
 * anything else is a follow-up about the latest case: the follow-up agent (gpt-4o-mini, bind_tools) gets the case
@@ -76,7 +76,7 @@ def parse_case_request(text: str, rows=None) -> dict | None:
 
 
 def case_summary(result: dict) -> dict:
-    """De-identified summary of a pipeline result (what the chat, API and Slack bot show and what follow-ups see)."""
+    """De-identified summary of a pipeline result (what the chat tab and API show and what follow-ups see)."""
     risk = result.get("risk") or {}
     final = result.get("final") or {}
     ev = (result.get("evidence") or {}).get("findings", [])

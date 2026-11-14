@@ -9,13 +9,13 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "2.3.0"
-INCLUDE = ["app.py", "harness_contract.json", "requirements.txt", "requirements-dev.txt", "requirements-api.txt", "requirements-bots.txt", "pytest.ini",
-           "Dockerfile", ".dockerignore", "Procfile", "docker-compose.yml", ".env.example", "README.md", "LICENSE", "CHANGELOG.md",
+VERSION = "2.4.0"
+INCLUDE = ["app.py", "harness_contract.json", "requirements.txt", "requirements-dev.txt", "requirements-api.txt", "pytest.ini",
+           ".env.example", "README.md", "LICENSE", "CHANGELOG.md",
            "DATA_SOURCES.md", "module_summary.md", "module_summary.pdf", "architecture_diagram.png", "architecture_diagram.pdf",
            "evaluation.ipynb", ".streamlit/config.toml", ".streamlit/secrets.toml.example", ".gitignore",
            "data/guidelines.json", "data/raw/mtsamples_subset.csv", "data/pubmed_cache.json"]
-INCLUDE_DIRS = ["core", "mcp_server", "skills", "knowledge", "scripts", "docs", "eval", "api", "bots", "deploy", "tests", "ci"]
+INCLUDE_DIRS = ["core", "mcp_server", "skills", "knowledge", "scripts", "docs", "eval", "api", "tests", "ci"]
 EXCLUDE_PARTS = {"__pycache__", "runtime", ".git", "dist", ".ipynb_checkpoints"}
 EXCLUDE_NAMES = {"secrets.toml", "healthcare-dataset-stroke-data.csv", ".env"}
 

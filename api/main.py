@@ -13,8 +13,8 @@ Endpoints
 
 Auth: ``X-API-Key`` must equal the NG_API_KEY environment variable (constant-time compare). Without NG_API_KEY the
 API refuses every protected call unless NG_API_ALLOW_ANON=1 (local development only). Keys are never logged.
-CORS: NG_CORS_ORIGINS (comma separated) for browser / mobile web clients. Streamlit Community Cloud cannot host this
-service (it only runs ``streamlit run``); use Docker / docker-compose / Kubernetes / any container host.
+CORS: NG_CORS_ORIGINS (comma separated) for browser clients. Streamlit Community Cloud cannot host this service (it
+only runs ``streamlit run``); run it locally with uvicorn (see docs/DEPLOYMENT.md).
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ from core.db import describe as db_describe
 from core.harness import verify_receipt
 from core.job_queue import get_queue
 
-VERSION = "2.3.0"
+VERSION = "2.4.0"
 WAIT_MAX_S = 330
 
 
