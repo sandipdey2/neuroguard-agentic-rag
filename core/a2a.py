@@ -5,7 +5,9 @@ Card (name, description, version, endpoint, skills, capabilities). The orchestra
 Task whose history holds a Message (role "user", text + data parts); the receiving agent returns the Task
 with status "completed" (or "failed") and an Artifact carrying its structured result. Every send/receive is
 recorded on the bus and shown in the UI. The endpoints use an ``inproc://`` scheme to make clear that no
-network hop exists; swapping the bus for HTTP JSON-RPC would not change the payloads.
+network hop exists; swapping the bus for HTTP JSON-RPC would not change the payloads. With ``set_sink`` installed (the API
+worker does this) every event is also published to the durable queue's 'a2a' topic (core/job_queue.py); the text
+part of task/send is not published (it may quote the question).
 """
 from __future__ import annotations
 
@@ -36,6 +38,23 @@ def agent_card(name: str, contract: dict) -> dict:
     }
 
 
+_SINK = None
+
+
+def set_sink(fn) -> None:
+    """Publish every bus event to an external sink too (e.g. ``job_queue.get_queue().publish`` on topic 'a2a')."""
+    global _SINK
+    _SINK = fn
+
+
+def _emit(ev: dict) -> None:
+    if _SINK is not None:
+        try:
+            _SINK("a2a", ev)
+        except Exception:      # an unavailable queue must never break a run
+            pass
+
+
 def _id() -> str:
     return uuid.uuid4().hex[:12]
 
@@ -54,6 +73,7 @@ class MessageBus:
                 "history": [msg], "artifacts": []}
         self.log.append({"ts": round(time.time(), 3), "event": "task/send", "from": sender, "to": receiver,
                          "taskId": task_id, "skill": skill, "text": text[:400]})
+        _emit({**self.log[-1], "contextId": self.context_id, "text": None})
         return task
 
     def complete(self, task: dict, agent: str, name: str, data: dict, state: str = "completed") -> dict:
@@ -65,4 +85,5 @@ class MessageBus:
                                 "metadata": {"from": agent}})
         self.log.append({"ts": round(time.time(), 3), "event": f"task/{state}", "from": agent, "to": "orchestrator",
                          "taskId": task["id"], "artifact": name, "artifact_keys": sorted(data)[:12]})
+        _emit({**self.log[-1], "contextId": self.context_id})
         return task

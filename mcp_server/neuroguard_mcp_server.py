@@ -8,8 +8,9 @@ Tools      predict_risk, explain_factors, cohort_stats, screen_note, search_guid
            graph_traverse (graph RAG), calculator, memory_read, memory_write, episode_recall, episode_write
            + context-retrieval tools for agentic search (core/context_tools.py): semantic_search, search_files,
            load_skill, execute_query (read-only SQL), web_search / web_fetch (CDC / NIH / WHO allowlist), get_memory,
-           shell (grep / wc / head / ls over the read-only knowledge/ directory)
-Resources  guideline://index, guideline://{id}, model://risk-card, dataset://stroke-card, policy://harness-contract,
+           shell (grep / wc / head / ls over the read-only knowledge/ directory), pubmed_search (NCBI E-utilities)
+Policy     every tool is wrapped by core/server_policy.py::ServerPolicy.guard (server-side re-check of the contract)
+Resources  registry://tools (tool registry + policies), guideline://index, guideline://{id}, model://risk-card, dataset://stroke-card, policy://harness-contract,
            graph://knowledge-graph
 Prompts    clinical_report, red_team_review
 The server never receives the OpenAI key (the client strips it from the environment).
@@ -27,7 +28,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
-from core import context_tools as ct, episodes, memory  # noqa: E402
+from core import context_tools as ct, episodes, memory, pubmed  # noqa: E402
+from core.cache import get_cache  # noqa: E402
+from core.server_policy import ServerPolicy  # noqa: E402
 from core.skills import catalog as skill_catalog  # noqa: E402
 from core.config import CONTRACT_PATH  # noqa: E402
 from core.data import load_guidelines, pipeline_log, validate_profile  # noqa: E402
@@ -38,6 +41,7 @@ from core.rag import get_index  # noqa: E402
 from core.stats import age_band, cohort_stats as _cohort, factor_tests  # noqa: E402
 
 mcp = FastMCP("neuroguard", log_level="WARNING")
+policy = ServerPolicy()          # server-side policy engine: every tools/call is re-checked against the contract
 
 
 def _j(obj) -> str:
@@ -46,6 +50,7 @@ def _j(obj) -> str:
 
 # ----------------------------------------------------------------------------- tools
 @mcp.tool()
+@policy.guard("predict_risk")
 def predict_risk(age: float, gender: str, hypertension: int, heart_disease: int, ever_married: str, work_type: str,
                  Residence_type: str, avg_glucose_level: float, smoking_status: str, bmi: float | None = None) -> str:
     """Calibrated probability of the dataset's stroke label for one profile (logistic regression + sigmoid calibration).
@@ -61,6 +66,7 @@ def predict_risk(age: float, gender: str, hypertension: int, heart_disease: int,
 
 
 @mcp.tool()
+@policy.guard("explain_factors")
 def explain_factors(age: float, gender: str, hypertension: int, heart_disease: int, ever_married: str, work_type: str,
                     Residence_type: str, avg_glucose_level: float, smoking_status: str, bmi: float | None = None, top: int = 6) -> str:
     """Per-feature contributions to the log-odds (vs. the average training patient) from the logistic model. Positive = raises risk."""
@@ -72,28 +78,35 @@ def explain_factors(age: float, gender: str, hypertension: int, heart_disease: i
 
 
 @mcp.tool()
+@policy.guard("cohort_stats")
 def cohort_stats(age: float, hypertension: int | None = None, heart_disease: int | None = None) -> str:
     """Observed stroke rate (with Wilson 95% CI) in the public dataset for patients in the same age band, optionally with the same flags."""
     return _j(_cohort(age, hypertension, heart_disease))
 
 
 @mcp.tool()
+@policy.guard("screen_note")
 def screen_note(note: str) -> str:
     """Screen a (PHI-redacted) free-text note: CDC BE FAST red-flag rule plus a TF-IDF classifier trained on MTSamples."""
     return _j(_screen(note[:4000]))
 
 
 @mcp.tool()
+@policy.guard("search_guidelines")
 def search_guidelines(query: str, k: int = 4, mode: str = "hybrid", boost_factors: list[str] | None = None) -> str:
     """Search 30 verbatim CDC/NHLBI stroke guideline excerpts. mode: hybrid (default; 0.6 TF-IDF + 0.4 dense LSA vectors),
     sparse or dense. Returns id (cite as [G-xx]), title, publisher, url, text and the score components.
     boost_factors is set by the harness (learning loop), not by the agent."""
     boosts = episodes.retrieval_boosts(boost_factors) if boost_factors else None
     mode = mode if mode in ("hybrid", "sparse", "dense") else "hybrid"
-    return _j(get_index().search(query, k=max(1, min(int(k), 5)), mode=mode, boosts=boosts))
+    k = max(1, min(int(k), 5))
+    if boosts:                    # learning-loop boosts change the ranking: never served from cache
+        return _j(get_index().search(query, k=k, mode=mode, boosts=boosts))
+    return _j(get_cache().cached("retrieval", ["search_guidelines", query, k, mode], lambda: get_index().search(query, k=k, mode=mode)))
 
 
 @mcp.tool()
+@policy.guard("graph_traverse")
 def graph_traverse(factors: list[str], max_hops: int = 2, k: int = 6) -> str:
     """Graph RAG: traverse the knowledge graph (risk factor -> guideline excerpt -> condition -> excerpt) from the
     patient's factors. factors use: hypertension, glucose, bmi, smoking, heart_disease, age, cholesterol, lifestyle, tia.
@@ -124,6 +137,7 @@ def _eval(node):
 
 
 @mcp.tool()
+@policy.guard("calculator")
 def calculator(expression: str) -> str:
     """Sandboxed arithmetic: numbers, + - * / ** %, and round/min/max/abs/sqrt/log/exp. No names, attributes or imports."""
     try:
@@ -136,12 +150,14 @@ def calculator(expression: str) -> str:
 
 
 @mcp.tool()
+@policy.guard("memory_read")
 def memory_read(session_id: str, limit: int = 3) -> str:
     """Most recent de-identified cases stored for this session (consent-based). session_id is pinned by the client harness."""
     return _j({"cases": memory.read_cases(session_id, max(1, min(int(limit), 5)))})
 
 
 @mcp.tool()
+@policy.guard("memory_write")
 def memory_write(session_id: str, age: float, risk_probability: float, risk_band: str, top_factors: list[str], report_sha256: str) -> str:
     """Store a de-identified case summary (age band, risk, band, factor names, report hash). Only allowed with user consent."""
     lo, hi = age_band(age)
@@ -150,6 +166,7 @@ def memory_write(session_id: str, age: float, risk_probability: float, risk_band
 
 
 @mcp.tool()
+@policy.guard("episode_recall")
 def episode_recall(factors: list[str], age_band: str | None = None, k: int = 3) -> str:
     """Episodic memory: the most similar past runs (de-identified) and the learning loop's active, whitelisted hints."""
     return _j({"similar_episodes": episodes.recall(factors, age_band, max(1, min(int(k), 3))),
@@ -157,6 +174,7 @@ def episode_recall(factors: list[str], age_band: str | None = None, k: int = 3) 
 
 
 @mcp.tool()
+@policy.guard("episode_write")
 def episode_write(episode_json: str) -> str:
     """Store one de-identified run episode (harness only). Free-text fields are not accepted."""
     ep = json.loads(episode_json)
@@ -168,18 +186,22 @@ def episode_write(episode_json: str) -> str:
 
 # ----------------------------------------------------------------------------- context-retrieval tools (agentic search)
 @mcp.tool()
+@policy.guard("semantic_search")
 def semantic_search(query: str, k: int = 4) -> str:
     """Database source: semantic (dense LSA + sparse hybrid) search over the 30 guideline excerpts. Returns citable G-xx records."""
-    return _j(get_index().search(query, k=max(1, min(int(k), 5)), mode="hybrid"))
+    k = max(1, min(int(k), 5))
+    return _j(get_cache().cached("retrieval", ["semantic_search", query, k], lambda: get_index().search(query, k=k, mode="hybrid")))
 
 
 @mcp.tool()
+@policy.guard("search_files")
 def search_files(query: str, max_results: int = 8) -> str:
     """Local-files source: keyword search over knowledge/*.md (incl. Plan.md, cohort schema, guideline titles) and skills/*/SKILL.md."""
     return _j(ct.search_files(query, max(1, min(int(max_results), 10))))
 
 
 @mcp.tool()
+@policy.guard("load_skill")
 def load_skill(name: str) -> str:
     """Skill-loading tool: returns the full SKILL.md body of one skill (progressive disclosure on demand)."""
     meta = skill_catalog().get(name)
@@ -190,12 +212,14 @@ def load_skill(name: str) -> str:
 
 
 @mcp.tool()
+@policy.guard("execute_query")
 def execute_query(sql: str) -> str:
     """Database source: ONE read-only SELECT/WITH query over table `patients` (cleaned Stroke Prediction Dataset). Max 50 rows."""
     return _j(ct.execute_query(sql))
 
 
 @mcp.tool()
+@policy.guard("web_search")
 def web_search(query: str, k: int = 2) -> str:
     """Web source: finds the allowlisted CDC / NIH / WHO source page for the query and fetches it live; always returns the
     local excerpt too, so it degrades gracefully offline. Web text is context only; cite G-xx."""
@@ -203,25 +227,43 @@ def web_search(query: str, k: int = 2) -> str:
 
 
 @mcp.tool()
+@policy.guard("web_fetch")
 def web_fetch(url: str) -> str:
     """Web source: fetch ONE https page on cdc.gov, nih.gov or who.int (redirects re-checked, private addresses refused)."""
     return _j(ct.web_fetch(url))
 
 
 @mcp.tool()
+@policy.guard("get_memory")
 def get_memory(session_id: str) -> str:
     """Long-term memory source: this session's de-identified case summaries plus learned hints from episodic memory."""
     return _j({"cases": memory.read_cases(session_id, limit=3), "learned_hints": episodes.learned_hints(), "episodes": episodes.stats()})
 
 
 @mcp.tool()
+@policy.guard("shell")
 def shell(command: str) -> str:
     """Sandboxed shell: grep, wc, head or ls ONLY, run without a shell interpreter inside the read-only knowledge/ directory,
     no pipes/redirects/globs, no absolute or parent paths, empty environment, 3 s timeout."""
     return _j(ct.run_shell(command))
 
 
+@mcp.tool()
+@policy.guard("pubmed_search")
+def pubmed_search(query: str, k: int = 3) -> str:
+    """Public data API: NCBI PubMed E-utilities (esearch + esummary, keyless). Returns PMID, title, journal, year and URL of
+    peer-reviewed stroke literature for a risk-factor query. Literature metadata is context only; cite G-xx excerpts."""
+    return _j(pubmed.search(query, max(1, min(int(k), 5))))
+
+
 # ----------------------------------------------------------------------------- resources
+@mcp.resource("registry://tools", mime_type="application/json")
+def tool_registry() -> str:
+    """Tool registry: every MCP tool with the agents it is granted to, argument clamps, per-run quotas and controls."""
+    tools = {t.name: t.description for t in mcp._tool_manager.list_tools()}
+    return _j(policy.registry(tools))
+
+
 @mcp.resource("guideline://index", mime_type="application/json")
 def guideline_index() -> str:
     """Id, title, publisher and URL of every guideline excerpt."""

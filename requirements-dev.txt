@@ -1,5 +1,10 @@
-# Extra packages to execute evaluation.ipynb and rebuild the PDF paper (not needed on Streamlit Cloud)
+# Tests (pytest), evaluation notebook and PDF rebuild extras (not needed on Streamlit Cloud)
 -r requirements.txt
+-r requirements-api.txt
+-r requirements-bots.txt
+pytest==9.2.0
+fakeredis==2.40.0
+pyyaml==6.0.3
 ipykernel==7.4.0
 nbconvert==7.17.2
 nbformat==5.11.1

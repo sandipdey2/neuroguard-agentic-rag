@@ -1,0 +1,482 @@
+{
+ "hypertension": {
+  "query": "hypertension",
+  "term": "(hypertension) AND stroke",
+  "total_hits": 57546,
+  "results": [
+   {
+    "pmid": "29149815",
+    "title": "Stroke and Hypertension: An Appraisal from Pathophysiology to Clinical Practice.",
+    "journal": "Current vascular pharmacology",
+    "year": "2019",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29149815/"
+   },
+   {
+    "pmid": "20723798",
+    "title": "Stroke prevention and treatment.",
+    "journal": "Journal of the American College of Cardiology",
+    "year": "2010",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/20723798/"
+   },
+   {
+    "pmid": "31514409",
+    "title": "Conflicting Roles of 20-HETE in Hypertension and Stroke.",
+    "journal": "International journal of molecular sciences",
+    "year": "2019",
+    "authors": 7,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/31514409/"
+   },
+   {
+    "pmid": "39688187",
+    "title": "Higher blood pressure targets for hypertension in older adults.",
+    "journal": "The Cochrane database of systematic reviews",
+    "year": "2024",
+    "authors": 8,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39688187/"
+   },
+   {
+    "pmid": "23736641",
+    "title": "Hypertension and experimental stroke therapies.",
+    "journal": "Journal of cerebral blood flow and metabolism : official journal of the International Society of Cerebral Blood Flow and Metabolism",
+    "year": "2013",
+    "authors": 4,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/23736641/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:55+0000"
+ },
+ "diabetes glucose": {
+  "query": "diabetes glucose",
+  "term": "(diabetes glucose) AND stroke",
+  "total_hits": 6586,
+  "results": [
+   {
+    "pmid": "20609967",
+    "title": "Diabetes mellitus, fasting blood glucose concentration, and risk of vascular disease: a collaborative meta-analysis of 102 prospective studies.",
+    "journal": "Lancet (London, England)",
+    "year": "2010",
+    "authors": 19,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/20609967/"
+   },
+   {
+    "pmid": "40140859",
+    "title": "Association between C-reactive protein-triglyceride glucose index and stroke risk in different glycemic status: insights from the China Health and Retirement Longitudinal Study (CHARLS).",
+    "journal": "Cardiovascular diabetology",
+    "year": "2025",
+    "authors": 6,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/40140859/"
+   },
+   {
+    "pmid": "31379119",
+    "title": "Diabetes drugs and stroke risk: Intensive versus conventional glucose-lowering strategies, and implications of recent cardiovascular outcome trials.",
+    "journal": "Diabetes, obesity & metabolism",
+    "year": "2020",
+    "authors": 4,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/31379119/"
+   },
+   {
+    "pmid": "36214941",
+    "title": "Pre-diabetes, Diabetes, Hyperglycemia, and Stroke: Bittersweet Therapeutic Opportunities.",
+    "journal": "Current neurology and neuroscience reports",
+    "year": "2022",
+    "authors": 1,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/36214941/"
+   },
+   {
+    "pmid": "39359413",
+    "title": "Impact of diverse aerobic exercise plans on glycemic control, lipid levels, and functional activity in stroke patients with type 2 diabetes mellitus.",
+    "journal": "Frontiers in endocrinology",
+    "year": "2024",
+    "authors": 7,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39359413/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:56+0000"
+ },
+ "obesity bmi": {
+  "query": "obesity bmi",
+  "term": "(obesity bmi) AND stroke",
+  "total_hits": 2282,
+  "results": [
+   {
+    "pmid": "38350287",
+    "title": "Associations between sarcopenic obesity and risk of cardiovascular disease: A population-based cohort study among middle-aged and older adults using the CHARLS.",
+    "journal": "Clinical nutrition (Edinburgh, Scotland)",
+    "year": "2024",
+    "authors": 4,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/38350287/"
+   },
+   {
+    "pmid": "32124408",
+    "title": "Obesity paradox and stroke: a narrative review.",
+    "journal": "Eating and weight disorders : EWD",
+    "year": "2021",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/32124408/"
+   },
+   {
+    "pmid": "26440472",
+    "title": "Childhood obesity as a predictor of morbidity in adulthood: a systematic review and meta-analysis.",
+    "journal": "Obesity reviews : an official journal of the International Association for the Study of Obesity",
+    "year": "2016",
+    "authors": 4,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/26440472/"
+   },
+   {
+    "pmid": "37368983",
+    "title": "Relationship Among Diabetes, Obesity, and Cardiovascular Disease Phenotypes: A UK Biobank Cohort Study.",
+    "journal": "Diabetes care",
+    "year": "2023",
+    "authors": 16,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37368983/"
+   },
+   {
+    "pmid": "37137958",
+    "title": "Obesity paradox and stroke outcomes according to stroke subtype: a propensity score-matched analysis.",
+    "journal": "International journal of obesity (2005)",
+    "year": "2023",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37137958/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:56+0000"
+ },
+ "smoking": {
+  "query": "smoking",
+  "term": "(smoking) AND stroke",
+  "total_hits": 15886,
+  "results": [
+   {
+    "pmid": "30896633",
+    "title": "The relationship between smoking and stroke: A meta-analysis.",
+    "journal": "Medicine",
+    "year": "2019",
+    "authors": 6,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/30896633/"
+   },
+   {
+    "pmid": "21515928",
+    "title": "[Smoking and stroke].",
+    "journal": "Brain and nerve = Shinkei kenkyu no shinpo",
+    "year": "2011",
+    "authors": 1,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/21515928/"
+   },
+   {
+    "pmid": "10501270",
+    "title": "Smoking and risk of stroke.",
+    "journal": "Journal of cardiovascular risk",
+    "year": "1999",
+    "authors": 1,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/10501270/"
+   },
+   {
+    "pmid": "29367388",
+    "title": "Low cigarette consumption and risk of coronary heart disease and stroke: meta-analysis of 141 cohort studies in 55 study reports.",
+    "journal": "BMJ (Clinical research ed.)",
+    "year": "2018",
+    "authors": 5,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29367388/"
+   },
+   {
+    "pmid": "20602553",
+    "title": "Smoking and stroke: the more you smoke the more you stroke.",
+    "journal": "Expert review of cardiovascular therapy",
+    "year": "2010",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/20602553/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:57+0000"
+ },
+ "atrial fibrillation heart disease": {
+  "query": "atrial fibrillation heart disease",
+  "term": "(atrial fibrillation heart disease) AND stroke",
+  "total_hits": 31370,
+  "results": [
+   {
+    "pmid": "34890796",
+    "title": "Atrial fibrillation and stroke: A review and new insights.",
+    "journal": "Trends in cardiovascular medicine",
+    "year": "2023",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34890796/"
+   },
+   {
+    "pmid": "37870421",
+    "title": "Atrial fibrillation and ischemic heart disease: (un)solved therapeutic dilemma?",
+    "journal": "Minerva cardiology and angiology",
+    "year": "2024",
+    "authors": 15,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37870421/"
+   },
+   {
+    "pmid": "39191640",
+    "title": "Congenital Heart Disease, Atrial Fibrillation, and Ischemic Stroke Risk.",
+    "journal": "Journal of the American Heart Association",
+    "year": "2024",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39191640/"
+   },
+   {
+    "pmid": "36252244",
+    "title": "Apixaban Versus Rivaroxaban in Patients With Atrial Fibrillation and Valvular Heart Disease : A Population-Based Study.",
+    "journal": "Annals of internal medicine",
+    "year": "2022",
+    "authors": 5,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/36252244/"
+   },
+   {
+    "pmid": "20723798",
+    "title": "Stroke prevention and treatment.",
+    "journal": "Journal of the American College of Cardiology",
+    "year": "2010",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/20723798/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:58+0000"
+ },
+ "age older adults": {
+  "query": "age older adults",
+  "term": "(age older adults) AND stroke",
+  "total_hits": 87959,
+  "results": [
+   {
+    "pmid": "39688187",
+    "title": "Higher blood pressure targets for hypertension in older adults.",
+    "journal": "The Cochrane database of systematic reviews",
+    "year": "2024",
+    "authors": 8,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39688187/"
+   },
+   {
+    "pmid": "35027110",
+    "title": "Management of Atrial Fibrillation in Patients 75 Years and Older: JACC\u00a0State-of-the-Art\u00a0Review.",
+    "journal": "Journal of the American College of Cardiology",
+    "year": "2022",
+    "authors": 10,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/35027110/"
+   },
+   {
+    "pmid": "39972478",
+    "title": "Development and validation of risk-predicting model for oral frailty in older adults patients with stroke.",
+    "journal": "BMC oral health",
+    "year": "2025",
+    "authors": 5,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39972478/"
+   },
+   {
+    "pmid": "33619704",
+    "title": "Seizures and Epilepsy After Stroke: Epidemiology, Biomarkers and Management.",
+    "journal": "Drugs & aging",
+    "year": "2021",
+    "authors": 9,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/33619704/"
+   },
+   {
+    "pmid": "37205706",
+    "title": "Older adults and stroke survivors are steadier when gazing down.",
+    "journal": "PloS one",
+    "year": "2023",
+    "authors": 4,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37205706/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:58+0000"
+ },
+ "transient ischemic attack": {
+  "query": "transient ischemic attack",
+  "term": "(transient ischemic attack) AND stroke",
+  "total_hits": 21344,
+  "results": [
+   {
+    "pmid": "34870698",
+    "title": "Comparison of Ticagrelor vs Clopidogrel in Addition to Aspirin in Patients With Minor Ischemic Stroke and Transient Ischemic Attack: A Network Meta-analysis.",
+    "journal": "JAMA neurology",
+    "year": "2022",
+    "authors": 6,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34870698/"
+   },
+   {
+    "pmid": "16899775",
+    "title": "High-dose atorvastatin after stroke or transient ischemic attack.",
+    "journal": "The New England journal of medicine",
+    "year": "2006",
+    "authors": 12,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/16899775/"
+   },
+   {
+    "pmid": "37542547",
+    "title": "Transient ischemic attack and minor stroke as \"surgeons affairs\": a narrative review.",
+    "journal": "Neurological sciences : official journal of the Italian Neurological Society and of the Italian Society of Clinical Neurophysiology",
+    "year": "2023",
+    "authors": 9,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37542547/"
+   },
+   {
+    "pmid": "30667047",
+    "title": "Headaches Attributed to Ischemic Stroke and Transient Ischemic Attack.",
+    "journal": "Headache",
+    "year": "2019",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/30667047/"
+   },
+   {
+    "pmid": "24050733",
+    "title": "Posterior circulation ischaemic stroke and transient ischaemic attack: diagnosis, investigation, and secondary prevention.",
+    "journal": "The Lancet. Neurology",
+    "year": "2013",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/24050733/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:15:59+0000"
+ },
+ "physical activity lifestyle": {
+  "query": "physical activity lifestyle",
+  "term": "(physical activity lifestyle) AND stroke",
+  "total_hits": 2379,
+  "results": [
+   {
+    "pmid": "33501848",
+    "title": "Heart Disease and Stroke Statistics-2021 Update: A Report From the American Heart Association.",
+    "journal": "Circulation",
+    "year": "2021",
+    "authors": 40,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/33501848/"
+   },
+   {
+    "pmid": "29480368",
+    "title": "The Global Epidemic of the Metabolic Syndrome.",
+    "journal": "Current hypertension reports",
+    "year": "2018",
+    "authors": 1,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29480368/"
+   },
+   {
+    "pmid": "39467622",
+    "title": "Device-measured vigorous intermittent lifestyle physical activity (VILPA) and major adverse cardiovascular events: evidence of sex differences.",
+    "journal": "British journal of sports medicine",
+    "year": "2025",
+    "authors": 11,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39467622/"
+   },
+   {
+    "pmid": "40321136",
+    "title": "Sitting Time, Leisure-Time Physical Activity, and Risk of Mortality Among US Stroke Survivors: A Prospective Cohort Study From the NHANES 2007 to 2018.",
+    "journal": "Stroke",
+    "year": "2025",
+    "authors": 9,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/40321136/"
+   },
+   {
+    "pmid": "39622318",
+    "title": "[Lifestyle-Related Diseases and Stroke].",
+    "journal": "No shinkei geka. Neurological surgery",
+    "year": "2024",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39622318/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:16:00+0000"
+ },
+ "high blood pressure": {
+  "query": "high blood pressure",
+  "term": "(high blood pressure) AND stroke",
+  "total_hits": 61493,
+  "results": [
+   {
+    "pmid": "35291822",
+    "title": "Blood Pressure Management for Ischemic Stroke in the First 24 Hours.",
+    "journal": "Stroke",
+    "year": "2022",
+    "authors": 9,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/35291822/"
+   },
+   {
+    "pmid": "29076879",
+    "title": "Managing high blood pressure during acute ischemic stroke and intracerebral hemorrhage.",
+    "journal": "Current opinion in neurology",
+    "year": "2018",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29076879/"
+   },
+   {
+    "pmid": "14662649",
+    "title": "High blood pressure in acute stroke and subsequent outcome: a systematic review.",
+    "journal": "Hypertension (Dallas, Tex. : 1979)",
+    "year": "2004",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/14662649/"
+   },
+   {
+    "pmid": "34459569",
+    "title": "Effect of Salt Substitution on Cardiovascular Events and Death.",
+    "journal": "The New England journal of medicine",
+    "year": "2021",
+    "authors": 32,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34459569/"
+   },
+   {
+    "pmid": "31243539",
+    "title": "Targeting blood pressure for stroke prevention: current evidence and unanswered questions.",
+    "journal": "Journal of neurology",
+    "year": "2021",
+    "authors": 1,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/31243539/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:16:00+0000"
+ },
+ "cholesterol": {
+  "query": "cholesterol",
+  "term": "(cholesterol) AND stroke",
+  "total_hits": 12824,
+  "results": [
+   {
+    "pmid": "40987840",
+    "title": "Cholesterol metabolic reprogramming mediates microglia-induced chronic neuroinflammation and hinders neurorestoration following stroke.",
+    "journal": "Nature metabolism",
+    "year": "2025",
+    "authors": 13,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/40987840/"
+   },
+   {
+    "pmid": "28549755",
+    "title": "Cholesterol and stroke: Roll of PCSK9 inhibitors.",
+    "journal": "Neurologia",
+    "year": "2019",
+    "authors": 3,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/28549755/"
+   },
+   {
+    "pmid": "30602355",
+    "title": "Cholesterol Lowering and Prevention of Stroke.",
+    "journal": "Stroke",
+    "year": "2019",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/30602355/"
+   },
+   {
+    "pmid": "39674498",
+    "title": "Predictive value of remnant cholesterol inflammatory index for stroke risk: Evidence from the China health and Retirement Longitudinal study.",
+    "journal": "Journal of advanced research",
+    "year": "2025",
+    "authors": 7,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39674498/"
+   },
+   {
+    "pmid": "20723798",
+    "title": "Stroke prevention and treatment.",
+    "journal": "Journal of the American College of Cardiology",
+    "year": "2010",
+    "authors": 2,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/20723798/"
+   }
+  ],
+  "fetched_at": "2026-11-14T10:16:01+0000"
+ }
+}

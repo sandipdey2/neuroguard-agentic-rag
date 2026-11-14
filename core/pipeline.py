@@ -35,6 +35,7 @@ def _receipt(ctx: RunContext, inputs: dict, result: dict) -> dict:
     return sign_receipt({
         "run_id": ctx.run_id, "product": "NeuroGuard AI", "contract_version": ctx.contract["contract_version"],
         "contract_sha256": ctx.contract_sha256, "model": ctx.contract["model"], "temperature": ctx.contract["temperature"],
+        "top_p": ctx.contract.get("top_p"),
         "mcp_server_sha256": SERVER_SHA, "inputs_sha256": sha(inputs), "report_sha256": sha(result.get("report") or ""),
         "trace_sha256": sha(result.get("trace", [])), "audit_chain_head": ctx.audit.entries[-1]["hash"] if ctx.audit.entries else None,
         "audit_chain_valid": ctx.audit.verify_chain(), "status": result["status"], "checks": v.get("checks", {}),
@@ -119,6 +120,9 @@ async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm, progress=No
                         pass
             seen = len(tr)
         state["mcp_tools_listed"] = [t.name for t in listed.tools]
+        from .agents import NODE_ROLES
+        phases = ["planner"] + [NODE_ROLES.get(a, "validator" if a == "FINISH" else "executor") for a in state.get("route", [])]
+        state["state_machine"] = {"roles": NODE_ROLES, "phases": [p for i, p in enumerate(phases) if i == 0 or p != phases[i - 1]]}
         return state
 
 

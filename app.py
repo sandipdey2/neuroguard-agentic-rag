@@ -43,6 +43,9 @@ if "session_id" not in st.session_state:
 SID = st.session_state["session_id"]
 
 st.markdown("<h1 style='margin-bottom:0'>🧠 NeuroGuard AI</h1>", unsafe_allow_html=True)
+# responsive layout for phones / tablets: Streamlit stacks st.columns below ~640 px; shrink headings and metric text too
+st.markdown("""<style>@media (max-width: 640px) { h1 {font-size: 1.6rem !important;} [data-testid="stMetricValue"] {font-size: 1.2rem;}
+[data-testid="stHorizontalBlock"] {flex-wrap: wrap;} }</style>""", unsafe_allow_html=True)
 st.caption("Multi-agent stroke-risk decision support: planner + LLM orchestrator + 5 specialist agents, real MCP server, hybrid + graph "
            f"+ agentic RAG with citations, episodic memory, guardrails, confidence gate, invariant verifier and signed run receipts. [Source]({REPO})" + (f" · [Live demo]({LIVE_DEMO})" if LIVE_DEMO else ""))
 st.warning(DISCLAIMER, icon="⚠️")
@@ -71,8 +74,8 @@ with st.sidebar:
     st.caption(f"Run contract v{CONTRACT['contract_version']}: ≤{CONTRACT['loop']['max_orchestrator_turns']} orchestrator turns, "
                f"≤{b['max_llm_calls']} LLM calls, ≤{b['max_tool_calls']} tool calls, ≤{b['wall_clock_timeout_s']} s")
 
-tab_run, tab_cov, tab_batch, tab_about, tab_model, tab_mem = st.tabs(
-    ["🩺 Assess a profile", "🧩 Knowledge-graph coverage", "👥 Cohort batch", "ℹ️ How it works", "📊 Model & data", "🗂️ Memory & learning"])
+tab_run, tab_chat, tab_cov, tab_batch, tab_about, tab_model, tab_mem = st.tabs(
+    ["🩺 Assess a profile", "💬 Chat", "🧩 Knowledge-graph coverage", "👥 Cohort batch", "ℹ️ How it works", "📊 Model & data", "🗂️ Memory & learning"])
 
 # --------------------------------------------------------------------------- assess
 PRESETS = {f"Dataset row id {int(r.id)} (age {r.age:g}, {r.gender})": r for r in
@@ -163,13 +166,13 @@ with tab_run:
     res_ = st.session_state.get("result")
     if res_:
         st.divider()
-        if res_["status"] == "blocked":
-            g = res_["input_guardrail"]
-            (st.error if g["reason"] == "emergency" else st.warning)(f"**Input guardrail: {g['reason']}** - {g['detail']}")
-            if g.get("phi_redacted"):
-                st.caption(f"PHI redacted before any processing: {g['phi_redacted']}")
-            st.download_button("Download signed receipt (.json)", receipt_json(res_["receipt"]), "receipt.json", "application/json")
-            st.stop()
+    if res_ and res_["status"] == "blocked":      # no st.stop() here: the other tabs (chat, coverage...) must still render
+        g = res_["input_guardrail"]
+        (st.error if g["reason"] == "emergency" else st.warning)(f"**Input guardrail: {g['reason']}** - {g['detail']}")
+        if g.get("phi_redacted"):
+            st.caption(f"PHI redacted before any processing: {g['phi_redacted']}")
+        st.download_button("Download signed receipt (.json)", receipt_json(res_["receipt"]), "receipt.json", "application/json")
+    elif res_:
         risk = res_.get("risk") or {}
         final = res_.get("final") or {}
         k = st.columns(8)
@@ -315,6 +318,69 @@ with tab_run:
                                         **{r_["slot"].split(" ")[0]: r_["tokens"] for r_ in e["slots"]}} for e in cws]).astype("object").fillna(0).astype(str),
                          width="stretch", hide_index=True)
 
+# --------------------------------------------------------------------------- chat
+with tab_chat:
+    from core.chat import case_summary, handle_message
+    from core.chat_memory import get_memory
+    st.subheader("Chat with NeuroGuard")
+    st.caption("Type **assess row 9046** (a real row of the public dataset) or **age=67 gender=Male hypertension=1 glucose=228.7 "
+               "bmi=36.6 smoking=former** to run the full multi-agent assessment, then ask follow-up questions. Follow-ups are answered "
+               "by a follow-up agent that calls the Evidence Researcher **as a tool** (`consult_evidence_researcher`) and recalls this "
+               "conversation (PHI-redacted; stored in SQLite only if the sidebar consent box is ticked, otherwise kept in memory).")
+    chat_log = st.session_state.setdefault("chat", [])
+    if st.session_state.get("result") and not st.session_state.get("chat_case") and st.session_state["result"].get("status") != "blocked":
+        st.session_state["chat_case"] = case_summary(st.session_state["result"])
+    cc = st.session_state.get("chat_case")
+    st.caption("Current case: " + (f"run `{str(cc['run_id'])[:8]}` - {cc['risk_percent']}% ({cc['risk_band']}), {cc['status']}" if cc else "none yet"))
+    box = st.container(height=460)
+    for m_ in chat_log:
+        box.chat_message(m_["role"]).markdown(m_["text"])
+    prompt = st.chat_input("assess row 9046 · or ask: what should we discuss about blood pressure?", key="chat_in")
+    if prompt:
+        chat_log.append({"role": "user", "text": prompt})
+        box.chat_message("user").markdown(prompt)
+        with box.chat_message("assistant"):
+            if not key:
+                reply = "OPENAI_API_KEY is not configured (Streamlit secrets)."
+                st.error(reply)
+            else:
+                with st.spinner("Working... a new case takes about 1-2 minutes, a follow-up about 10-30 s"):
+                    try:
+                        out = handle_message(prompt, SID, case=cc, consent=consent, rag_mode=rag_mode)
+                    except Exception as exc:
+                        out = {"kind": "error", "reply": f"Error: {type(exc).__name__}: {str(exc)[:200]}"}
+                reply = out["reply"]
+                st.markdown(reply)
+                if out["kind"] == "case":
+                    st.session_state["chat_case"] = out["case"]
+                    st.session_state["result"] = out["result"]
+                    st.session_state["receipt"] = out["result"]["receipt"]
+                    st.session_state["approval"] = None
+                if out["kind"] == "followup":
+                    st.session_state["last_followup"] = out["followup"]
+        chat_log.append({"role": "assistant", "text": reply})
+    c1_, c2_ = st.columns(2)
+    if c1_.button("🧹 Clear conversation memory", width="stretch"):
+        n_ = get_memory().clear(SID)
+        st.session_state["chat"], st.session_state["chat_case"] = [], None
+        st.toast(f"Deleted {n_} stored turn(s)")
+    with c2_.expander("🧠 What the agent remembers"):
+        st.json(get_memory().recall(SID))
+    lf = st.session_state.get("last_followup")
+    if lf:
+        with st.expander(f"Last follow-up: {lf['status']} · {lf['llm_calls']} LLM calls · {lf['tool_calls']} tool calls · "
+                         f"${lf['cost_usd']} · {lf['latency_s']} s"):
+            st.markdown("**Agent as a tool - A2A log** (followup_agent → evidence_subagent)")
+            st.dataframe(pd.DataFrame(lf.get("a2a", [])).astype(str), width="stretch")
+            st.markdown("**Sub-agent ReAct steps**")
+            st.dataframe(pd.DataFrame([{k_: e.get(k_) for k_ in ("step", "action", "decision", "observation")}
+                                       for e in lf.get("trace", []) if e.get("type") == "react_step"]).astype(str), width="stretch")
+            if lf.get("literature"):
+                st.markdown("**PubMed literature (metadata, context only)**")
+                st.dataframe(pd.DataFrame(lf["literature"]), width="stretch")
+            st.markdown(f"Output checks: `{lf.get('checks')}` · signed receipt `{lf['receipt']['signature'][:24]}...` "
+                        f"(verifies: {verify_receipt(lf['receipt'])})")
+
 # --------------------------------------------------------------------------- knowledge-graph coverage
 with tab_cov:
     st.subheader("Agentic-AI knowledge graph → NeuroGuard implementation")
@@ -372,7 +438,7 @@ report** for a clinician or patient. It is a demonstration product built on publ
 3. A **planner** recalls similar de-identified past episodes and writes a structured plan; the **LLM orchestrator** (gpt-4o-mini,
    LangGraph) executes it, delegating via **A2A-style tasks** to five agents - Intake, Risk Analyst, Evidence Researcher (ReAct,
    hybrid + graph RAG, re-retrieves when topics are missing), Clinical Writer (self-critique) and Safety Reviewer.
-4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 19 tools, 5 resources + 1 resource template, 2 prompts.
+4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 20 tools (incl. PubMed E-utilities), 6 resources (incl. the registry://tools tool registry) + 1 resource template, 2 prompts, and a server-side policy engine.
    Three selectable **RAG modes**: classical (fixed semantic_search before the LLM), agentic (the LLM calls search tools) and
    agentic search (context-retrieval tools over local files, skills, the cohort database, allowlisted CDC/NIH/WHO pages, memory
    and a sandboxed shell). The **Context window** tab shows every slot with its token count.

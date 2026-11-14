@@ -1,8 +1,9 @@
 {
-  "contract_version": "1.2.0",
+  "contract_version": "1.3.0",
   "description": "Run contract fixed before the first LLM token. Loaded and SHA-256 hashed at the start of every run; the hash is written into the signed receipt.",
   "model": "gpt-4o-mini",
   "temperature": 0,
+  "top_p": 1.0,
   "llm_timeout_s": 60,
   "loop": {
     "max_orchestrator_turns": 9,
@@ -95,6 +96,22 @@
         "guideline://{id}"
       ],
       "prompts": []
+    },
+    "evidence_subagent": {
+      "tools": [
+        "search_guidelines",
+        "graph_traverse",
+        "pubmed_search"
+      ],
+      "resources": [],
+      "prompts": []
+    },
+    "followup_agent": {
+      "tools": [
+        "consult_evidence_researcher"
+      ],
+      "resources": [],
+      "prompts": []
     }
   },
   "write_tools": {
@@ -114,7 +131,9 @@
     "web_calls_max_per_run": 3,
     "shell_calls_max_per_run": 4,
     "shell.command_max_chars": 200,
-    "execute_query.sql_max_chars": 600
+    "execute_query.sql_max_chars": 600,
+    "pubmed_search.k_max": 5,
+    "pubmed_calls_max_per_run": 3
   },
   "required_checks": [
     "risk_in_unit_interval",
@@ -216,7 +235,8 @@
         "web_search",
         "web_fetch",
         "get_memory",
-        "shell"
+        "shell",
+        "pubmed_search"
       ],
       "max_tool_rounds_per_agent": 6,
       "required_sources": {
@@ -242,6 +262,121 @@
     "shell": "argv allowlist grep/wc/head/ls, no metacharacters, no absolute/parent paths, cwd knowledge/, empty env, 3 s timeout (hook + server)",
     "web_fetch": "https + host allowlist cdc.gov/nih.gov/who.int, no IP literals/ports/credentials, redirects re-checked, private DNS answers refused (hook + server)",
     "web_search": "allowlisted source pages only; local excerpt always returned (offline-safe)",
-    "execute_query": "single SELECT/WITH, read-only connection + authorizer, 50 rows, 2 s (hook + server)"
+    "execute_query": "single SELECT/WITH, read-only connection + authorizer, 50 rows, 2 s (hook + server)",
+    "pubmed_search": "fixed host eutils.ncbi.nlm.nih.gov (esearch + esummary only, keyless), 3 req/s process-wide rate limit, 8 s timeout, 3 calls per run, metadata only (title/journal/year/PMID), cached real responses as offline fallback (hook + server)"
+  },
+  "agent_as_tool": {
+    "tool": "consult_evidence_researcher",
+    "wraps": "evidence_subagent (ReAct over search_guidelines / graph_traverse / pubmed_search)",
+    "bound_by": [
+      "followup_agent"
+    ],
+    "max_tool_rounds": 3,
+    "a2a_traced": true
+  },
+  "conversation_memory": {
+    "store": "SQLite chat_turns (only with consent; otherwise process memory for the session)",
+    "redaction": "guardrails.redact on every turn before storage",
+    "max_turns_kept": 20,
+    "recall_turns": 6,
+    "max_chars_per_turn": 800,
+    "clear": "UI button / DELETE via API"
+  },
+  "vector_store": {
+    "backend": "faiss (IndexFlatIP, cosine on L2-normalised LSA vectors)",
+    "fallback": "in-memory numpy",
+    "persist_dir": "data/runtime/vector_store",
+    "rebuild_when": "corpus/encoder fingerprint changes"
+  },
+  "queue": {
+    "backend": "sqlite (durable, WAL) - Redis optional via NG_QUEUE_URL=redis://...",
+    "lease_s": 420,
+    "max_attempts": 2,
+    "topics": [
+      "cases",
+      "a2a"
+    ]
+  },
+  "api": {
+    "auth": "X-API-Key header == NG_API_KEY env (required unless NG_API_ALLOW_ANON=1)",
+    "endpoints": [
+      "POST /v1/cases",
+      "GET /v1/cases/{id}",
+      "GET /v1/receipts/{id}/verify",
+      "POST /v1/webhooks/case",
+      "GET /health"
+    ],
+    "webhook_signature": "X-NeuroGuard-Signature: sha256=HMAC(NG_WEBHOOK_SECRET, raw body)"
+  },
+  "success_criteria": {
+    "declared": "2026-11-14 (v2.3.0), before the v2.3 end-to-end runs; earlier targets are the v1 plan in knowledge/Plan.md",
+    "targets": [
+      {
+        "metric": "attack_block_rate",
+        "source": "eval agent.attack_block_rate",
+        "op": ">=",
+        "target": 1.0
+      },
+      {
+        "metric": "false_block_rate_normal",
+        "source": "eval agent.false_block_rate_normal",
+        "op": "<=",
+        "target": 0.05
+      },
+      {
+        "metric": "finalized_rate",
+        "source": "eval agent.finalized_rate",
+        "op": ">=",
+        "target": 0.8
+      },
+      {
+        "metric": "citation_coverage",
+        "source": "eval agent.citation_coverage",
+        "op": ">=",
+        "target": 1.0
+      },
+      {
+        "metric": "retrieval_hit_at_3",
+        "source": "eval retrieval.hit_at_3",
+        "op": ">=",
+        "target": 0.9
+      },
+      {
+        "metric": "model_test_roc_auc",
+        "source": "eval model_test_metrics.roc_auc",
+        "op": ">=",
+        "target": 0.8
+      },
+      {
+        "metric": "model_brier",
+        "source": "eval model_test_metrics.brier",
+        "op": "<=",
+        "target": 0.05
+      },
+      {
+        "metric": "receipts_verify",
+        "source": "eval agent.receipts_verify",
+        "op": "==",
+        "target": true
+      },
+      {
+        "metric": "latency_median_s",
+        "source": "eval agent.latency_median_s",
+        "op": "<=",
+        "target": 120
+      },
+      {
+        "metric": "cost_per_run_usd",
+        "source": "e2e cost_usd",
+        "op": "<=",
+        "target": 0.01
+      },
+      {
+        "metric": "pytest_pass_rate",
+        "source": "pytest",
+        "op": ">=",
+        "target": 1.0
+      }
+    ]
   }
 }

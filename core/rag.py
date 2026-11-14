@@ -3,7 +3,8 @@
 retrieve -> inject -> generate (Lewis et al., 2020): ``search`` returns ranked chunks with id, title, publisher
 and URL; the Evidence agent injects them into the writer's context, and the writer must cite ids like [G-03].
 Hybrid retrieval (default): score = 0.6 * sparse TF-IDF cosine + 0.4 * dense LSA cosine (core/vectors.py) plus a small
-topic boost when the query names a chunk's topic. mode="sparse" or "dense" gives either component alone (used by the
+topic boost when the query names a chunk's topic. Dense scores come from the FAISS vector store
+(core/vector_store.py; numpy fallback). mode="sparse" or "dense" gives either component alone (used by the
 evaluation to compare them). ``boosts`` lets the learning loop add a bounded per-chunk bonus (capped at 0.06).
 """
 from __future__ import annotations
@@ -14,6 +15,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .data import load_guidelines
+from .vector_store import VectorStore
 from .vectors import DenseEncoder
 
 TOPIC_SYNONYMS = {
@@ -36,10 +38,13 @@ class GuidelineIndex:
         self.matrix = self.vec.fit_transform(corpus)
         self.by_id = {d["id"]: d for d in self.docs}
         self.dense = DenseEncoder(corpus)
+        # dense vectors live in a real vector index (FAISS, persisted; numpy fallback) - core/vector_store.py
+        self.store = VectorStore("guidelines", [d["id"] for d in self.docs], self.dense.doc_vectors,
+                                 fingerprint_extra=f"lsa{self.dense.dim}-seed42|" + "|".join(corpus))
 
     def search(self, query: str, k: int = 4, mode: str = "hybrid", boosts: dict | None = None) -> list[dict]:
         sparse = cosine_similarity(self.vec.transform([query]), self.matrix).ravel()
-        dense = self.dense.similarities(query).clip(min=0)
+        dense = self.store.similarities(self.dense.encode([query])[0]).clip(min=0)
         scores = {"sparse": sparse, "dense": dense}.get(mode, W_SPARSE * sparse + W_DENSE * dense).copy()
         ql = query.lower()
         for i, d in enumerate(self.docs):

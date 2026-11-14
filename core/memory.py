@@ -3,6 +3,7 @@
 Stored only with explicit consent and only de-identified summaries (age band, risk, band, factor names,
 report hash) - never the free-text note or the question. Agents reach it exclusively through the MCP tools
 memory_read / memory_write, whose session_id is pinned by the pre-tool-use hook. The UI offers a clear button.
+Backend: SQLite file by default, PostgreSQL when DATABASE_URL is set (core/db.py).
 On Streamlit Community Cloud the file lives on the container's ephemeral disk and is lost on restart.
 """
 from __future__ import annotations
@@ -14,6 +15,7 @@ import time
 from pathlib import Path
 
 from .config import RUNTIME
+from .db import connect
 
 SCHEMA = """CREATE TABLE IF NOT EXISTS cases (
   id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT NOT NULL, created_at REAL NOT NULL,
@@ -24,10 +26,9 @@ def db_path() -> Path:
     return Path(os.environ.get("NG_MEMORY_DB", RUNTIME / "neuroguard_memory.sqlite"))
 
 
-def _conn() -> sqlite3.Connection:
-    p = db_path()
-    p.parent.mkdir(parents=True, exist_ok=True)
-    c = sqlite3.connect(p, timeout=10)
+def _conn():
+    """SQLite file by default; PostgreSQL when DATABASE_URL is set (core/db.py backend switch)."""
+    c = connect(db_path())
     c.execute(SCHEMA)
     return c
 

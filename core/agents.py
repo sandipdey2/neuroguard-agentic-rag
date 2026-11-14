@@ -8,6 +8,10 @@ Graph (exactly what ``build_graph`` wires):
              +------------------- every specialist returns to the orchestrator --------------------+
     orchestrator --FINISH--> gate (confidence score + policy gate, episode write) -> END
 
+State machine (LangGraph + MCP reference architecture): planner node = ``planner``; executor = ``orchestrator`` + the
+five specialists (except the reviewer); validator = ``safety_reviewer`` + finalize ``gate``. ``NODE_ROLES`` holds the
+mapping and every node writes ``phase`` into the state.
+
 Planner -> executor: the planner writes an explicit step plan; the orchestrator executes it turn by turn (it sees
 the plan and the next planned step) and may deviate; plan adherence is measured.
 
@@ -53,7 +57,13 @@ DEFAULT_SKILL = {"intake": "note-screening", "risk_analyst": "cohort-comparison"
                  "clinical_writer": "risk-communication", "safety_reviewer": "red-team-review"}
 
 
+# LangGraph + MCP reference architecture: Planner node -> Executor node -> Validator node (agent state machine).
+NODE_ROLES = {"planner": "planner", "orchestrator": "executor", "intake": "executor", "risk_analyst": "executor",
+              "evidence_researcher": "executor", "clinical_writer": "executor", "safety_reviewer": "validator", "gate": "validator"}
+
+
 class CaseState(TypedDict, total=False):
+    phase: str                         # planner | executor | validator (state-machine phase of the last node)
     rag_mode: str                      # classical | agentic | agentic_search
     plan: Optional[dict]
     learning: Optional[dict]
@@ -455,7 +465,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
                    evidence={"similar_episodes": len(recall.get("similar_episodes", [])), "hints": len(hints)})
         trace.append({"agent": "planner", "type": "plan", "steps": plan["steps"], "watch_outs": plan["watch_outs"], "rationale": plan["rationale"],
                       "similar_episodes": len(recall.get("similar_episodes", [])), "learned_hints": [h["hint"] for h in hints], "ms": _ms(t0)})
-        return {"plan": plan, "learning": {"hints": hints, "similar_episodes": recall.get("similar_episodes", []),
+        return {"phase": "planner", "plan": plan, "learning": {"hints": hints, "similar_episodes": recall.get("similar_episodes", []),
                                            "retrieval_boosts": recall.get("retrieval_boosts", {}), "topics": topics, "age_band": band},
                 "trace": trace}
 
@@ -506,7 +516,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         ctx.decide("orchestrator", "route", choice.next, choice.reason, options=elig, turn=turns, skill=skill, override=override)
         tr = {"agent": "orchestrator", "type": "route", "turn": turns, "next": choice.next, "skill": skill,
               "instruction": choice.instruction, "reason": choice.reason, "override": override, "eligible": elig, "ms": _ms(t0)}
-        return {"turns": turns, "visits": visits, "next": choice.next, "skill": skill, "task": task,
+        return {"phase": "executor", "turns": turns, "visits": visits, "next": choice.next, "skill": skill, "task": task,
                 "trace": [tr], "route": [choice.next]}
 
     # ------------------------------------------------------------------ specialists
@@ -807,7 +817,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         trace += [{"agent": "safety_reviewer", "type": "mcp_prompt_get", "prompt": "red_team_review"},
                   {"agent": "safety_reviewer", "type": "review", "verdict": verdict, "failed_checks": v["failed"],
                    "issues": issues, "ms": _ms(t0)}]
-        return {"review": review, "pending_review": False, "trace": trace, "revisions": revisions + (1 if verdict == "revise" else 0)}
+        return {"phase": "validator", "review": review, "pending_review": False, "trace": trace, "revisions": revisions + (1 if verdict == "revise" else 0)}
 
     # ------------------------------------------------------------------ finalize gate
     async def gate(s: CaseState):
@@ -894,7 +904,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         ctx.audit.log("harness", "finalize_gate", "report", final["status"], failed=v["failed"])
         tr = {"agent": "gate", "type": "gate", "status": final["status"], "failed_checks": final["verification"]["failed"], "needs_human_approval": final["needs_human_approval"],
               "approval_reasons": reasons, "memory": mem, "confidence": cscore, "confidence_gate": cgate, "ms": _ms(t0)}
-        return {"final": final, "trace": [tr]}
+        return {"phase": "validator", "final": final, "trace": [tr]}
 
     g = StateGraph(CaseState)
     for name, fn in [("planner", planner), ("orchestrator", orchestrator), ("intake", intake), ("risk_analyst", risk_analyst),

@@ -14,6 +14,7 @@ CONTRACT_PATH = ROOT / "harness_contract.json"
 DEFAULT_BASE_URL = "https://openai.vocareum.com/v1"
 MODEL = "gpt-4o-mini"
 TEMPERATURE = 0
+TOP_P = 1.0
 
 
 def _from_streamlit(name: str) -> str | None:
@@ -47,6 +48,8 @@ def get_llm(http_async_client=None):
     if not key:
         raise RuntimeError("OPENAI_API_KEY is not set (Streamlit secrets or environment variable).")
     c = load_contract()
+    from .cache import install_llm_cache
+    install_llm_cache()                  # opt-in exact-match LLM cache (NG_LLM_CACHE=1, Redis or memory)
     extra = {"http_async_client": http_async_client} if http_async_client is not None else {}
-    return ChatOpenAI(model=c["model"], temperature=c["temperature"], api_key=key, base_url=base,
+    return ChatOpenAI(model=c["model"], temperature=c["temperature"], top_p=c.get("top_p", TOP_P), api_key=key, base_url=base,
                       timeout=c["llm_timeout_s"], max_retries=2, **extra)

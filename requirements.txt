@@ -1,6 +1,7 @@
 # Pinned from the tested environments (Python 3.13.5 and Python 3.14.10, Linux x86_64); every package installs
 # from wheels on both. Direct imports plus key transitive pins. Streamlit Community Cloud installs this file.
 anyio==4.16.0
+faiss-cpu==1.16.0
 fpdf2==2.9.0
 httpx==0.28.1
 joblib==1.6.0

@@ -78,6 +78,13 @@ class PermissionEngine:
             if tool == "web_fetch":
                 ok, why = ct.check_url(str(args.get("url", "")))
                 return None if ok else f"URL refused (SSRF guard): {why}"
+        if tool == "pubmed_search":
+            from . import pubmed
+            if self.counts.get("pubmed", 0) >= lim.get("pubmed_calls_max_per_run", 3):
+                return "PubMed call budget for this run exhausted"
+            ok, why = pubmed.check_query(str(args.get("query", "")))
+            if not ok:
+                return f"PubMed query refused: {why}"
         if tool == "execute_query":
             ok, why = ct.check_sql(str(args.get("sql", "")))
             return None if ok else f"SQL refused: {why}"
@@ -127,6 +134,9 @@ class PermissionEngine:
                 args["max_results"] = max(1, min(int(args.get("max_results", 8)), lim["search_files.max_results_max"]))
             if tool == "web_search":
                 args["k"] = max(1, min(int(args.get("k", 2)), lim["web_search.k_max"]))
+            if tool == "pubmed_search":
+                args["k"] = max(1, min(int(args.get("k", 3)), lim.get("pubmed_search.k_max", 5)))
+                self.counts["pubmed"] = self.counts.get("pubmed", 0) + 1
             if tool == "get_memory":
                 args["session_id"] = self.session_id          # pinned
             if tool == "shell":

