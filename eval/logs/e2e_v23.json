@@ -1,0 +1,106 @@
+{
+  "date": "2026-11-14",
+  "model": "gpt-4o-mini",
+  "temperature": 0,
+  "top_p": 1.0,
+  "endpoint": "OpenAI-compatible Vocareum gateway",
+  "backends_for_api_run": {
+    "database": "PostgreSQL 16.2 (local server)",
+    "cache": "Redis 6.2 (local server)",
+    "queue": "postgres"
+  },
+  "pipeline_runs": [
+    {
+      "via": "core.pipeline.run_case (direct)",
+      "mode": "agentic",
+      "status": "finalized",
+      "latency_s": 59.6,
+      "llm_calls": 19,
+      "tool_calls": 14,
+      "tokens": 31325,
+      "cost_usd": 0.005736,
+      "failed": [],
+      "receipt_valid": true,
+      "state_machine": [
+        "planner",
+        "executor",
+        "validator"
+      ],
+      "top_p_in_receipt": 1.0
+    },
+    {
+      "via": "FastAPI POST /v1/cases?wait=true",
+      "mode": "agentic_search",
+      "status": "finalized",
+      "latency_s": 69.02,
+      "cost_usd": 0.007745,
+      "failed": [],
+      "receipt_valid": true,
+      "a2a_events": 12
+    },
+    {
+      "via": "FastAPI POST /v1/webhooks/case (HMAC) -> queue -> worker",
+      "mode": "classical",
+      "status": "finalized",
+      "latency_s": 52.4,
+      "cost_usd": 0.003801
+    }
+  ],
+  "followups": [
+    {
+      "followup": "What should we discuss about her blood s",
+      "status": "answered",
+      "latency_s": 14.29,
+      "llm_calls": 6,
+      "tool_calls": 3,
+      "cost_usd": 0.001193,
+      "citations": [
+        "G-06",
+        "G-19",
+        "G-27"
+      ],
+      "tools": [
+        "graph_traverse",
+        "search_guidelines"
+      ],
+      "literature": 0,
+      "receipt_valid": true,
+      "history_recalled": null,
+      "answer": "High average glucose levels significantly elevate stroke risk, primarily due to their association with diabetes. Diabetes can lead to high blood sugar levels, which increase the likelihood of stroke [G-06]. Additionally, individuals with diabetes often experience high blood pressure, another major stroke risk factor [G-06]. Regular monitoring of blood sugar levels is crucial for managing diabetes ",
+      "a2a_route": "followup_agent -> evidence_subagent (consult_evidence_researcher)"
+    },
+    {
+      "followup": "And how does that factor interact with t",
+      "status": "answered",
+      "latency_s": 29.94,
+      "llm_calls": 8,
+      "tool_calls": 6,
+      "cost_usd": 0.002773,
+      "citations": [
+        "G-05",
+        "G-06",
+        "G-19",
+        "G-28"
+      ],
+      "tools": [
+        "graph_traverse",
+        "pubmed_search",
+        "graph_traverse",
+        "pubmed_search"
+      ],
+      "literature": 3,
+      "receipt_valid": true,
+      "history_recalled": null,
+      "answer": "High blood sugar and heart disease interact significantly in increasing stroke risk. Elevated glucose levels can lead to high blood pressure, which is a major risk factor for stroke [G-06]. Additionally, heart disease, particularly coronary artery disease, contributes to stroke risk through plaque buildup that obstructs blood flow to the brain [G-05]. Managing diabetes through lifestyle changes ca",
+      "a2a_route": "followup_agent -> evidence_subagent (consult_evidence_researcher)"
+    }
+  ],
+  "api_checks": {
+    "health": "ok",
+    "no_api_key": 401,
+    "receipt_verify": true,
+    "chat_followup_receipt": true,
+    "a2a_events_in_queue": 28,
+    "cors_allow_origin": "https://mobile.example.org"
+  }
+}

@@ -12,8 +12,8 @@ NODES = [
     # group, node, status, where, how, note
     ("Foundations", "LLM reasoning", "full", "core/agents.py::build_graph", "gpt-4o-mini (temperature 0) reasons in 7 LLM roles: planner, orchestrator, 3 gatherers, writer, reviewer", ""),
     ("Foundations", "Prompt patterns", "full", "core/agents.py::SYSTEM, mcp_server prompts, skills/*", "role system prompts, ReAct 'Thought:' format, MCP prompt templates, progressive-disclosure skills, structured output", ""),
-    ("Foundations", "Tool use / function calling", "full", "core/agents.py::react, mcp_server (19 tools)", "bind_tools function calling to real MCP tools over stdio, every call through the pre-tool-use hook", ""),
-    ("Foundations", "Embeddings & vectors", "full", "core/vectors.py::DenseEncoder, core/rag.py::search", "24-dim LSA dense vectors + TF-IDF sparse, weighted hybrid fusion; notebook compares OpenAI text-embedding-3-small", "MCP server uses local LSA (it holds no API key by design)"),
+    ("Foundations", "Tool use / function calling", "full", "core/agents.py::react, mcp_server (20 tools)", "bind_tools function calling to real MCP tools over stdio, every call through the pre-tool-use hook", ""),
+    ("Foundations", "Embeddings & vectors", "full", "core/vectors.py::DenseEncoder, core/vector_store.py, core/rag.py::search", "24-dim LSA dense vectors stored in a persisted FAISS index + TF-IDF sparse, weighted hybrid fusion; notebook compares OpenAI text-embedding-3-small", "MCP server uses local LSA (it holds no API key by design)"),
     ("Foundations", "Context windows", "full", "core/context.py, core/agents.py::react", "tiktoken o200k_base counts, tool output truncation, observation compaction, budgeted writer evidence", ""),
     ("Retrieval & Memory", "Classical RAG", "full", "core/rag.py::GuidelineIndex.search, core/agents.py::classical_retrieve", "selectable mode 'classical': a fixed pipeline calls MCP semantic_search once per required topic BEFORE the LLM; the docs are injected into the context (system prompt + user message + docs); one LLM call, no tool calls", "no re-retrieval loop in this mode, by design"),
     ("Retrieval & Memory", "Graph RAG", "full", "core/graph_rag.py::traverse, MCP graph_traverse", "networkx graph of factors, conditions and chunks; weighted multi-hop traversal returns paths", ""),
@@ -43,7 +43,70 @@ NODES = [
     ("Frontier", "Memory & learning loops", "partial", "core/episodes.py::learned_hints, retrieval_boosts", "recurring reviewer/clinician feedback becomes whitelisted hints and bounded retrieval boosts", "bounded and reversible by design; no weight updates"),
     ("Frontier", "Self-improving agents", "partial", "core/episodes.py + planner + writer", "agents read their own past failures before acting; effect shown in notebook demo", "prompt-level only; no autonomous code or prompt rewriting"),
     ("Frontier", "Multi-modal reasoning", "partial", "core/multimodal.py", "lab image -> gpt-4o-mini vision structured values; PDF -> pypdf text + regex", "3 fields only, no OCR for scanned PDFs, small rendered test set"),
-    ("Frontier", "Agentic workflows at scale", "partial", "core/batch.py", "cohort batch with semaphore concurrency and shared token-bucket rate limit", "single process, max 6 cases, no distributed queue"),
+    ("Frontier", "Agentic workflows at scale", "partial", "core/batch.py, core/job_queue.py, core/worker.py, deploy/k8s", "cohort batch with semaphore concurrency and shared token-bucket rate limit; v2.3: durable job queue (SQLite / PostgreSQL / Redis) consumed by N workers, Kubernetes HPA for API and workers", "multi-worker path implemented and tested on one machine; not load-tested on a cluster"),
+]
+
+# "How to Build an AI Agent" diagram (8 boxes, 37 items) -> implementation. Item labels follow the v2.2 audit of that diagram.
+AGENT_BUILD = [
+    # box, item, status, where, how, note
+    ("1 Purpose", "Problem / goal", "full", "README.md, knowledge/Plan.md, module_summary.md s.1", "stroke-risk decision support for clinicians: cited, checked report from a profile + note", ""),
+    ("1 Purpose", "Target users", "full", "README.md, docs/GUMROAD_LISTING.md", "clinicians (report audience 'clinician') and patients ('patient-friendly-summary' skill)", ""),
+    ("1 Purpose", "Scope & non-goals", "full", "core/guardrails.py, README disclaimer", "not a medical device: emergency stop, dosing refusal, out-of-scope refusal before any LLM call", ""),
+    ("1 Purpose", "Success criteria", "full", "harness_contract.json success_criteria, scripts/success_report.py, eval/success_criteria.md", "11 numeric targets declared before the v2.3 runs; the report compares observed vs target", ""),
+    ("2 Prompts", "Role / persona", "full", "core/agents.py::SYSTEM", "one role prompt per agent (planner, orchestrator, 5 specialists, follow-up agent, evidence sub-agent)", ""),
+    ("2 Prompts", "Instructions", "full", "core/agents.py::SYSTEM, mcp_server prompts", "step instructions + MCP prompt templates clinical_report / red_team_review", ""),
+    ("2 Prompts", "Constraints / guardrails", "full", "prompts + core/harness.py::verify", "no doses, no diagnosis, cite only retrieved ids; re-checked by code", ""),
+    ("2 Prompts", "Output format", "full", "core/agents.py pydantic schemas", "with_structured_output (Plan, Route, RiskOut, EvidenceOut, RedTeam, SubOut) + fixed report headings", ""),
+    ("2 Prompts", "Examples / skills", "full", "skills/*/SKILL.md, core/skills.py", "progressive-disclosure skills with worked rules; load_skill tool", ""),
+    ("3 LLM", "Model choice", "full", "harness_contract.json model, core/config.py::get_llm", "gpt-4o-mini via the OpenAI-compatible Vocareum endpoint (only model used)", ""),
+    ("3 LLM", "Context window", "full", "core/context.py, app 'Context window' tab", "tiktoken o200k_base budgets out of 128k; per-slot inspector", ""),
+    ("3 LLM", "Cost", "full", "core/harness.py::price, cost_summary", "per-call list-price costing; every receipt carries cost_usd", ""),
+    ("3 LLM", "Latency", "full", "core/observability.py, receipts latency_s", "per-call spans (OTLP-JSON), run latency, wall-clock budget 300 s", ""),
+    ("3 LLM", "Temperature", "full", "harness_contract.json temperature=0", "deterministic decoding; written into the signed receipt", ""),
+    ("3 LLM", "Top-p", "full", "harness_contract.json top_p=1.0, core/config.py::get_llm", "passed to ChatOpenAI and written into every receipt (v2.3)", ""),
+    ("4 Tools", "Web & data APIs", "full", "core/pubmed.py (MCP pubmed_search), core/context_tools.py::web_fetch", "NCBI PubMed E-utilities (esearch + esummary, keyless, 3 req/s, cached, real snapshot fallback) + allowlisted CDC/NIH/WHO pages", "PubMed returns metadata only; reports cite only G-xx excerpts"),
+    ("4 Tools", "Custom tools", "full", "mcp_server/neuroguard_mcp_server.py", "predict_risk, explain_factors, cohort_stats, screen_note, calculator, graph_traverse, ...", ""),
+    ("4 Tools", "MCP", "full", "official mcp SDK (FastMCP) over stdio", "20 tools, 6 resources + 1 template, 2 prompts; server-side policy engine", ""),
+    ("4 Tools", "AI agent as a tool", "full", "core/agent_tools.py::make_evidence_agent_tool", "Evidence Researcher sub-agent wrapped as LangChain StructuredTool consult_evidence_researcher; bound by the follow-up agent; A2A-traced", ""),
+    ("5 Memory", "Working memory", "full", "core/agents.py::CaseState", "LangGraph state across nodes in one run", ""),
+    ("5 Memory", "Episodic memory", "full", "core/episodes.py + core/chat_memory.py", "run episodes for the learning loop + de-identified conversation turns recalled into follow-ups (consent-gated, bounded)", ""),
+    ("5 Memory", "Vector database", "full", "core/vector_store.py (FAISS IndexFlatIP, persisted)", "guideline embeddings in a persisted FAISS index; semantic_search / hybrid search read it; numpy fallback", ""),
+    ("5 Memory", "SQL database", "full", "core/db.py, core/memory.py", "SQLite by default, PostgreSQL via DATABASE_URL (tested on a real PostgreSQL 16 server)", ""),
+    ("5 Memory", "File storage", "full", "knowledge/, data/runtime/, skills/", "read-only knowledge files (search_files / shell), model cache, FAISS index files", ""),
+    ("6 Orchestration", "Framework (LangGraph)", "full", "core/agents.py::build_graph", "StateGraph planner -> orchestrator <-> specialists -> gate", ""),
+    ("6 Orchestration", "Triggers", "full", "api/main.py (POST /v1/cases, /v1/webhooks/case), scripts/scheduled_batch.py", "UI, HTTP API, HMAC-signed webhook and a cron-ready scheduled batch CLI", ""),
+    ("6 Orchestration", "Message queue", "full", "core/job_queue.py, core/worker.py", "durable SQLite (WAL) job queue with leases + retries; PostgreSQL (SKIP LOCKED) or Redis backends; A2A events published to it", ""),
+    ("6 Orchestration", "Agent2Agent", "full", "core/a2a.py", "agent cards + task/message/artifact on an in-process bus; events mirrored to the queue", "in-process, not a networked A2A server"),
+    ("6 Orchestration", "Error handling", "full", "core/agents.py::call_llm, core/worker.py, core/cache.py", "gateway retries, tool errors as data, timeouts, job retry + lease recovery, cache / DB fallbacks", ""),
+    ("7 Interface", "Chat interface", "full", "app.py 'Chat' tab, core/chat.py", "st.chat_input / st.chat_message: run cases and ask follow-ups with conversation memory", ""),
+    ("7 Interface", "Web app", "full", "app.py (Streamlit Community Cloud)", "live demo with 7 tabs", ""),
+    ("7 Interface", "API endpoint", "full", "api/main.py (FastAPI)", "POST /v1/cases, GET /v1/cases/{id}, GET /v1/receipts/{id}/verify, webhook, chat, health; API-key auth, CORS, OpenAPI /docs", "Streamlit Cloud cannot host it: run with Docker / compose / Kubernetes"),
+    ("7 Interface", "Slack / Discord bot", "full", "bots/slack_bot.py (Slack Bolt, socket mode), bots/discord_bot.py", "/neuroguard slash command returns summary + citations + receipt; handler unit-tested", "not connected to a live Slack workspace in this project (no tokens); Discord bot optional and untested"),
+    ("8 Testing", "Unit tests", "full", "tests/ (pytest), ci/github-actions-ci.yml", "harness, guardrails, permissions, sandbox, SQL authorizer, RAG/vector store, queue, cache, DB, API, Slack, chat memory, agent-as-tool, deploy manifests; CI workflow for 3.13 + 3.14", "the CI workflow ships as ci/github-actions-ci.yml; it runs once copied to .github/workflows/ (the push token had no workflow scope)"),
+    ("8 Testing", "Latency tests", "full", "evaluation.ipynb, eval/logs/e2e_v23.json", "per-run latency in every eval row and receipt; median vs target in success criteria", ""),
+    ("8 Testing", "Quality metrics", "full", "evaluation.ipynb, eval/summary.json", "attack block rate, finalized rate, citation coverage, faithfulness, hit@3, AUC, Brier", ""),
+    ("8 Testing", "Improvement loop", "full", "core/episodes.py, docs/IMPROVEMENTS.md", "episodes -> whitelisted hints + bounded retrieval boosts; roadmap from failures", ""),
+]
+
+# "LangGraph + MCP Architecture" reference diagram -> implementation.
+LANGGRAPH_MCP = [
+    ("Client", "Web UI", "full", "app.py", "Streamlit app (assess form, chat tab, traces); responsive CSS for narrow screens", ""),
+    ("Client", "Mobile App", "partial", "api/main.py (CORS, OpenAPI), docs/MOBILE_CLIENT.md, app.py responsive CSS", "mobile-ready REST API (CORS allowlist, /docs, curl + JavaScript fetch examples) and a phone-friendly Streamlit layout", "no native iOS/Android app is shipped"),
+    ("Client", "API Request", "full", "api/main.py", "JSON over HTTPS with X-API-Key; webhook with HMAC signature", ""),
+    ("API Gateway", "FastAPI", "full", "api/main.py", "FastAPI app: auth, validation (pydantic), CORS, queue hand-off, receipt verification", ""),
+    ("LangGraph Agent System", "Planner Node", "full", "core/agents.py::planner", "LLM plan from episodic memory (NODE_ROLES planner)", ""),
+    ("LangGraph Agent System", "Executor Node", "full", "core/agents.py::orchestrator + intake / risk_analyst / evidence_researcher / clinical_writer", "orchestrator executes the plan by delegating to specialists (NODE_ROLES executor)", ""),
+    ("LangGraph Agent System", "Validator Node", "full", "core/agents.py::safety_reviewer + gate", "12-check verifier + red team + finalize/confidence gate (NODE_ROLES validator)", ""),
+    ("LangGraph Agent System", "Agent State Machine", "full", "core/agents.py::CaseState, NODE_ROLES; result['state_machine']", "typed LangGraph state with phase = planner | executor | validator; executed phase sequence returned per run", ""),
+    ("MCP Server", "Tool Registry", "full", "mcp_server: tools/list + resource registry://tools", "every tool with granted agents, clamps, quotas and high-risk controls", ""),
+    ("MCP Server", "Memory Access", "full", "MCP memory_read / memory_write / get_memory / episode_recall / episode_write", "session-pinned, consent-gated memory tools over SQLite or PostgreSQL", ""),
+    ("MCP Server", "Policy Engine", "full", "core/server_policy.py::ServerPolicy.guard (server) + core/permissions.py (client hook)", "server re-checks allowlist, clamps, validators and per-run quotas from the contract on every tools/call", ""),
+    ("Data & Memory Layer", "Redis (cache)", "full", "core/cache.py", "REDIS_URL -> Redis cache for retrieval, PubMed and opt-in LLM responses; in-process fallback (tested on real Redis 6.2 + fakeredis)", "optional; Streamlit Cloud uses the in-process cache"),
+    ("Data & Memory Layer", "PostgreSQL (database)", "full", "core/db.py", "DATABASE_URL -> memory, episodes, chat turns and job queue in PostgreSQL (tested on a real PostgreSQL 16.2 server); SQLite default", "optional; Streamlit Cloud uses SQLite"),
+    ("Data & Memory Layer", "Vector Store (embeddings)", "full", "core/vector_store.py", "persisted FAISS index of the guideline embeddings", ""),
+    ("Deployment & LLM Infrastructure", "Docker / Compose", "full", "Dockerfile, docker-compose.yml", "api + worker + ui + slack-bot + redis + postgres (validated with docker compose config)", "images not built on the dev box (no Docker daemon)"),
+    ("Deployment & LLM Infrastructure", "Kubernetes", "full", "deploy/k8s/*.yaml", "Deployments, Services, ConfigMap, Secret template, StatefulSet, HPA, Ingress (kubeconform -strict: valid)", "not applied to a live cluster"),
+    ("Deployment & LLM Infrastructure", "vLLM", "optional", "docker-compose.yml profile vllm, deploy/k8s/optional/vllm.yaml, docs/DEPLOYMENT.md", "optional self-hosted OpenAI-compatible endpoint (base_url swap)", "NOT the default and NOT used in tests or evaluations; the project uses gpt-4o-mini via Vocareum only"),
 ]
 
 
@@ -99,7 +162,7 @@ def evidence(node: str, r: dict | None) -> str:
         "Memory & learning loops": f"{len((r.get('learning') or {}).get('hints', []))} learned hint(s) applied; {len((r.get('learning') or {}).get('retrieval_boosts', {}))} boosted excerpts",
         "Self-improving agents": f"planner watch-outs: {len((r.get('plan') or {}).get('watch_outs', []))}",
         "Multi-modal reasoning": "used" if "Lab report (" in ((r.get("inputs") or {}).get("note") or "") else "not used in this run (upload a lab report)",
-        "Agentic workflows at scale": "see the Cohort batch tab",
+        "Agentic workflows at scale": "see the Cohort batch tab; API jobs go through the durable queue",
     }
     return m.get(node, "")
 
@@ -117,6 +180,14 @@ def _chunks(e):
         return json.loads(e["output"]).get("chunks", [])
     except Exception:
         return []
+
+
+def agent_build_rows() -> list[dict]:
+    return [{"box": b, "item": i, "status": st, "where": w, "how": h, "limits": n} for b, i, st, w, h, n in AGENT_BUILD]
+
+
+def langgraph_mcp_rows() -> list[dict]:
+    return [{"layer": l_, "component": c, "status": st, "where": w, "how": h, "limits": n} for l_, c, st, w, h, n in LANGGRAPH_MCP]
 
 
 def coverage_rows(result: dict | None = None) -> list[dict]:

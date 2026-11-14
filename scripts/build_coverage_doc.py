@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from core.coverage import NODES  # noqa: E402
+from core.coverage import AGENT_BUILD, LANGGRAPH_MCP, NODES  # noqa: E402
 
 S = json.loads((ROOT / "eval" / "summary.json").read_text())
 K = json.loads((ROOT / "harness_contract.json").read_text())
@@ -27,7 +27,7 @@ hy, sp, de, oa = (cmp_[k] for k in ("hybrid 0.6/0.4 (served)", "sparse (TF-IDF)"
 EVID = {
     "LLM reasoning": f"notebook s.8-9: {A['llm_calls_mean']} LLM calls / run (mean), finalized {A['finalized_rate']}; scripts/live_evidence.py",
     "Prompt patterns": "notebook s.12 (prompt probe); trace `skill_loaded`, `mcp_prompt_get`; skills/*/SKILL.md",
-    "Tool use / function calling": f"live_evidence: finish_reason=tool_calls from bind_tools; {A['tool_calls_mean']} MCP calls / run; verify_mcp.py (19 tools)",
+    "Tool use / function calling": f"live_evidence: finish_reason=tool_calls from bind_tools; {A['tool_calls_mean']} MCP calls / run; verify_mcp.py (20 tools)",
     "Embeddings & vectors": f"notebook s.5b: paraphrase hit@3 sparse {sp['paraphrase_hit@3']} / dense {de['paraphrase_hit@3']} / hybrid {hy['paraphrase_hit@3']} / OpenAI {oa['paraphrase_hit@3']}",
     "Context windows": f"notebook s.5d + s.9: max {A['max_context_tokens']} tokens in any agent context of {CX['model_context_window']:,}; {A['tool_outputs_truncated_total']} tool outputs truncated",
     "Classical RAG": f"notebook s.5: hit@3 {R['hit_at_3']}, MRR {R['mrr_at_3']} on {R['queries']} labelled queries; s.17 classical mode: hit@3 {RM['classical']['hit_at_3']}, coverage {RM['classical']['coverage']}, faithfulness {RM['classical']['faithfulness']}, {RM['classical']['latency_mean_s']} s",
@@ -120,7 +120,8 @@ lines += ["", "## How the new pieces fit one run", "",
           "- The confidence score is a transparent weighted heuristic, not a calibrated probability that the report is correct.",
           "- The learning loop changes only whitelisted hint texts and bounded retrieval boosts; it never edits code, prompts, the contract or model weights.",
           "- Multi-modal input reads three lab fields; scanned PDFs (no text layer) are refused; it was tested on rendered images of real dataset values, not real scans.",
-          "- Batch mode is single-process concurrency for a small cohort, not a distributed queue.",
+          "- Batch mode is single-process concurrency for a small cohort; v2.3 adds a durable queue + workers (API / webhook / schedule), "
+          "tested on one machine, not load-tested on a cluster.",
           "- Web search is not a general search engine: it ranks the corpus' known CDC / NIH / WHO source pages and fetches them live; "
           "web text is context, never a citation. On the development box DNS answers come from a fake-IP proxy (198.18.0.0/15), which "
           "the SSRF guard accepts only when NG_FAKEIP_DNS=1 is set; Streamlit Cloud resolves normally and needs no flag.",
@@ -128,5 +129,31 @@ lines += ["", "## How the new pieces fit one run", "",
           "- In agentic-search mode the harness sends one 'source check' message if the LLM finished without consulting a required source "
           "class; the LLM still chooses the call. Without it gpt-4o-mini often stopped after semantic_search.",
           ""]
+from collections import Counter  # noqa: E402
+_ab = Counter(r[2] for r in AGENT_BUILD)
+lines += ["", "## AI Agent build diagram (\"How to Build an AI Agent\": 8 boxes, 37 items)", "",
+          f"**Status (v2.3.0): {len(AGENT_BUILD)} items - " + ", ".join(f"{n} {k}" for k, n in _ab.items()) + ".** "
+          "v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, "
+          "agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, "
+          "API endpoint, Slack bot). Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.", "",
+          "| Box | Item | Status | File / function | How it works |", "|---|---|---|---|---|"]
+for b, i, st, where, how, note in AGENT_BUILD:
+    lines.append(f"| {b} | {i} | {st} | `{where}` | {how}." + (f" **Limit:** {note}" if note else "") + " |")
+_lg = Counter(r[2] for r in LANGGRAPH_MCP)
+lines += ["", "## LangGraph + MCP architecture diagram", "",
+          f"**Status: {len(LANGGRAPH_MCP)} components - " + ", ".join(f"{n} {k}" for k, n in _lg.items()) + ".** "
+          "Client -> API gateway (FastAPI) -> LangGraph agent system (planner -> executor -> validator state machine) -> MCP server "
+          "(tool registry, memory access, policy engine) -> data & memory layer (Redis cache, PostgreSQL, vector store) on Docker / "
+          "Kubernetes. The LLM is gpt-4o-mini via the Vocareum OpenAI-compatible endpoint; vLLM is only an optional, documented "
+          "on-prem profile that is not used anywhere by default, in tests or in evaluations.", "",
+          "State-machine mapping (`core/agents.py::NODE_ROLES`, every node writes `phase` into `CaseState`):", "",
+          "| Reference node | NeuroGuard LangGraph nodes |", "|---|---|",
+          "| Planner Node | `planner` (LLM plan from episodic memory + learned hints) |",
+          "| Executor Node | `orchestrator` (LLM routing under code guards) + `intake`, `risk_analyst`, `evidence_researcher`, `clinical_writer` |",
+          "| Validator Node | `safety_reviewer` (12-check verifier + quote-confirmed red team; may send back for one revision) + `gate` (finalize + confidence gate, signed receipt) |", "",
+          "| Layer | Component | Status | File / function | How it works |", "|---|---|---|---|---|"]
+for l_, c, st, where, how, note in LANGGRAPH_MCP:
+    lines.append(f"| {l_} | {c} | {st} | `{where}` | {how}." + (f" **Limit:** {note}" if note else "") + " |")
+lines.append("")
 (ROOT / "docs" / "KNOWLEDGE_GRAPH_COVERAGE.md").write_text("\n".join(lines))
 print("wrote docs/KNOWLEDGE_GRAPH_COVERAGE.md")

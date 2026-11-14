@@ -1,0 +1,137 @@
+# API gateway (FastAPI), queue workers, Streamlit UI and Slack bot - one image, different commands.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: neuroguard
+  labels: {app: api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: api}
+  template:
+    metadata:
+      labels: {app: api}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: api
+          image: ghcr.io/sandipdey2/neuroguard:2.3.0
+          command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+          envFrom:
+            - configMapRef: {name: neuroguard-config}
+            - secretRef: {name: neuroguard-secrets}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1536Mi}
+          volumeMounts: [{name: runtime, mountPath: /data}]
+          ports: [{containerPort: 8000}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes: [{name: runtime, emptyDir: {}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: neuroguard
+  labels: {app: worker}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: worker}
+  template:
+    metadata:
+      labels: {app: worker}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: worker
+          image: ghcr.io/sandipdey2/neuroguard:2.3.0
+          command: ["python", "-m", "core.worker"]
+          envFrom:
+            - configMapRef: {name: neuroguard-config}
+            - secretRef: {name: neuroguard-secrets}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1536Mi}
+          volumeMounts: [{name: runtime, mountPath: /data}]
+      volumes: [{name: runtime, emptyDir: {}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui
+  namespace: neuroguard
+  labels: {app: ui}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: ui}
+  template:
+    metadata:
+      labels: {app: ui}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: ui
+          image: ghcr.io/sandipdey2/neuroguard:2.3.0
+          command: ["streamlit", "run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+          envFrom:
+            - configMapRef: {name: neuroguard-config}
+            - secretRef: {name: neuroguard-secrets}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1536Mi}
+          volumeMounts: [{name: runtime, mountPath: /data}]
+          ports: [{containerPort: 8501}]
+          readinessProbe:
+            httpGet: {path: /_stcore/health, port: 8501}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes: [{name: runtime, emptyDir: {}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slack-bot
+  namespace: neuroguard
+  labels: {app: slack-bot}
+spec:
+  replicas: 0
+  selector:
+    matchLabels: {app: slack-bot}
+  template:
+    metadata:
+      labels: {app: slack-bot}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: slack-bot
+          image: ghcr.io/sandipdey2/neuroguard:2.3.0
+          command: ["python", "-m", "bots.slack_bot"]
+          envFrom:
+            - configMapRef: {name: neuroguard-config}
+            - secretRef: {name: neuroguard-secrets}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1536Mi}
+          volumeMounts: [{name: runtime, mountPath: /data}]
+      volumes: [{name: runtime, emptyDir: {}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: api, namespace: neuroguard}
+spec:
+  selector: {app: api}
+  ports: [{port: 80, targetPort: 8000}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: ui, namespace: neuroguard}
+spec:
+  selector: {app: ui}
+  ports: [{port: 80, targetPort: 8501}]

@@ -76,14 +76,14 @@ class MessageBus:
         _emit({**self.log[-1], "contextId": self.context_id, "text": None})
         return task
 
-    def complete(self, task: dict, agent: str, name: str, data: dict, state: str = "completed") -> dict:
+    def complete(self, task: dict, agent: str, name: str, data: dict, state: str = "completed", to: str = "orchestrator") -> dict:
         art = {"artifactId": _id(), "name": name, "parts": [{"kind": "data", "data": data}]}
         task["artifacts"].append(art)
         task["status"] = {"state": state, "timestamp": round(time.time(), 3)}
         task["history"].append({"kind": "message", "messageId": _id(), "role": "agent", "taskId": task["id"],
                                 "contextId": self.context_id, "parts": [{"kind": "text", "text": f"{name} ready"}],
                                 "metadata": {"from": agent}})
-        self.log.append({"ts": round(time.time(), 3), "event": f"task/{state}", "from": agent, "to": "orchestrator",
+        self.log.append({"ts": round(time.time(), 3), "event": f"task/{state}", "from": agent, "to": to,
                          "taskId": task["id"], "artifact": name, "artifact_keys": sorted(data)[:12]})
         _emit({**self.log[-1], "contextId": self.context_id})
         return task

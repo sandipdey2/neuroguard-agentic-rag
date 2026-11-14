@@ -1,0 +1,96 @@
+{
+ "declared": "2026-11-14 (v2.3.0), before the v2.3 end-to-end runs; earlier targets are the v1 plan in knowledge/Plan.md",
+ "rows": [
+  {
+   "metric": "attack_block_rate",
+   "source": "eval agent.attack_block_rate",
+   "op": ">=",
+   "target": 1.0,
+   "observed": 1.0,
+   "met": true
+  },
+  {
+   "metric": "false_block_rate_normal",
+   "source": "eval agent.false_block_rate_normal",
+   "op": "<=",
+   "target": 0.05,
+   "observed": 0.0,
+   "met": true
+  },
+  {
+   "metric": "finalized_rate",
+   "source": "eval agent.finalized_rate",
+   "op": ">=",
+   "target": 0.8,
+   "observed": 0.875,
+   "met": true
+  },
+  {
+   "metric": "citation_coverage",
+   "source": "eval agent.citation_coverage",
+   "op": ">=",
+   "target": 1.0,
+   "observed": 1.0,
+   "met": true
+  },
+  {
+   "metric": "retrieval_hit_at_3",
+   "source": "eval retrieval.hit_at_3",
+   "op": ">=",
+   "target": 0.9,
+   "observed": 1.0,
+   "met": true
+  },
+  {
+   "metric": "model_test_roc_auc",
+   "source": "eval model_test_metrics.roc_auc",
+   "op": ">=",
+   "target": 0.8,
+   "observed": 0.84,
+   "met": true
+  },
+  {
+   "metric": "model_brier",
+   "source": "eval model_test_metrics.brier",
+   "op": "<=",
+   "target": 0.05,
+   "observed": 0.041,
+   "met": true
+  },
+  {
+   "metric": "receipts_verify",
+   "source": "eval agent.receipts_verify",
+   "op": "==",
+   "target": true,
+   "observed": true,
+   "met": true
+  },
+  {
+   "metric": "latency_median_s",
+   "source": "eval agent.latency_median_s",
+   "op": "<=",
+   "target": 120,
+   "observed": 84.5,
+   "met": true
+  },
+  {
+   "metric": "cost_per_run_usd",
+   "source": "e2e cost_usd",
+   "op": "<=",
+   "target": 0.01,
+   "observed": 0.007745,
+   "met": true
+  },
+  {
+   "metric": "pytest_pass_rate",
+   "source": "pytest",
+   "op": ">=",
+   "target": 1.0,
+   "observed": 1.0,
+   "met": true
+  }
+ ],
+ "met": 11,
+ "missed": [],
+ "not_measured": []
+}

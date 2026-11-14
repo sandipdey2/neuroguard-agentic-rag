@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neuroguard
+  namespace: neuroguard
+spec:
+  rules:
+    - host: neuroguard.example.com
+      http:
+        paths:
+          - {path: /v1, pathType: Prefix, backend: {service: {name: api, port: {number: 80}}}}
+          - {path: /health, pathType: Exact, backend: {service: {name: api, port: {number: 80}}}}
+          - {path: /docs, pathType: Prefix, backend: {service: {name: api, port: {number: 80}}}}
+          - {path: /openapi.json, pathType: Exact, backend: {service: {name: api, port: {number: 80}}}}
+          - {path: /, pathType: Prefix, backend: {service: {name: ui, port: {number: 80}}}}

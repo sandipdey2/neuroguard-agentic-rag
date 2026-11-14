@@ -392,6 +392,12 @@ with tab_cov:
     for grp in cov["group"].unique():
         st.markdown(f"**{grp}**")
         st.dataframe(cov[cov["group"] == grp].drop(columns=["group"]), width="stretch", hide_index=True)
+    from core.coverage import agent_build_rows, langgraph_mcp_rows
+    st.markdown("**\"How to Build an AI Agent\" diagram - 37 items** (v2.3 closed the 12 gaps of the v2.2 audit)")
+    st.dataframe(pd.DataFrame(agent_build_rows()), width="stretch", hide_index=True)
+    st.markdown("**LangGraph + MCP architecture diagram** - planner → executor → validator state machine, MCP tool registry / "
+                "memory / policy engine, Redis / PostgreSQL / vector store, Docker / Kubernetes (vLLM optional, not used)")
+    st.dataframe(pd.DataFrame(langgraph_mcp_rows()), width="stretch", hide_index=True)
     gs = graph_rag.stats()
     st.caption(f"Knowledge graph used by Graph RAG: {gs['nodes']} nodes ({gs['node_kinds']}), {gs['edges']} edges ({gs['edge_relations']}).")
     st.caption("Episodic memory now: " + json.dumps(episodes.stats()))

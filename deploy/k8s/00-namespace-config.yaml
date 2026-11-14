@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: neuroguard
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: neuroguard-config
+  namespace: neuroguard
+data:
+  OPENAI_API_BASE: "https://openai.vocareum.com/v1"   # default and only evaluated LLM path: gpt-4o-mini via Vocareum
+  REDIS_URL: "redis://redis:6379/0"
+  NG_RUNTIME_DIR: "/data/runtime"
+  NG_API_INLINE_WORKER: "0"
+  NG_CORS_ORIGINS: "https://your-web-or-mobile-app.example"

@@ -1,0 +1,23 @@
+name: CI
+on:
+  push: {branches: [main]}
+  pull_request:
+permissions: {contents: read}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.13", "3.14"]
+    env:                          # no secrets: every LLM call in the suite is mocked; web access is off (real snapshots)
+      NG_WEB_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "${{ matrix.python }}"}
+      - name: Install
+        run: pip install -r requirements.txt -r requirements-api.txt -r requirements-bots.txt pytest==9.2.0 fakeredis==2.40.0 pyyaml==6.0.3
+      - name: pytest
+        run: python -m pytest -q
+      - name: MCP server over stdio
+        run: python scripts/verify_mcp.py

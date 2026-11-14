@@ -128,7 +128,7 @@ def make_evidence_agent_tool(llm, tool_map: dict, ctx, sink: dict, max_rounds: i
             sink["retrieved"][f["citation_id"]] = ids[f["citation_id"]]
         art = {"findings": kept, "dropped_unretrieved": dropped,
                "literature": [{k: x.get(k) for k in ("pmid", "title", "journal", "year", "url")} for x in sink["literature"][:3]]}
-        ctx.bus.complete(task, "evidence_subagent", "cited_findings", art)
+        ctx.bus.complete(task, "evidence_subagent", "cited_findings", art, to=parent)
         sink["trace"].append({"agent": "evidence_subagent", "type": "agent_output", "output": art, "ms": round((time.perf_counter() - t0) * 1000)})
         return json.dumps(art)
 

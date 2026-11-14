@@ -37,7 +37,11 @@ def describe() -> str:
     if not url:
         return "sqlite (local file per store)"
     u = urlparse(url)
-    return f"postgres://{u.username or ''}:***@{u.hostname}:{u.port or 5432}{u.path}"
+    host = u.hostname
+    if not host:  # unix-socket URI: postgresql://user@/db?host=/path
+        from urllib.parse import parse_qs
+        host = (parse_qs(u.query).get("host") or ["localhost"])[0]
+    return f"postgres://{u.username or ''}:***@{host}:{u.port or 5432}{u.path}"
 
 
 _INS = re.compile(r"^\s*INSERT\s+OR\s+(REPLACE|IGNORE)\s+INTO\s+(\w+)\s*\(([^)]*)\)", re.I | re.S)

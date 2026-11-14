@@ -1,0 +1,83 @@
+# NeuroGuard AI - full stack: API gateway (FastAPI) + queue worker + Streamlit UI + Slack bot + Redis + PostgreSQL.
+#   cp .env.example .env   # fill in OPENAI_API_KEY etc. (never commit .env)
+#   docker compose up -d --build                 # default: gpt-4o-mini through the Vocareum OpenAI-compatible endpoint
+#   docker compose --profile slack up -d         # + Slack bot (needs SLACK_BOT_TOKEN / SLACK_APP_TOKEN)
+#   docker compose --profile vllm up -d          # OPTIONAL on-prem LLM profile (see docs/DEPLOYMENT.md) - not used by default
+x-app: &app
+  build: .
+  image: neuroguard:2.3.0
+  env_file: [{path: .env, required: false}]
+  environment:
+    DATABASE_URL: postgresql://neuroguard:${POSTGRES_PASSWORD:-change-me}@postgres:5432/neuroguard
+    REDIS_URL: redis://redis:6379/0
+    NG_RUNTIME_DIR: /data/runtime
+    OPENAI_API_BASE: ${OPENAI_API_BASE:-https://openai.vocareum.com/v1}
+  volumes: [ngdata:/data]
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+  restart: unless-stopped
+
+services:
+  api:
+    <<: *app
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://neuroguard:${POSTGRES_PASSWORD:-change-me}@postgres:5432/neuroguard
+      REDIS_URL: redis://redis:6379/0
+      NG_RUNTIME_DIR: /data/runtime
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-https://openai.vocareum.com/v1}
+      NG_API_INLINE_WORKER: "0"
+    ports: ["8000:8000"]
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "core.worker"]
+    healthcheck: {disable: true}
+
+  ui:
+    <<: *app
+    command: ["streamlit", "run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    ports: ["8501:8501"]
+    healthcheck: {disable: true}
+
+  slack-bot:
+    <<: *app
+    command: ["python", "-m", "bots.slack_bot"]
+    profiles: ["slack"]
+    healthcheck: {disable: true}
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: neuroguard
+      POSTGRES_USER: neuroguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U neuroguard"], interval: 5s, timeout: 3s, retries: 20}
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20}
+    restart: unless-stopped
+
+  # OPTIONAL self-hosted, OpenAI-compatible LLM server (on-prem path). NOT the default and NOT used in any test or evaluation:
+  # NeuroGuard is built, evaluated and demoed with gpt-4o-mini via the Vocareum endpoint. To try it, start this profile and
+  # set OPENAI_API_BASE=http://vllm:8000/v1 plus a model name in harness_contract.json (re-run the evaluation before relying on it).
+  vllm:
+    image: vllm/vllm-openai:latest
+    profiles: ["vllm"]
+    command: ["--model", "${VLLM_MODEL:-meta-llama/Llama-3.1-8B-Instruct}", "--enable-auto-tool-choice", "--tool-call-parser", "llama3_json"]
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    ports: ["8001:8000"]
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, count: 1, capabilities: [gpu]}]
+
+volumes:
+  ngdata: {}
+  pgdata: {}
