@@ -23,10 +23,24 @@ from .config import get_llm
 from .data import validate_profile
 from .guardrails import check_input
 from .harness import RunContext, sha, sign_receipt
-from .observability import metrics, otlp_json
+from .observability import metrics, otlp_json, init_tracing, phoenix_status, start_span, ctx_attributes
+from .monitoring import record_run
 from .mcp_client import SERVER, mcp_session
 
 SERVER_SHA = hashlib.sha256(Path(SERVER).read_bytes()).hexdigest()
+
+
+def _store_metrics(res: dict) -> dict:
+    try:
+        record_run(res, phoenix=phoenix_status())
+    except Exception:
+        pass
+    try:
+        from .observability import force_flush
+        force_flush()
+    except Exception:
+        pass
+    return res
 
 
 def _receipt(ctx: RunContext, inputs: dict, result: dict) -> dict:
@@ -56,6 +70,7 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
     """``progress`` (optional callable) receives each new trace event as the graph runs - used for live UI updates.
     ``limiter`` (optional, batch mode) is a shared token-bucket rate limiter awaited before every LLM call."""
     t0 = time.perf_counter()
+    init_tracing()
     ctx = RunContext(session_id=session_id, consent=consent, limiter=limiter)        # contract fixed before any LLM token
     rag_mode = rag_mode or ctx.contract.get("rag_modes", {}).get("default", "agentic")
     if rag_mode not in RAG_MODES:
@@ -77,14 +92,18 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
                "latency_s": round(time.perf_counter() - t0, 2), "tool_calls": 0, "llm_calls": 0, "a2a": [], "audit": ctx.audit.entries,
                "decisions": ctx.decisions, "spans": [], "cost": ctx.cost_summary(), "metrics": metrics([])}
         res["receipt"] = _receipt(ctx, inputs, res)
-        return res
+        return _store_metrics(res)
     try:
+        async def _traced_graph(the_llm):
+            with start_span("neuroguard.run", ctx_attributes(ctx, rag_mode=rag_mode)):
+                return await _run_graph(inputs, gate, ctx, the_llm, progress)
+
         if llm is None:
             async with httpx.AsyncClient(timeout=httpx.Timeout(ctx.contract["llm_timeout_s"])) as http_client:
-                state = await asyncio.wait_for(_run_graph(inputs, gate, ctx, get_llm(http_async_client=http_client), progress),
+                state = await asyncio.wait_for(_traced_graph(get_llm(http_async_client=http_client)),
                                                timeout=ctx.contract["budget"]["wall_clock_timeout_s"] + 30)
         else:
-            state = await asyncio.wait_for(_run_graph(inputs, gate, ctx, llm, progress), timeout=ctx.contract["budget"]["wall_clock_timeout_s"] + 30)
+            state = await asyncio.wait_for(_traced_graph(llm), timeout=ctx.contract["budget"]["wall_clock_timeout_s"] + 30)
         status = state["final"]["status"]
     except asyncio.TimeoutError:
         state, status = {"trace": [{"agent": "harness", "type": "timeout"}]}, "timeout"
@@ -96,7 +115,7 @@ async def arun_case(profile: dict, question: str, note: str = "", audience: str 
            "confidence": (state.get("final") or {}).get("confidence"), "episode": (state.get("final") or {}).get("episode")}
     res["otlp"] = otlp_json(ctx.run_id, ctx.spans, ctx.started, time.time())
     res["receipt"] = _receipt(ctx, inputs, res)
-    return res
+    return _store_metrics(res)
 
 
 async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm, progress=None) -> dict:

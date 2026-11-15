@@ -11,6 +11,8 @@ os.environ["NG_WEB_OFFLINE"] = "1"
 os.environ.pop("DATABASE_URL", None)
 os.environ.pop("REDIS_URL", None)
 os.environ.pop("NG_QUEUE_URL", None)
+os.environ.pop("PHOENIX_COLLECTOR_ENDPOINT", None)
+os.environ.pop("NG_PHOENIX", None)
 os.environ.setdefault("NG_RECEIPT_KEY", "test-receipt-key-not-a-secret")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

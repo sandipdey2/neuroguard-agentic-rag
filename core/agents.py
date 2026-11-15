@@ -409,7 +409,10 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
                         out, n_red = redact(_text(await tool_map[tc["name"]].ainvoke(d.args)))
                     except Exception as exc:          # tool errors go back to the LLM as data
                         out, n_red = json.dumps({"error": str(exc)[:300]}), []
-                ctx.record_tool_span(agent, tc["name"], w1, time.time(), "allow" if d.allow else "deny")
+                ok = d.allow and '"error"' not in out[:20]
+                err = None if d.allow else d.reason
+                ctx.record_tool_span(agent, tc["name"], w1, time.time(), "allow" if d.allow else "deny",
+                                     args=d.args, ok=ok, error=err)
                 evidence.append({"agent": agent, "tool": tc["name"], "args": d.args, "output": out, "allowed": d.allow})
                 obs, cut = truncate(out, cx["max_tool_output_tokens"])     # budgeted context: the LLM sees at most N tokens
                 truncated += int(cut)
@@ -446,7 +449,8 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             if d.allow:
                 w1 = time.time()
                 recall = json.loads(_text(await tool_map["episode_recall"].ainvoke(d.args)))
-                ctx.record_tool_span("planner", "episode_recall", w1, time.time(), "allow")
+                ctx.record_tool_span("planner", "episode_recall", w1, time.time(), "allow",
+                                     args=d.args, ok=True)
                 trace.append({"agent": "planner", "type": "mcp_tool_call", "tool": "episode_recall", "args": d.args, "decision": "allow",
                               "hook_reason": d.reason, "phi_redactions": 0, "output_preview": json.dumps(recall)[:300], "ms": _ms(t0)})
         hints = recall.get("learned_hints", [])[: C["learning"]["max_hints"]]
@@ -587,7 +591,8 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
                 continue
             w1, t1 = time.time(), time.perf_counter()
             out = _text(await tool_map["semantic_search"].ainvoke(d.args))
-            ctx.record_tool_span(rm["retriever_agent"], "semantic_search", w1, time.time(), "allow")
+            ctx.record_tool_span(rm["retriever_agent"], "semantic_search", w1, time.time(), "allow",
+                                args=d.args, ok=True)
             ev.append({"agent": rm["retriever_agent"], "tool": "semantic_search", "args": d.args, "output": out, "allowed": True})
             trace.append({"agent": rm["retriever_agent"], "type": "mcp_tool_call", "tool": "semantic_search", "args": d.args, "decision": "allow",
                           "hook_reason": d.reason, "phi_redactions": 0, "output_preview": out[:300], "ms": _ms(t1)})
@@ -907,10 +912,30 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         return {"phase": "validator", "final": final, "trace": [tr]}
 
     g = StateGraph(CaseState)
+    from .observability import node_span, safe_set
+
+    def _traced(name, fn):
+        async def wrapped(s: CaseState):
+            with node_span(name, ctx) as span:
+                out = await fn(s)
+                if span is not None and name == "gate":
+                    final = (out or {}).get("final") or {}
+                    v = final.get("verification") or {}
+                    checks = v.get("checks") or {}
+                    safe_set(span, {
+                        "decision": final.get("status"),
+                        "confidence": (final.get("confidence") or {}).get("score"),
+                        "checks.failed": ",".join(v.get("failed") or []),
+                        "checks.passed": sum(1 for ok in checks.values() if ok),
+                    })
+                return out
+        wrapped.__name__ = name
+        return wrapped
+
     for name, fn in [("planner", planner), ("orchestrator", orchestrator), ("intake", intake), ("risk_analyst", risk_analyst),
                      ("evidence_researcher", evidence_researcher), ("clinical_writer", clinical_writer),
                      ("safety_reviewer", safety_reviewer), ("gate", gate)]:
-        g.add_node(name, fn)
+        g.add_node(name, _traced(name, fn))
     g.add_edge(START, "planner")
     g.add_edge("planner", "orchestrator")
     g.add_conditional_edges("orchestrator", lambda s: s["next"], {**{a: a for a in SPECIALISTS}, "FINISH": "gate"})

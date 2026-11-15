@@ -24,3 +24,6 @@ scikit-learn==1.9.1
 scipy==1.18.1
 streamlit==1.67.0
 tiktoken==0.14.0
+# Lightweight OpenTelemetry SDK (Phoenix itself stays in requirements-phoenix.txt)
+opentelemetry-api==1.45.2
+opentelemetry-sdk==1.45.2

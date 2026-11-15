@@ -79,9 +79,17 @@ class RunContext:
                                      "cached_tokens": cached, "cost_usd": round(cost, 7), "finish_reason": finish}})
         self.audit.log(agent, "llm_call", self.contract["model"], "ok", tokens=usage.get("total_tokens"), cost_usd=round(cost, 7))
 
-    def record_tool_span(self, agent: str, tool: str, start: float, end: float, decision: str) -> None:
+    def record_tool_span(self, agent: str, tool: str, start: float, end: float, decision: str,
+                         args: dict | None = None, ok: bool | None = None, error: str | None = None) -> None:
         self.spans.append({"name": f"mcp.tools/call.{tool}", "kind": "client", "start": start, "end": end,
                            "attrs": {"agent": agent, "tool": tool, "hook": decision}})
+        try:
+            from .observability import emit_tool_span
+            allowed = decision == "allow"
+            emit_tool_span(self, agent, tool, start, end, decision, args=args,
+                           ok=allowed if ok is None else bool(ok) and allowed, error=error)
+        except Exception:
+            pass
 
     def decide(self, actor: str, kind: str, chosen, rationale: str, options=None, evidence=None, **extra) -> dict:
         """Decision reasoning log: one structured entry per decision (who, what, between which options, why, on what)."""
@@ -146,6 +154,7 @@ def section(md: str, title: str) -> str:
 
 def verify(report_md: str, risk: dict | None, analyst: dict | None, retrieved: dict, evidence_text: str,
            red_team: dict | None, ctx: RunContext) -> dict:
+    t_verify = time.time()
     checks = {}
     p = (risk or {}).get("risk_probability")
     checks["risk_in_unit_interval"] = isinstance(p, (int, float)) and 0.0 <= p <= 1.0
@@ -179,7 +188,13 @@ def verify(report_md: str, risk: dict | None, analyst: dict | None, retrieved: d
                "numbers_checked": len(nums)}
     required = ctx.contract["required_checks"]
     failed = [c for c in required if not checks.get(c)]
-    return {"checks": checks, "failed": failed, "passed": not failed, "details": details}
+    result = {"checks": checks, "failed": failed, "passed": not failed, "details": details}
+    try:
+        from .observability import emit_verify_span
+        emit_verify_span(ctx, result, t_verify, time.time())
+    except Exception:
+        pass
+    return result
 
 
 # ----------------------------------------------------------------------------- receipt

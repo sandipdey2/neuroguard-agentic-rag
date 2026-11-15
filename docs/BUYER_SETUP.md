@@ -52,6 +52,7 @@ python scripts/scheduled_batch.py --rows 9046 31112     # cron trigger; add to c
 - Browser clients on another origin: set `NG_CORS_ORIGINS`.
 - Shared storage (optional): set `DATABASE_URL` (PostgreSQL) and/or `REDIS_URL`; without them everything uses local SQLite and an in-process cache.
 - Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 and 3.14).
+- Optional Arize Phoenix tracing: install `requirements-phoenix.txt` in the app venv, and install `arize-phoenix==21.0.0` in a *separate* venv (it pulls mcp 2.x). Run `phoenix serve`, set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006` (or `NG_PHOENIX=1`), then `python scripts/run_phoenix_demo.py`. The Streamlit **📈 Monitoring** tab works without Phoenix.
 
 ## 7. Customise
 - Budgets, turn caps, per-agent tool permissions, required checks and success criteria: `harness_contract.json` (re-run `python scripts/success_report.py` after an evaluation).

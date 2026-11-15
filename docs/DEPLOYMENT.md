@@ -68,3 +68,25 @@ The 2 real-server PostgreSQL / Redis tests skip in CI (no servers); fakeredis an
 
 Only placeholders live in the repo: `.env.example` and `.streamlit/secrets.toml.example`.
 The MCP server subprocess never receives `OPENAI_API_KEY`, `NG_RECEIPT_KEY` or GitHub tokens.
+
+## Optional: Arize Phoenix tracing
+
+Phoenix is off by default. Streamlit Community Cloud should leave these unset: the **📈 Monitoring** tab
+charts this app's own stored run metrics in SQLite and does not need a collector.
+
+To send live OpenTelemetry traces to a local Phoenix server:
+
+```bash
+# Phoenix UI/server in its own venv (arize-phoenix 21 is not compatible with this repo's mcp 1.30)
+python -m venv .venv-phoenix && source .venv-phoenix/bin/activate
+pip install arize-phoenix==21.0.0
+phoenix serve                                          # UI at http://localhost:6006
+
+# App venv
+pip install -r requirements.txt -r requirements-phoenix.txt
+export PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006  # or NG_PHOENIX=1
+export OPENAI_API_KEY=PASTE_YOUR_KEY_HERE OPENAI_API_BASE=https://openai.vocareum.com/v1
+python scripts/run_phoenix_demo.py
+```
+
+The project name is `neuroguard`. Span attributes are PHI-redacted and never include API keys or raw notes.

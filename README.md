@@ -15,13 +15,15 @@ self-critique check every draft; a finalize gate and a confidence gate refuse an
 with an **HMAC-SHA256 signed receipt**, a decision reasoning log, OTLP-JSON spans and a cost estimate.
 Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
 
-**v2.4.1** keeps the v2.4 capstone simplification - a FastAPI service (REST + webhook + cron
-triggers on a durable queue), a 💬 Chat tab with conversation memory, an evidence sub-agent exposed as a tool, a FAISS vector
-store, a second keyless public API (PubMed E-utilities) as an MCP tool, a server-side MCP policy engine, optional Redis /
-PostgreSQL backends (SQLite by default), explicit success criteria and a pytest suite (75 tests) - and drops the extra
-packaging layers. It runs in two places only: Streamlit Community Cloud (live demo) and `uvicorn` on your machine (API).
-CI is active on GitHub Actions ([`.github/workflows/ci.yml`](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml), Python 3.13 and 3.14); the first run was green on 2026-11-14.
-See [What's new in v2.3](#whats-new-in-v23) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+**v2.5.0** adds optional Arize Phoenix tracing and a **📈 Monitoring** tab, and keeps the v2.4 capstone simplification —
+a FastAPI service (REST + webhook + cron triggers on a durable queue), a 💬 Chat tab with conversation memory, an evidence
+sub-agent exposed as a tool, a FAISS vector store, a second keyless public API (PubMed E-utilities) as an MCP tool, a
+server-side MCP policy engine, optional Redis / PostgreSQL backends (SQLite by default), explicit success criteria and a
+pytest suite (80 tests) — without extra packaging layers. It runs in two places only: Streamlit Community Cloud (live demo)
+and `uvicorn` on your machine (API). Phoenix is off unless you set `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1`, so Cloud
+and CI do not need it. CI is active on GitHub Actions
+([`.github/workflows/ci.yml`](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml), Python 3.13 and 3.14).
+See [What's new in v2.5](#whats-new-in-v25), [What's new in v2.3](#whats-new-in-v23) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ![architecture](architecture_diagram.png)
 
@@ -58,6 +60,13 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | RAG modes & agentic search | File search → `search_files` over `knowledge/` (Plan.md) + skills (full) · Skill loading → `load_skill`, own catalog only (full) · Database tools → `semantic_search` + read-only `execute_query` (full) · Web search → CDC/NIH/WHO allowlist, SSRF guard, offline fallback (**partial**: not a general search engine) · Memory tool → `get_memory` (full) · Shell → argv allowlist sandbox (full) · Context-window inspector → app tab + `context_window` trace (full) |
 | Frontier | Memory & learning loops → whitelisted hints + bounded boosts (**partial**) · Self-improving agents → prompt-level only (**partial**) · Multi-modal reasoning → `core/multimodal.py` lab image (vision) / PDF (**partial**) · Agentic workflows at scale → `core/batch.py` semaphore + token bucket (**partial**) |
 
+## What's new in v2.5
+| Feature | Where (real code) |
+|---|---|
+| Optional Arize Phoenix tracing | `core/observability.py`: OpenTelemetry + OpenInference export when `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1` is set; no-op otherwise. Project name `neuroguard`. Manual spans around each LangGraph node, each MCP tool call and the 12-check `verify()`. Attributes include case id, contract SHA, cost, tokens, LLM/tool counts, checks, decision and confidence — never PHI, API keys or raw notes. |
+| Monitoring dashboard | App tab **📈 Monitoring** (`core/monitoring.py`): charts and a table of stored run metrics (latency, cost, tokens, LLM/tool calls, check pass rate, decision mix, confidence, failed-check breakdown). Works on Streamlit Cloud without Phoenix. A status line says whether Phoenix tracing is on and links to the UI at [http://localhost:6006](http://localhost:6006) when you run Phoenix locally. |
+| Phoenix demo | `pip install -r requirements-phoenix.txt`, `phoenix serve`, `python scripts/run_phoenix_demo.py` (see below). These packages stay out of `requirements.txt` so Cloud still deploys. |
+
 ## What's new in v2.3
 | Gap closed | Where (real code) |
 |---|---|
@@ -69,7 +78,7 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | Vector database | `core/vector_store.py`: FAISS `IndexFlatIP`, persisted with a corpus fingerprint, used by `core/rag.py` |
 | Triggers | `POST /v1/cases`, HMAC `POST /v1/webhooks/case`, cron CLI `scripts/scheduled_batch.py` |
 | Durable message queue | `core/job_queue.py` (SQLite WAL / PostgreSQL `SKIP LOCKED` / Redis `LMOVE`; leases, retries) + `core/worker.py`; A2A events published to it |
-| Unit tests + CI | `tests/` (75 tests, LLM mocked, MCP real); CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 + 3.14) |
+| Unit tests + CI | `tests/` (80 tests, LLM mocked, MCP real); CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 + 3.14) |
 | Chat interface | app tab **💬 Chat** (`st.chat_input`): "row 9046" or `age=67 …` runs a case; other messages are follow-ups |
 | API endpoint | `api/main.py` (FastAPI, OpenAPI at `/docs`, API key, CORS), run locally with `uvicorn`; Streamlit Cloud cannot host it (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) |
 
@@ -168,7 +177,23 @@ python scripts/smoke_test.py          # one full multi-agent run
 python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + plan, ReAct, decisions
 streamlit run app.py
 ```
-Tests: `pip install -r requirements-dev.txt && pytest` (75 tests; real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
+### Optional: Arize Phoenix tracing
+Phoenix is optional. The Streamlit **📈 Monitoring** tab and the signed OTLP-JSON download work without it.
+```bash
+# Phoenix UI/server in its own venv (arize-phoenix 21 is not compatible with this repo's mcp 1.30)
+python -m venv .venv-phoenix && source .venv-phoenix/bin/activate
+pip install arize-phoenix==21.0.0
+phoenix serve                                          # UI at http://localhost:6006
+
+# App venv
+pip install -r requirements.txt -r requirements-phoenix.txt
+export PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006  # or: export NG_PHOENIX=1
+export OPENAI_API_KEY=PASTE_YOUR_KEY_HERE OPENAI_API_BASE=https://openai.vocareum.com/v1
+python scripts/run_phoenix_demo.py                      # one real case, then open the Phoenix UI
+```
+Span attributes are PHI-redacted. Leave the env vars unset on Streamlit Cloud.
+
+Tests: `pip install -r requirements-dev.txt && pytest` (80 tests; 78 run and pass without a database server; 2 real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14; Phoenix is not installed in CI). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
 
 ## Deploy on Streamlit Community Cloud
 New app → repo `sandipdey2/neuroguard-agentic-rag`, branch `main`, file `app.py` → Advanced settings → Secrets:
@@ -182,7 +207,7 @@ NG_RECEIPT_KEY = "a long random string"
 Stroke Prediction Dataset (fedesoriano, Kaggle; educational use — excluded from the product zip), MTSamples (CC0), 30 verbatim CDC/NHLBI excerpts (U.S. public domain).
 
 ## Limitations & ethics
-Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (one eval run hit the 330 s timeout); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process (its events are also published to the durable queue); the queue and workers were tested on one machine, not load-tested; the API is not hosted publicly (run it locally); web search only fetches allowlisted CDC/NIH/WHO source pages and the shell is an allowlist sandbox, not a container. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
+Educational dataset with no race/ethnicity field and no event timing; estimates are associations, not incidence. Guardrails are regex-based; 16 eval cases are too few for confidence intervals; retrieval labels are author-made; runs take ~1.5 minutes (one eval run hit the 330 s timeout); the confidence score is a heuristic, not a calibrated probability of correctness; the learning loop is bounded to whitelisted hints; multi-modal input reads three lab fields only; Streamlit Cloud storage is ephemeral and not HIPAA-compliant; A2A is in-process (its events are also published to the durable queue); the queue and workers were tested on one machine, not load-tested; the API is not hosted publicly (run it locally); Phoenix tracing is optional and off by default (Streamlit Cloud has no collector); web search only fetches allowlisted CDC/NIH/WHO source pages and the shell is an allowlist sandbox, not a container. The LLM red team was noisy during development, so its findings are quote-confirmed by code.
 
 ## Product
 Gumroad listing draft: [docs/GUMROAD_LISTING.md](docs/GUMROAD_LISTING.md) · buyer guide: [docs/BUYER_SETUP.md](docs/BUYER_SETUP.md) · improvement roadmap: [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) · [CHANGELOG.md](CHANGELOG.md)

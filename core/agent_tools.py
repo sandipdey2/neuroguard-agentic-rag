@@ -102,7 +102,8 @@ def make_evidence_agent_tool(llm, tool_map: dict, ctx, sink: dict, max_rounds: i
                         out, _ = redact(_text(await tool_map[tc["name"]].ainvoke(d.args)))
                     except Exception as exc:
                         out = json.dumps({"error": str(exc)[:300]})
-                ctx.record_tool_span("evidence_subagent", tc["name"], w1, time.time(), "allow" if d.allow else "deny")
+                ctx.record_tool_span("evidence_subagent", tc["name"], w1, time.time(), "allow" if d.allow else "deny",
+                                     args=d.args, ok=d.allow, error=None if d.allow else d.reason)
                 outputs.append(out)
                 sink["evidence_log"].append({"agent": "evidence_subagent", "tool": tc["name"], "args": d.args, "output": out, "allowed": d.allow})
                 if tc["name"] == "pubmed_search" and d.allow:

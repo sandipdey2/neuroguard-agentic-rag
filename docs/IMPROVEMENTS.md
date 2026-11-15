@@ -16,6 +16,11 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.5.0 (optional Arize Phoenix + Monitoring tab)
+The "200-case eval in CI" item below is still open. What shipped here is live, optional tracing and a dashboard over stored run metrics.
+- OpenTelemetry / OpenInference export to Arize Phoenix when `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1` is set; no-op otherwise (`core/observability.py`).
+- Streamlit **📈 Monitoring** tab from de-identified SQLite run metrics (`core/monitoring.py`); works on Streamlit Cloud without Phoenix.
+
 ## Done in v2.3.0 (12 audit gaps closed; live end-to-end runs, 79 pytest tests)
 | Change | Evidence |
 |---|---|

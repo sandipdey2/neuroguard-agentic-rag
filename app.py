@@ -74,8 +74,9 @@ with st.sidebar:
     st.caption(f"Run contract v{CONTRACT['contract_version']}: ≤{CONTRACT['loop']['max_orchestrator_turns']} orchestrator turns, "
                f"≤{b['max_llm_calls']} LLM calls, ≤{b['max_tool_calls']} tool calls, ≤{b['wall_clock_timeout_s']} s")
 
-tab_run, tab_chat, tab_cov, tab_batch, tab_about, tab_model, tab_mem = st.tabs(
-    ["🩺 Assess a profile", "💬 Chat", "🧩 Knowledge-graph coverage", "👥 Cohort batch", "ℹ️ How it works", "📊 Model & data", "🗂️ Memory & learning"])
+tab_run, tab_chat, tab_cov, tab_mon, tab_batch, tab_about, tab_model, tab_mem = st.tabs(
+    ["🩺 Assess a profile", "💬 Chat", "🧩 Knowledge-graph coverage", "📈 Monitoring", "👥 Cohort batch",
+     "ℹ️ How it works", "📊 Model & data", "🗂️ Memory & learning"])
 
 # --------------------------------------------------------------------------- assess
 PRESETS = {f"Dataset row id {int(r.id)} (age {r.age:g}, {r.gender})": r for r in
@@ -406,6 +407,66 @@ with tab_cov:
     gs = graph_rag.stats()
     st.caption(f"Knowledge graph used by Graph RAG: {gs['nodes']} nodes ({gs['node_kinds']}), {gs['edges']} edges ({gs['edge_relations']}).")
     st.caption("Episodic memory now: " + json.dumps(episodes.stats()))
+
+# --------------------------------------------------------------------------- monitoring
+with tab_mon:
+    from core.observability import phoenix_status
+    from core.monitoring import aggregate
+    st.subheader("Run monitoring")
+    st.caption("Charts and the table below are built from this app's own stored run metrics (latency, cost, tokens, "
+               "LLM/tool calls, checks, decision, confidence) in SQLite. No notes, questions or API keys are stored. "
+               "On Streamlit Community Cloud the file lives on ephemeral disk. Phoenix is optional and is not required "
+               "for this tab.")
+    ph = phoenix_status()
+    if ph["enabled"]:
+        st.success(f"Phoenix tracing is **on** — project `{ph['project']}`, exporting to `{ph['endpoint']}`. "
+                   f"Open the Phoenix UI: [{ph['ui']}]({ph['ui']})")
+    else:
+        st.info(f"Phoenix tracing is **off**. {ph['reason']}. To send OpenTelemetry traces to a local Phoenix server, "
+                "install `requirements-phoenix.txt`, run `phoenix serve`, and set `PHOENIX_COLLECTOR_ENDPOINT` "
+                f"(or `NG_PHOENIX=1`). The UI is at [{ph['ui']}]({ph['ui']}) when Phoenix runs locally. "
+                "This dashboard still works without it.")
+    data = aggregate()
+    if data["n"] == 0:
+        st.warning("No stored runs yet. Assess a profile (or use Chat) and the metrics will appear here.")
+    else:
+        sm = data["summary"]
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Runs", data["n"])
+        c2.metric("Mean latency", f"{sm['latency_s_mean']} s" if sm.get("latency_s_mean") is not None else "—")
+        c3.metric("Mean cost", f"${sm['cost_usd_mean']}" if sm.get("cost_usd_mean") is not None else "—")
+        c4.metric("Mean check pass rate", f"{sm['check_pass_rate_mean']:.0%}" if sm.get("check_pass_rate_mean") is not None else "—")
+        c5.metric("Mean confidence", f"{sm['confidence_mean']:.3f}" if sm.get("confidence_mean") is not None else "—")
+        series = data["series"]
+        chart = pd.DataFrame({
+            "latency_s": series["latency_s"],
+            "cost_usd": series["cost_usd"],
+            "tokens": series["tokens"],
+            "llm_calls": series["llm_calls"],
+            "tool_calls": series["tool_calls"],
+            "check_pass_rate": series["check_pass_rate"],
+            "confidence": series["confidence"],
+        }, index=series["created_at"])
+        left, right = st.columns(2)
+        with left:
+            st.markdown("**Latency, cost and tokens over time**")
+            st.line_chart(chart[["latency_s", "cost_usd", "tokens"]])
+            st.markdown("**LLM and tool calls over time**")
+            st.line_chart(chart[["llm_calls", "tool_calls"]])
+        with right:
+            st.markdown("**Check pass rate and confidence over time**")
+            st.line_chart(chart[["check_pass_rate", "confidence"]])
+            st.markdown("**Decision mix**")
+            st.bar_chart(pd.Series(data["decision_mix"], name="runs"))
+            st.markdown("**Failed-check breakdown**")
+            if data["failed_checks"]:
+                st.bar_chart(pd.Series(data["failed_checks"], name="count"))
+            else:
+                st.caption("No failed checks in the stored runs.")
+        table = pd.DataFrame(data["runs"])
+        show = [c for c in ("created_at", "status", "rag_mode", "latency_s", "cost_usd", "tokens", "llm_calls",
+                            "tool_calls", "check_pass_rate", "failed_checks", "confidence", "run_id") if c in table.columns]
+        st.dataframe(table[show], width="stretch", hide_index=True)
 
 # --------------------------------------------------------------------------- cohort batch
 with tab_batch:

@@ -2,6 +2,14 @@
 
 **Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
+## 2.5.0 - 2026-11-14
+Optional Arize Phoenix tracing and a Streamlit Monitoring dashboard. No change to the agents' prompts, the MCP tool set, the harness contract (still v1.3.0, same hash) or the evaluation numbers.
+- **Arize Phoenix (optional):** `core/observability.py` registers `phoenix.otel` (OpenInference LangChain / OpenAI instrumentation when those packages are installed) if `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1` is set; otherwise tracing is a no-op so Streamlit Cloud and CI work without Phoenix. Project name `neuroguard`. Manual spans around each LangGraph node (planner, specialists, finalize gate), each MCP tool call (tool name, redacted args, latency, ok/error) and the 12-check `verify()`. Attributes: case id, contract SHA, run cost, tokens, LLM/tool call counts, checks passed/failed, decision, confidence. PHI, API keys and raw notes are redacted or dropped.
+- **📈 Monitoring tab:** `core/monitoring.py` stores de-identified run metrics in SQLite and charts latency, cost, tokens, LLM/tool calls, check pass rate, decision mix, confidence and the failed-check breakdown. A status line reports whether Phoenix tracing is on and links to http://localhost:6006. Works on Streamlit Cloud without Phoenix.
+- Demo: `requirements-phoenix.txt` (not in the Cloud install) and `scripts/run_phoenix_demo.py`.
+- Tests: 80 pytest tests (78 run and pass; 2 real-server backend tests skip without `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL`), including in-memory OpenTelemetry span tests and monitoring aggregation. CI installs the OpenTelemetry SDK only, not Phoenix.
+- API version 2.5.0; product zip `neuroguard-ai-2.5.0.zip`. Architecture diagram retitled v2.5 with an optional Phoenix box.
+
 ## 2.4.1 - 2026-11-14
 CI is now active on GitHub Actions.
 - Workflow at `.github/workflows/ci.yml` (Python 3.13 and 3.14): pytest and the MCP server check over stdio. First run was green on 2026-11-14 (https://github.com/sandipdey2/neuroguard-agentic-rag/actions/runs/43604794444).

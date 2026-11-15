@@ -1,0 +1,18 @@
+# Optional Arize Phoenix *client* tracing libraries. Safe to install next to this
+# project's mcp==1.30.0. Not installed on Streamlit Community Cloud.
+#
+#   pip install -r requirements-phoenix.txt
+#   export PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006
+#   python scripts/run_phoenix_demo.py
+#
+# The Phoenix UI/server is a separate install. arize-phoenix 21 pulls mcp 2.x and
+# will break this repo if it is installed into the same virtualenv. In another venv:
+#   python -m venv .venv-phoenix && source .venv-phoenix/bin/activate
+#   pip install arize-phoenix==21.0.0
+#   phoenix serve          # UI at http://localhost:6006
+#
+# See scripts/run_phoenix_demo.py and docs/DEPLOYMENT.md.
+arize-phoenix-client==3.7.0
+arize-phoenix-otel==0.17.3
+openinference-instrumentation-langchain==0.1.86
+openinference-instrumentation-openai==0.1.73
