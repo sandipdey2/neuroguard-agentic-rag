@@ -21,3 +21,11 @@ jobs:
         run: python -m pytest -q
       - name: MCP server over stdio
         run: python scripts/verify_mcp.py
+      - name: Lint (ruff)
+        run: |
+          pip install ruff==0.17.5
+          ruff check .
+      - name: Types (mypy)
+        run: |
+          pip install mypy==2.4.1
+          mypy
