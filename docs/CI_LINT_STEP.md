@@ -1,14 +1,8 @@
-# Add the lint + type step to CI (manual, one paste)
+# Lint + type steps in CI (applied)
 
-v2.6.0 adds `ruff` (lint) and `mypy` (types) with their configs in `ruff.toml` and `mypy.ini`. Both pass locally on
-Python 3.13 and 3.14. The automation token used for this repo cannot edit `.github/workflows/*` (no `workflow` scope),
-so the step has to be pasted once in the GitHub web editor.
+As of commit b8fb7f7 (2026-11-15), `.github/workflows/ci.yml` runs `Lint (ruff)` and `Types (mypy)` after pytest and the MCP server check, on Python 3.13 and 3.14. First green run with these steps: https://github.com/sandipdey2/neuroguard-agentic-rag/actions/runs/43707597000.
 
-## How
-1. Open https://github.com/sandipdey2/neuroguard-agentic-rag/edit/main/.github/workflows/ci.yml
-2. Paste the two steps below **at the end of `steps:`**, after `MCP server over stdio`, with the same indentation
-   (6 spaces before each `- name:`).
-3. Commit to `main`. The next CI run shows `Lint (ruff)` and `Types (mypy)` for both Python versions.
+The automation token used for this repo cannot edit `.github/workflows/*` (no `workflow` scope), so the steps were pasted once in the GitHub web editor. They are kept below as a reference of what is now in the workflow.
 
 ```yaml
       - name: Lint (ruff)
@@ -24,7 +18,7 @@ so the step has to be pasted once in the GitHub web editor.
 `mypy` with no arguments reads `mypy.ini`, which scopes the check to the harness / gate / receipt / learning core
 (`core/harness.py`, `core/pipeline.py`, `core/episodes.py`, `core/config.py`, `core/permissions.py`,
 `core/confidence.py`, `core/monitoring.py`) and `scripts/garden.py`, with `ignore_missing_imports = True`.
-Widening that scope is a listed improvement, not a v2.6.0 claim.
+Widening that scope is a listed improvement, not a v2.6.1 claim.
 
 ## Run locally
 ```bash
