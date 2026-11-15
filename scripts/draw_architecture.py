@@ -59,7 +59,7 @@ def arrow(x1, y1, x2, y2, label="", both=False, color="#333", ls="-", rad=0.0, l
                 bbox=dict(fc="white", ec="none", pad=0.3))
 
 
-ax.text(94, 172, "NeuroGuard AI v2.5 - architecture as implemented (app.py, core/*.py, mcp_server/neuroguard_mcp_server.py)",
+ax.text(94, 172, "NeuroGuard AI v2.5.1 - architecture as implemented (app.py, core/*.py, mcp_server/neuroguard_mcp_server.py)",
         ha="center", va="top", fontsize=13.5, weight="bold")
 ax.text(94, 168.8, f"All LLM roles: {K['model']}, temperature {K['temperature']}, OpenAI-compatible Vocareum endpoint   |   contract v{K['contract_version']}   |   "
         "colour: blue UI, red guard, yellow LLM agent, green deterministic code, purple MCP, cyan observability, grey data", ha="center", va="top", fontsize=8.4, color="#444")
@@ -144,7 +144,7 @@ yg, hg = 27, 15
 box(0, yg, 30, hg, "Skills (skills/, core/skills.py)", f"{len(SK)} SKILL.md; catalog = name +\ndescription only; full body\ninjected when the orchestrator\nselects it (progressive disclosure)", C["state"], fs=8.6, bfs=6.9)
 box(33, yg, 30, hg, "Context windows\n(core/context.py)", f"tiktoken o200k_base counts\ntruncate / compact / pack evidence\nwindow {K['context']['model_context_window'] // 1000}k, budgets per agent\nslot inspector: system, skills,\ntools, memory, history, user, calls, docs", C["obs"], fs=8.6, bfs=6.9)
 box(66, yg, 28, hg, "Decision log + OTLP-JSON\n(core/harness.py, observability.py)", "RunContext.decide(): actor, options,\nchosen, rationale, evidence | one span\nper LLM / MCP call -> OTLP-JSON export", C["obs"], fs=8.2, bfs=6.7)
-box(97, yg, 30, hg, "Arize Phoenix (optional)", "OpenTelemetry + OpenInference\nwhen PHOENIX_COLLECTOR_ENDPOINT\nor NG_PHOENIX=1 is set; else no-op\nUI: localhost:6006 | Monitoring tab\n(core/monitoring.py) uses SQLite", C["obs"], fs=8.2, bfs=6.6, ls="--")
+box(97, yg, 30, hg, "Phoenix / Arize AX (optional)", "OpenTelemetry + OpenInference\nPhoenix and/or Arize AX; else no-op\nUI: localhost:6006 / app.arize.com\nMonitoring tab uses SQLite", C["obs"], fs=8.2, bfs=6.6, ls="--")
 box(130, yg, 24, hg, "Cost / token economics", f"usage per call x list price\nUSD {K['pricing']['input_per_1m']}/1M in\nUSD {K['pricing']['output_per_1m']}/1M out\nper-agent cost; budgets cap spend", C["obs"], fs=8.2, bfs=6.6)
 box(157, yg, 32, hg, "Signed receipt (core/pipeline.py)", "HMAC-SHA256 over contract, server, inputs,\nreport, trace, decision-log hashes, audit head,\ncost, confidence | clinician decision re-signs\nand is written back to episodic memory", C["rule"], fs=8.2, bfs=6.6)
 arrow(173, 46, 173, 42.4)
@@ -166,7 +166,7 @@ for x0, x1 in ((13, 50), (43, 62), (72, 80), (103, 96), (137, 112), (172, 128)):
 ax.text(94, -2.0, "Scale (partial): queue + workers (above) and core/batch.py runs a cohort with asyncio.Semaphore("
         f"{K['batch']['max_concurrency']}) + one shared token bucket ({K['batch']['llm_calls_per_minute']} LLM calls/min) awaited before every LLM call.  "
         "Honest scope: A2A is in-process; public educational data; not a medical device.", ha="center", fontsize=7.6, color="#333")
-ax.text(94, -5.0, "Tests: pytest suite (tests/, CI on Python 3.13 + 3.14, LLM mocked; Phoenix optional) + scripts/verify_mcp.py + live end-to-end runs", ha="center", fontsize=7.6, color="#333")
+ax.text(94, -5.0, "Tests: pytest suite (tests/, CI on Python 3.13 + 3.14, LLM mocked; Phoenix / Arize AX optional) + scripts/verify_mcp.py + live end-to-end runs", ha="center", fontsize=7.6, color="#333")
 ax.text(94, -7.8, f"Repo: {REPO}    |    Live demo: {LIVE}", ha="center", fontsize=8.2, color="#1a56c4")
 fig.savefig(ROOT / "architecture_diagram.png", dpi=150, bbox_inches="tight")
 fig.savefig(ROOT / "architecture_diagram.pdf", bbox_inches="tight")

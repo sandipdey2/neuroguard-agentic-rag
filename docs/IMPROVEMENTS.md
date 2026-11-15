@@ -16,6 +16,10 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.5.1 (optional Arize AX export alongside Phoenix)
+- The same redacted OpenTelemetry spans also export to Arize AX when `ARIZE_SPACE_ID` and `ARIZE_API_KEY` are set (environment or Streamlit secrets); no-op otherwise (`core/observability.py`, official `arize-otel` package). Phoenix and Arize can be on together.
+- Monitoring tab shows Phoenix on/off and Arize on/off, with a link to https://app.arize.com/ when Arize is on.
+
 ## Done in v2.5.0 (optional Arize Phoenix + Monitoring tab)
 The "200-case eval in CI" item below is still open. What shipped here is live, optional tracing and a dashboard over stored run metrics.
 - OpenTelemetry / OpenInference export to Arize Phoenix when `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1` is set; no-op otherwise (`core/observability.py`).

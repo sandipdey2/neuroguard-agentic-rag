@@ -20,8 +20,13 @@ port. The live demo therefore shows the UI and the chat tab; run the API locally
    OPENAI_API_KEY = "PASTE_YOUR_KEY_HERE"
    OPENAI_API_BASE = "https://openai.vocareum.com/v1"
    NG_RECEIPT_KEY = "PASTE_A_LONG_RANDOM_STRING"
+   # Optional Arize AX export (leave unset to keep cloud tracing off):
+   # ARIZE_SPACE_ID = "PASTE_YOUR_SPACE_ID_HERE"
+   # ARIZE_API_KEY = "PASTE_YOUR_ARIZE_API_KEY_HERE"
    ```
 4. Deploy. The first start trains the models (about 20 s); a full run then takes about 1-2 minutes.
+   To turn on Arize AX later, add the two `ARIZE_*` secrets and reboot the app. The Monitoring tab
+   then shows Arize as on and links to https://app.arize.com/.
 
 ## 2. REST API locally with uvicorn
 
@@ -69,12 +74,23 @@ The 2 real-server PostgreSQL / Redis tests skip in CI (no servers); fakeredis an
 Only placeholders live in the repo: `.env.example` and `.streamlit/secrets.toml.example`.
 The MCP server subprocess never receives `OPENAI_API_KEY`, `NG_RECEIPT_KEY` or GitHub tokens.
 
-## Optional: Arize Phoenix tracing
+## Optional: Phoenix and Arize AX tracing
 
-Phoenix is off by default. Streamlit Community Cloud should leave these unset: the **📈 Monitoring** tab
-charts this app's own stored run metrics in SQLite and does not need a collector.
+Phoenix and Arize AX are off by default. The **📈 Monitoring** tab charts this app's own stored run
+metrics in SQLite and does not need a collector. Both exporters can be on at the same time; span
+attributes are PHI-redacted and never include API keys or raw notes. Project name: `neuroguard`.
 
-To send live OpenTelemetry traces to a local Phoenix server:
+### Arize AX (cloud)
+
+Set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` in the environment or in Streamlit secrets (see the
+placeholders in `.streamlit/secrets.toml.example` and the Cloud snippet above). The official
+`arize-otel` package is already in `requirements.txt`, so the live Cloud app can export once those
+secrets are added and the app is rebooted. Traces appear at https://app.arize.com/. If either
+variable is missing, Arize export is a no-op.
+
+### Local Phoenix server
+
+Streamlit Community Cloud should leave the Phoenix variables unset (there is no local collector there).
 
 ```bash
 # Phoenix UI/server in its own venv (arize-phoenix 21 is not compatible with this repo's mcp 1.30)
@@ -89,4 +105,5 @@ export OPENAI_API_KEY=PASTE_YOUR_KEY_HERE OPENAI_API_BASE=https://openai.vocareu
 python scripts/run_phoenix_demo.py
 ```
 
-The project name is `neuroguard`. Span attributes are PHI-redacted and never include API keys or raw notes.
+The Monitoring tab shows a Phoenix on/off line and an Arize on/off line (with a link to
+https://app.arize.com/ when Arize is on).

@@ -52,7 +52,8 @@ python scripts/scheduled_batch.py --rows 9046 31112     # cron trigger; add to c
 - Browser clients on another origin: set `NG_CORS_ORIGINS`.
 - Shared storage (optional): set `DATABASE_URL` (PostgreSQL) and/or `REDIS_URL`; without them everything uses local SQLite and an in-process cache.
 - Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 and 3.14).
-- Optional Arize Phoenix tracing: install `requirements-phoenix.txt` in the app venv, and install `arize-phoenix==21.0.0` in a *separate* venv (it pulls mcp 2.x). Run `phoenix serve`, set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006` (or `NG_PHOENIX=1`), then `python scripts/run_phoenix_demo.py`. The Streamlit **📈 Monitoring** tab works without Phoenix.
+- Optional Phoenix tracing: install `requirements-phoenix.txt` in the app venv, and install `arize-phoenix==21.0.0` in a *separate* venv (it pulls mcp 2.x). Run `phoenix serve`, set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006` (or `NG_PHOENIX=1`), then `python scripts/run_phoenix_demo.py`.
+- Optional Arize AX (cloud) export: set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` (environment or Streamlit secrets; placeholders are in `.streamlit/secrets.toml.example`). `arize-otel` is already in `requirements.txt`. Phoenix and Arize can be on together. The Streamlit **📈 Monitoring** tab works without either collector and shows an on/off line for each, with a link to https://app.arize.com/ when Arize is on.
 
 ## 7. Customise
 - Budgets, turn caps, per-agent tool permissions, required checks and success criteria: `harness_contract.json` (re-run `python scripts/success_report.py` after an evaluation).

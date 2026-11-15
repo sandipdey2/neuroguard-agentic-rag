@@ -410,14 +410,15 @@ with tab_cov:
 
 # --------------------------------------------------------------------------- monitoring
 with tab_mon:
-    from core.observability import phoenix_status
+    from core.observability import arize_status, phoenix_status
     from core.monitoring import aggregate
     st.subheader("Run monitoring")
     st.caption("Charts and the table below are built from this app's own stored run metrics (latency, cost, tokens, "
                "LLM/tool calls, checks, decision, confidence) in SQLite. No notes, questions or API keys are stored. "
-               "On Streamlit Community Cloud the file lives on ephemeral disk. Phoenix is optional and is not required "
-               "for this tab.")
+               "On Streamlit Community Cloud the file lives on ephemeral disk. Phoenix and Arize AX are optional and "
+               "are not required for this tab.")
     ph = phoenix_status()
+    ax = arize_status()
     if ph["enabled"]:
         st.success(f"Phoenix tracing is **on** — project `{ph['project']}`, exporting to `{ph['endpoint']}`. "
                    f"Open the Phoenix UI: [{ph['ui']}]({ph['ui']})")
@@ -426,6 +427,13 @@ with tab_mon:
                 "install `requirements-phoenix.txt`, run `phoenix serve`, and set `PHOENIX_COLLECTOR_ENDPOINT` "
                 f"(or `NG_PHOENIX=1`). The UI is at [{ph['ui']}]({ph['ui']}) when Phoenix runs locally. "
                 "This dashboard still works without it.")
+    if ax["enabled"]:
+        st.success(f"Arize AX tracing is **on** — project `{ax['project']}`. "
+                   f"Open the Arize UI: [{ax['ui']}]({ax['ui']})")
+    else:
+        st.info(f"Arize AX tracing is **off**. {ax['reason']}. To export the same redacted OpenTelemetry spans to "
+                "Arize AX, set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` (environment or Streamlit secrets). "
+                f"The UI is at [{ax['ui']}]({ax['ui']}). Phoenix and Arize can be on at the same time.")
     data = aggregate()
     if data["n"] == 0:
         st.warning("No stored runs yet. Assess a profile (or use Chat) and the metrics will appear here.")

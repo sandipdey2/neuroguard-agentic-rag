@@ -1,9 +1,13 @@
 # Optional Arize Phoenix *client* tracing libraries. Safe to install next to this
-# project's mcp==1.30.0. Not installed on Streamlit Community Cloud.
+# project's mcp==1.30.0. Not installed on Streamlit Community Cloud (the Cloud
+# app already has arize-otel from requirements.txt for Arize AX export).
 #
 #   pip install -r requirements-phoenix.txt
 #   export PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006
 #   python scripts/run_phoenix_demo.py
+#
+# Arize AX (cloud) export uses ARIZE_SPACE_ID + ARIZE_API_KEY and arize-otel,
+# which is already in requirements.txt. Phoenix and Arize can be on together.
 #
 # The Phoenix UI/server is a separate install. arize-phoenix 21 pulls mcp 2.x and
 # will break this repo if it is installed into the same virtualenv. In another venv:

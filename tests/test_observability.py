@@ -1,4 +1,4 @@
-"""Phoenix / OpenTelemetry tracing (in-memory exporter) and the monitoring aggregation store."""
+"""Phoenix / Arize AX / OpenTelemetry tracing (in-memory exporter) and the monitoring aggregation store."""
 import json
 import time
 
@@ -9,13 +9,20 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from core.harness import RunContext, verify
 from core.observability import (
+    arize_requested,
+    arize_status,
+    attach_exporter,
     configure,
     emit_tool_span,
+    export_status,
+    force_flush,
+    init_tracing,
     node_span,
     phoenix_requested,
     phoenix_status,
     reset_tracing,
     safe_attributes,
+    start_span,
 )
 from core import monitoring
 
@@ -52,6 +59,8 @@ def test_noop_mode_does_not_raise(monkeypatch):
     reset_tracing()
     monkeypatch.delenv("PHOENIX_COLLECTOR_ENDPOINT", raising=False)
     monkeypatch.delenv("NG_PHOENIX", raising=False)
+    monkeypatch.delenv("ARIZE_SPACE_ID", raising=False)
+    monkeypatch.delenv("ARIZE_API_KEY", raising=False)
     ctx = RunContext(session_id="s", consent=False)
     with node_span("planner", ctx) as span:
         assert span is None
@@ -118,6 +127,113 @@ def test_span_attributes_redact_phi_and_keys(exporter):
     assert "voc-TESTFAKESECRETVALUE99" not in blob
     assert "FAKESECRET_not_a_github_token" not in blob
     assert "Patient Jane Doe" not in blob
+
+
+
+
+class _RecordingExporter:
+    """In-process exporter used to assert dual attach + redaction with no network."""
+
+    def __init__(self):
+        self.batches = []
+
+    def export(self, spans):
+        from opentelemetry.sdk.trace.export import SpanExportResult
+        self.batches.append([{"name": s.name, "attrs": dict(s.attributes or {})} for s in spans])
+        return SpanExportResult.SUCCESS
+
+    def shutdown(self):
+        return None
+
+    def force_flush(self, timeout_millis=0):
+        return True
+
+
+def test_arize_is_off_by_default():
+    reset_tracing()
+    assert arize_requested() is False
+    status = arize_status()
+    assert status["enabled"] is False and status["project"] == "neuroguard"
+    assert status["ui"] == "https://app.arize.com/"
+    assert "off" in status["reason"].lower() or "unset" in status["reason"].lower()
+
+
+def test_arize_requested_needs_both_vars(monkeypatch):
+    reset_tracing()
+    monkeypatch.delenv("ARIZE_SPACE_ID", raising=False)
+    monkeypatch.delenv("ARIZE_API_KEY", raising=False)
+    assert arize_requested() is False
+    monkeypatch.setenv("ARIZE_SPACE_ID", "PASTE_YOUR_SPACE_ID_HERE")
+    assert arize_requested() is False
+    monkeypatch.setenv("ARIZE_API_KEY", "PASTE_YOUR_ARIZE_API_KEY_HERE")
+    assert arize_requested() is True
+    monkeypatch.delenv("ARIZE_SPACE_ID")
+    assert arize_requested() is False
+
+
+def test_both_exporters_attach_and_redact():
+    """Phoenix and Arize share one TracerProvider; both see redacted attributes, never PHI or keys."""
+    reset_tracing()
+    phoenix_exp = _RecordingExporter()
+    arize_exp = _RecordingExporter()
+    provider = TracerProvider()
+    attach_exporter(provider, phoenix_exp, "phoenix")
+    attach_exporter(provider, arize_exp, "arize")
+    configure(provider)
+    dirty = {
+        "note": "Patient Jane Doe, MRN 12345, email jane@example.com",
+        "api_key": "voc-TESTFAKESECRETVALUE99",
+        "comment": "Contact jane@example.com or 555-123-4567",
+        "case.id": "case-dual",
+    }
+    with start_span("neuroguard.run", dirty):
+        pass
+    force_flush()
+    assert phoenix_exp.batches and arize_exp.batches
+    assert phoenix_exp.batches == arize_exp.batches
+    blob = json.dumps(phoenix_exp.batches)
+    assert "jane@example.com" not in blob.lower()
+    assert "voc-TESTFAKESECRETVALUE99" not in blob
+    assert "Patient Jane Doe" not in blob
+    assert any(item["attrs"].get("case.id") == "case-dual" for batch in phoenix_exp.batches for item in batch)
+    status = export_status()
+    assert status["phoenix"]["ok"] is True and status["phoenix"]["result"] == "SUCCESS"
+    assert status["arize"]["ok"] is True and status["arize"]["result"] == "SUCCESS"
+    assert status["phoenix"]["spans"] >= 1 and status["arize"]["spans"] >= 1
+    reset_tracing()
+
+
+def test_init_tracing_attaches_phoenix_and_arize(monkeypatch):
+    """init_tracing registers both destinations on one provider (mocked exporters, no network)."""
+    reset_tracing()
+    monkeypatch.setenv("NG_PHOENIX", "1")
+    monkeypatch.setenv("ARIZE_SPACE_ID", "PASTE_YOUR_SPACE_ID_HERE")
+    monkeypatch.setenv("ARIZE_API_KEY", "PASTE_YOUR_ARIZE_API_KEY_HERE")
+    phoenix_exp = _RecordingExporter()
+    arize_exp = _RecordingExporter()
+
+    def fake_phoenix():
+        provider = TracerProvider()
+        attach_exporter(provider, phoenix_exp, "phoenix")
+        return provider
+
+    monkeypatch.setattr("core.observability._register_phoenix", fake_phoenix)
+    monkeypatch.setattr("core.observability._make_arize_exporter", lambda space_id, api_key: arize_exp)
+    provider = init_tracing()
+    assert provider is not None
+    ph = phoenix_status()
+    ax = arize_status()
+    assert ph["enabled"] is True and ax["enabled"] is True
+    assert ax["ui"] == "https://app.arize.com/"
+    with start_span("node.planner", {"case.id": "init-dual", "note": "jane@example.com"}):
+        pass
+    force_flush()
+    assert phoenix_exp.batches and arize_exp.batches
+    blob = json.dumps(phoenix_exp.batches + arize_exp.batches)
+    assert "jane@example.com" not in blob.lower()
+    assert export_status()["phoenix"]["ok"] is True
+    assert export_status()["arize"]["ok"] is True
+    reset_tracing()
 
 
 def test_monitoring_aggregate(runtime_dir):

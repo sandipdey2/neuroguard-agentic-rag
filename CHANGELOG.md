@@ -2,6 +2,14 @@
 
 **Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
+## 2.5.1 - 2026-11-14
+Optional Arize AX (cloud) export alongside Phoenix. No change to the agents' prompts, the MCP tool set, the harness contract (still v1.3.0, same hash) or the evaluation numbers.
+- **Arize AX (optional):** when `ARIZE_SPACE_ID` and `ARIZE_API_KEY` are set (environment or Streamlit secrets), `core/observability.py` also exports the same redacted OpenTelemetry spans to Arize AX via the official `arize-otel` package (`arize.otel.register(..., project_name='neuroguard')` or the OTLP HTTP endpoint `https://otlp.arize.com/v1`). Off when the vars are absent. Phoenix and Arize can be on at the same time (two span processors on one TracerProvider, both behind the redacting exporter so PHI and keys never leave).
+- **📈 Monitoring tab** now shows a Phoenix on/off line and an Arize on/off line, with a link to https://app.arize.com/ when Arize is on.
+- `arize-otel` is in `requirements.txt` (lightweight, Streamlit-Cloud-safe) so the live app can export once the secrets are added. Phoenix UI/client packages stay in `requirements-phoenix.txt`.
+- Tests: 84 pytest tests (82 run and pass; 2 real-server backend tests skip without `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL`), including Arize config detection and a dual-exporter redaction test (mocked, no network). CI does not require a Phoenix or Arize collector.
+- API version 2.5.1; product zip `neuroguard-ai-2.5.1.zip`. Architecture diagram optional box labelled "Phoenix / Arize AX".
+
 ## 2.5.0 - 2026-11-14
 Optional Arize Phoenix tracing and a Streamlit Monitoring dashboard. No change to the agents' prompts, the MCP tool set, the harness contract (still v1.3.0, same hash) or the evaluation numbers.
 - **Arize Phoenix (optional):** `core/observability.py` registers `phoenix.otel` (OpenInference LangChain / OpenAI instrumentation when those packages are installed) if `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1` is set; otherwise tracing is a no-op so Streamlit Cloud and CI work without Phoenix. Project name `neuroguard`. Manual spans around each LangGraph node (planner, specialists, finalize gate), each MCP tool call (tool name, redacted args, latency, ok/error) and the 12-check `verify()`. Attributes: case id, contract SHA, run cost, tokens, LLM/tool call counts, checks passed/failed, decision, confidence. PHI, API keys and raw notes are redacted or dropped.
