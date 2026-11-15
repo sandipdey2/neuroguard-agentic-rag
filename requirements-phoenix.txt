@@ -20,3 +20,8 @@ arize-phoenix-client==3.7.0
 arize-phoenix-otel==0.17.3
 openinference-instrumentation-langchain==0.1.86
 openinference-instrumentation-openai==0.1.73
+
+# Optional Arize AX gRPC transport (preferred). grpcio is relatively heavy, so it is
+# not in requirements.txt (Streamlit Community Cloud keeps the HTTP fallback).
+# Local demo / e2e venvs that already have Phoenix can install this extra:
+opentelemetry-exporter-otlp-proto-grpc==1.45.2

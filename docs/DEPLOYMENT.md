@@ -80,13 +80,18 @@ Phoenix and Arize AX are off by default. The **📈 Monitoring** tab charts this
 metrics in SQLite and does not need a collector. Both exporters can be on at the same time; span
 attributes are PHI-redacted and never include API keys or raw notes. Project name: `neuroguard`.
 
-### Arize AX (cloud)
+### Arize AX (cloud, best-effort)
 
 Set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` in the environment or in Streamlit secrets (see the
 placeholders in `.streamlit/secrets.toml.example` and the Cloud snippet above). The official
 `arize-otel` package is already in `requirements.txt`, so the live Cloud app can export once those
-secrets are added and the app is rebooted. Traces appear at https://app.arize.com/. If either
-variable is missing, Arize export is a no-op.
+secrets are added and the app is rebooted. Local demo venvs that install `requirements-phoenix.txt`
+prefer Arize's OTLP gRPC endpoint (`otlp.arize.com:443`); Streamlit Cloud falls back to HTTP.
+Traces appear at https://app.arize.com/. If either variable is missing, Arize export is a no-op.
+
+Arize AX is optional and best-effort. The cloud collector may drop spans (HTTP 5xx, or even after
+the exporter reports SUCCESS). **Phoenix is the complete trace record.** When the two UIs disagree,
+trust Phoenix.
 
 ### Local Phoenix server
 
@@ -106,4 +111,4 @@ python scripts/run_phoenix_demo.py
 ```
 
 The Monitoring tab shows a Phoenix on/off line and an Arize on/off line (with a link to
-https://app.arize.com/ when Arize is on).
+https://app.arize.com/ when Arize is on). Phoenix is the complete record; Arize is best-effort.

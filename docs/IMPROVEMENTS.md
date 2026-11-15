@@ -16,6 +16,11 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.5.3 (Arize delivery; Phoenix is the complete record)
+- Prefer Arize's OTLP gRPC transport (`otlp.arize.com:443`, gzip) when the optional proto-grpc package is installed; HTTP remains the Streamlit Cloud fallback.
+- Smaller BatchSpanProcessor batches (64) with backoff retries on 5xx / UNAVAILABLE, plus hard caps on attribute and event size.
+- Arize AX stays optional and best-effort: the cloud collector may still drop spans. Phoenix is the complete trace record.
+
 ## Done in v2.5.2 (export accounting + only wrapped exporters)
 - TracerProvider is built in-process with at most two redacting-wrapped OTLP exporters (Phoenix / Arize). register() is no longer used, so no unwrapped default processor can attach itself.
 - Exporters use BatchSpanProcessor (not one HTTP POST per span). The v2.5.1 Arize HTTP 500s happened on a 220-request burst; 500 is not retried by the OTLP client.

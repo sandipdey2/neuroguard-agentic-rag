@@ -9,14 +9,21 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from core.harness import RunContext, verify
 from core.observability import (
+    DEFAULT_ARIZE_GRPC,
+    DEFAULT_ARIZE_HTTP,
+    _REDACT_VALUE_LIMIT,
+    _OTHER_ATTR_LIMIT,
+    arize_grpc_endpoint,
     arize_requested,
     arize_status,
+    arize_transport,
     attach_exporter,
     configure,
     emit_tool_span,
     export_status,
     exporter_inventory,
     force_flush,
+    grpc_available,
     init_tracing,
     node_span,
     phoenix_requested,
@@ -363,6 +370,147 @@ def test_openinference_span_kinds_and_kept_attributes(exporter):
     tool = _attrs(spans["mcp.tools/call.predict_risk"])
     assert tool.get(SPAN_KIND_ATTR) == "TOOL" and tool.get("tool.name") == "predict_risk"
     assert "input.value" in tool and "jane@example.com" not in json.dumps(tool).lower()
+
+
+
+def test_arize_prefers_grpc_when_available(monkeypatch):
+    """gRPC is the default Arize transport when the optional proto-grpc package is importable."""
+    reset_tracing()
+    monkeypatch.delenv("ARIZE_OTLP_TRANSPORT", raising=False)
+    monkeypatch.delenv("ARIZE_COLLECTOR_ENDPOINT", raising=False)
+    if grpc_available():
+        assert arize_transport() == "grpc"
+        endpoint = arize_grpc_endpoint()
+        assert endpoint.rstrip("/").endswith("/v1") or "otlp.arize.com" in endpoint
+        assert not endpoint.endswith("/v1/traces")
+        assert DEFAULT_ARIZE_GRPC.endswith("/v1")
+    else:
+        assert arize_transport() == "http"
+    monkeypatch.setenv("ARIZE_OTLP_TRANSPORT", "http")
+    assert arize_transport() == "http"
+    reset_tracing()
+
+
+def test_make_arize_exporter_grpc_then_http_fallback(monkeypatch):
+    """_make_arize_exporter uses the gRPC maker when transport is grpc, otherwise HTTP."""
+    from core.observability import _make_arize_exporter
+
+    grpc_calls = []
+    http_calls = []
+
+    def fake_grpc(space_id, api_key):
+        grpc_calls.append((space_id, api_key))
+        exp = _RecordingExporter()
+        exp._ng_transport = "grpc"
+        exp._endpoint = "otlp.arize.com:443"
+        return exp
+
+    def fake_http(space_id, api_key):
+        http_calls.append((space_id, api_key))
+        exp = _RecordingExporter()
+        exp._ng_transport = "http"
+        exp._endpoint = DEFAULT_ARIZE_HTTP
+        return exp
+
+    monkeypatch.setattr("core.observability._make_arize_grpc_exporter", fake_grpc)
+    monkeypatch.setattr("core.observability._make_arize_http_exporter", fake_http)
+    monkeypatch.setattr("core.observability.arize_transport", lambda: "grpc")
+    exp = _make_arize_exporter("PASTE_YOUR_SPACE_ID_HERE", "PASTE_YOUR_ARIZE_API_KEY_HERE")
+    assert grpc_calls and not http_calls
+    assert exp._ng_transport == "grpc"
+
+    grpc_calls.clear()
+    monkeypatch.setattr("core.observability.arize_transport", lambda: "http")
+    exp = _make_arize_exporter("PASTE_YOUR_SPACE_ID_HERE", "PASTE_YOUR_ARIZE_API_KEY_HERE")
+    assert http_calls and not grpc_calls
+    assert exp._ng_transport == "http"
+
+    # gRPC construction failure falls back to HTTP
+    http_calls.clear()
+    def boom(space_id, api_key):
+        raise RuntimeError("grpc unavailable")
+    monkeypatch.setattr("core.observability.arize_transport", lambda: "grpc")
+    monkeypatch.setattr("core.observability._make_arize_grpc_exporter", boom)
+    exp = _make_arize_exporter("PASTE_YOUR_SPACE_ID_HERE", "PASTE_YOUR_ARIZE_API_KEY_HERE")
+    assert http_calls and exp._ng_transport == "http"
+
+
+def test_attach_exporter_uses_small_batches_and_inventory_records_transport():
+    reset_tracing()
+    provider = TracerProvider()
+    exp = _RecordingExporter()
+    exp._ng_transport = "grpc"
+    exp._endpoint = "https://otlp.arize.com/v1"
+    attach_exporter(provider, exp, "arize")
+    procs = list(getattr(getattr(provider, "_active_span_processor", None), "_span_processors", ()) or ())
+    assert len(procs) == 1
+    proc = procs[0]
+    assert type(proc).__name__ == "BatchSpanProcessor"
+    # BatchSpanProcessor stores these on the instance (SDK 1.45)
+    batch_size = getattr(proc, "max_export_batch_size", None) or getattr(proc, "_max_export_batch_size", None)
+    if batch_size is None:
+        sched = getattr(proc, "_batch_processor", None) or proc
+        batch_size = getattr(sched, "_max_export_batch_size", None)
+        delay = getattr(sched, "_schedule_delay", None) or getattr(sched, "_schedule_delay_millis", None)
+        queue = getattr(sched, "_max_queue_size", None)
+    else:
+        delay = getattr(proc, "_schedule_delay_millis", None)
+        queue = getattr(proc, "_max_queue_size", None)
+    assert batch_size == 64, batch_size
+    assert queue == 4096, queue
+    inv = exporter_inventory(provider)
+    assert len(inv) == 1 and inv[0]["redacting"] is True and inv[0]["name"] == "arize"
+    assert inv[0]["transport"] == "grpc"
+    reset_tracing()
+
+
+def test_export_retries_retryable_http_500_then_succeeds():
+    from opentelemetry.sdk.trace.export import SpanExportResult
+    from core.observability import _RedactingExporter
+
+    class Once500(_RecordingExporter):
+        def __init__(self):
+            super().__init__()
+            self.n = 0
+            self._ng_last_status = None
+
+        def export(self, spans):
+            self.n += 1
+            self.batches.append(len(spans))
+            if self.n == 1:
+                self._ng_last_status = 500
+                return SpanExportResult.FAILURE
+            self._ng_last_status = 200
+            return SpanExportResult.SUCCESS
+
+    reset_tracing()
+    inner = Once500()
+    wrapped = _RedactingExporter(inner, name="arize")
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(wrapped))
+    configure(provider)
+    with start_span("retry.probe", {"case.id": "r1"}):
+        pass
+    force_flush()
+    assert inner.n == 2
+    status = export_status()["arize"]
+    assert status["failures"] == 0 and status["ok"] is True
+    assert status["http_statuses"].get("200") == 1
+    reset_tracing()
+
+
+def test_attribute_caps_truncate_input_output_and_other_strings():
+    huge = "A" * 10000
+    out = safe_attributes({
+        "input.value": huge,
+        "output.value": huge,
+        "openinference.span.kind": "LLM",
+        "extra.field": huge,
+    })
+    assert len(out["input.value"]) <= _REDACT_VALUE_LIMIT
+    assert len(out["output.value"]) <= _REDACT_VALUE_LIMIT
+    assert len(out["extra.field"]) <= _OTHER_ATTR_LIMIT
+    assert out["openinference.span.kind"] == "LLM"
 
 
 def test_monitoring_aggregate(runtime_dir):

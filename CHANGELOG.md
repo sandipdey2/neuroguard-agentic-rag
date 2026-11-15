@@ -2,6 +2,16 @@
 
 **Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
+## 2.5.3 - 2026-11-14
+One solid attempt to improve Arize AX delivery (gRPC + smaller batches). Phoenix remains the complete trace record. No change to agents, MCP, the harness contract or evaluation numbers.
+- **Phoenix is the complete record:** a local Phoenix collector is the supported, complete OpenTelemetry record for a run (all spans, export failures = 0, no unknown OpenInference kinds). Arize AX stays an optional, best-effort cloud view of the same redacted spans. Arize's collector may drop spans even when the exporter reports SUCCESS, and OTLP HTTP 5xx is not retried by the upstream client (we retry with backoff). When the two UIs disagree, trust Phoenix.
+- **OTLP gRPC to Arize (preferred when installed):** if `opentelemetry-exporter-otlp-proto-grpc` is available, Arize export uses Arize's recommended gRPC transport (`https://otlp.arize.com/v1` → `otlp.arize.com:443`), gzip, and `space_id` / `api_key` / `arize-space-id` / `authorization` metadata, still behind the redacting exporter. Resource attributes stay `openinference.project.name`, `model_id`, `arize.project.name`, `arize.project.type=application`. The gRPC extra lives in `requirements-phoenix.txt` (grpcio is heavy for Streamlit Cloud); without it, export falls back to OTLP HTTP. `ARIZE_OTLP_TRANSPORT=http` forces the fallback.
+- **Smaller batches and retries:** BatchSpanProcessor uses max_export_batch_size=64, schedule_delay 1s, max_queue_size 4096. Failed exports retry the same batch with backoff on HTTP 5xx/429 and gRPC UNAVAILABLE.
+- **Attribute caps:** `input.value` / `output.value` are truncated to 2 KB; other string attributes to 1 KB; span events are capped at 20, all still redacted.
+- Tests: 93 pytest tests (91 run and pass; 2 real-server backend tests skip). New tests cover gRPC vs HTTP fallback, batch settings, 500 retries, and attribute caps.
+- **Phoenix e2e (headline evidence):** two real gpt-4o-mini public-data cases (demo67, N2) produced 220 and 216 Phoenix spans, 0 Phoenix export failures, 0 unknown OpenInference kinds, official first-pass `red_team_pass` 2/2, 0 revisions, \USD 0.010849. Arize gRPC also reported 0 export failures (SUCCESS) but GraphQL stabilized at 48 and 33 spans for those traces, so counts still do not match. That is why Arize remains best-effort.
+- API version 2.5.3; product zip neuroguard-ai-2.5.3.zip.
+
 ## 2.5.2 - 2026-11-14
 Fix for hidden OTLP export failures and a tighter TracerProvider setup. No change to agents, MCP, the harness contract or evaluation numbers.
 - **Honest export accounting:** a later SUCCESS from the same exporter no longer hides earlier FAILURE results (the v2.5.1 e2e snapshot could report 220 SUCCESS / 0 failures even when the SDK had logged HTTP 500s). Failures are counted for the whole run; ok is true only if every export succeeded. HTTP status counts are recorded (no bodies or headers).

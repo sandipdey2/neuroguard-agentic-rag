@@ -1,6 +1,8 @@
 {
-  "ok": false,
-  "phoenix_ui": "http://127.0.0.1:34683",
+  "ok": true,
+  "phoenix_headline_ok": true,
+  "arize_best_effort": true,
+  "phoenix_ui": "http://127.0.0.1:41297",
   "arize_ui": "https://app.arize.com/",
   "project": "neuroguard",
   "exporter_inventory": [
@@ -10,7 +12,8 @@
       "redacting": true,
       "name": "phoenix",
       "inner": "OTLPSpanExporter",
-      "endpoint": "http://127.0.0.1:34683/v1/traces",
+      "endpoint": "http://127.0.0.1:41297/v1/traces",
+      "transport": null,
       "is_default": false
     },
     {
@@ -18,56 +21,53 @@
       "processor": "BatchSpanProcessor",
       "redacting": true,
       "name": "arize",
-      "inner": "HTTPSpanExporter",
-      "endpoint": "https://otlp.arize.com/v1/traces",
+      "inner": "GRPCSpanExporter",
+      "endpoint": "https://otlp.arize.com:443",
+      "transport": "grpc",
       "is_default": false
     }
   ],
   "inventory_ok": true,
   "export_status": {
     "phoenix": {
-      "spans": 648,
-      "exports": 68,
+      "spans": 436,
+      "exports": 41,
       "failures": 0,
       "http_statuses": {
-        "200": 68
+        "200": 41
       },
       "result": "SUCCESS",
       "ok": true,
       "error": null
     },
     "arize": {
-      "spans": 648,
-      "exports": 74,
-      "failures": 14,
-      "http_statuses": {
-        "200": 60,
-        "500": 14
-      },
+      "spans": 436,
+      "exports": 40,
+      "failures": 0,
+      "http_statuses": {},
       "result": "SUCCESS",
-      "ok": false,
-      "error": "FAILURE"
+      "ok": true,
+      "error": null
     }
   },
   "force_flush_ok": true,
-  "failed_export_log_count": 70,
-  "failed_export_log_500_count": 70,
-  "arize_export_ok": false,
+  "failed_export_log_count": 0,
+  "failed_export_log_500_count": 0,
+  "arize_export_ok": true,
   "phoenix_export_ok": true,
   "phoenix": {
-    "span_count": 648,
+    "span_count": 436,
     "trace_ids": [
-      "39c80a0b4d7bb1a1014587d71e6c14a6",
-      "71675184fa9d74a1f79971d96288b358",
-      "7fbe50ab8f6bf4e4bad258cd06ce1a23"
+      "08551bbc218656d91cb46cd53efbb227",
+      "ddf4d6942af50ba45bdade74d3c75a51"
     ],
     "kinds": {
-      "TOOL": 63,
-      "EVALUATOR": 9,
-      "GUARDRAIL": 3,
-      "CHAIN": 441,
-      "LLM": 114,
-      "AGENT": 18
+      "TOOL": 46,
+      "EVALUATOR": 6,
+      "GUARDRAIL": 2,
+      "CHAIN": 294,
+      "LLM": 76,
+      "AGENT": 12
     },
     "unknown_kind_count": 0,
     "missing_kind_count": 0,
@@ -125,35 +125,41 @@
     "attempted": true,
     "usable": true,
     "project_found": true,
-    "span_count": 98,
+    "span_count": 7,
     "trace_ids": [
-      "39c80a0b4d7bb1a1014587d71e6c14a6",
-      "71675184fa9d74a1f79971d96288b358",
-      "7fbe50ab8f6bf4e4bad258cd06ce1a23"
+      "08551bbc218656d91cb46cd53efbb227",
+      "0bc9155ff1ab503d42e62f1803407b6a",
+      "3d029a13eb95032188509f9ea022af18",
+      "94eafcdd22fc1ec267359500324d0835",
+      "be869eb061531c9f7e58b44b46130105",
+      "ddf4d6942af50ba45bdade74d3c75a51",
+      "fc70aec91510b750856d3ba5bc28b94a"
     ],
-    "span_count_for_run": 98,
+    "span_count_for_run": 81,
     "kinds": {
-      "CHAIN": 75,
-      "LLM": 6,
-      "GUARDRAIL": 2,
-      "TOOL": 12,
-      "EVALUATOR": 2,
-      "AGENT": 1
+      "LLM": 10,
+      "CHAIN": 129,
+      "TOOL": 15,
+      "AGENT": 4
     },
     "unknown_kind_count": 0,
     "notes": [
-      "GraphQL returned totalCount=98 rows=98 traces=3 for project neuroguard in the time window (includeRootSpans=false, page size 50)."
+      "GraphQL returned totalCount=7 rows=158 traces=7 for project neuroguard in the time window (union of includeRootSpans true+false, page size 50)."
     ],
     "errors": [],
     "project_type": "application",
     "project_names": [
       "neuroguard"
     ],
-    "span_rows": 98,
+    "span_rows": 158,
     "spans_per_trace": {
-      "39c80a0b4d7bb1a1014587d71e6c14a6": 39,
-      "7fbe50ab8f6bf4e4bad258cd06ce1a23": 30,
-      "71675184fa9d74a1f79971d96288b358": 29
+      "ddf4d6942af50ba45bdade74d3c75a51": 48,
+      "08551bbc218656d91cb46cd53efbb227": 33,
+      "fc70aec91510b750856d3ba5bc28b94a": 21,
+      "3d029a13eb95032188509f9ea022af18": 21,
+      "0bc9155ff1ab503d42e62f1803407b6a": 15,
+      "94eafcdd22fc1ec267359500324d0835": 11,
+      "be869eb061531c9f7e58b44b46130105": 9
     },
     "span_names": [
       "ChatCompletion",
@@ -168,25 +174,109 @@
       "_check_refusal",
       "episode_recall",
       "episode_write",
+      "evidence_researcher",
+      "explain_factors",
       "gate",
+      "mcp.tools/call.cohort_stats",
       "mcp.tools/call.episode_recall",
-      "mcp.tools/call.memory_read",
       "mcp.tools/call.predict_risk",
-      "mcp.tools/call.screen_note",
       "mcp.tools/call.search_guidelines",
       "memory_read",
+      "neuroguard.run",
+      "ng.probe.batch40",
+      "ng.probe.batch40.c0",
+      "ng.probe.batch40.c1",
+      "ng.probe.batch40.c16",
+      "ng.probe.batch40.c28",
+      "ng.probe.batch40.c29",
+      "ng.probe.batch40.c30",
+      "ng.probe.batch40.c34",
+      "ng.probe.batch40.c7",
+      "ng.probe.onebatch",
+      "ng.probe.onebatch.c1",
+      "ng.probe.onebatch.c24",
+      "ng.probe.onebatch.c26",
+      "ng.probe.onebatch.c28",
+      "ng.probe.onebatch.c29",
+      "ng.probe.onebatch.c3",
+      "ng.probe.onebatch.c30",
+      "ng.probe.onebatch.c31",
+      "ng.probe.onebatch.c32",
+      "ng.probe.onebatch.c35",
+      "ng.probe.onebatch.c4",
+      "ng.probe.onebatch.c47",
+      "ng.probe.onebatch.c56",
+      "ng.probe.onebatch.c6",
+      "ng.probe.onebatch.c62",
+      "ng.probe.onebatch.c64",
+      "ng.probe.onebatch.c70",
+      "ng.probe.onebatch.c74",
+      "ng.probe.onebatch.c77",
+      "ng.probe.onebatch.c78",
+      "ng.probe.rapid4x20",
+      "ng.probe.rapid4x20.c11",
+      "ng.probe.rapid4x20.c12",
+      "ng.probe.rapid4x20.c15",
+      "ng.probe.rapid4x20.c2",
+      "ng.probe.rapid4x20.c28",
+      "ng.probe.rapid4x20.c31",
+      "ng.probe.rapid4x20.c39",
+      "ng.probe.rapid4x20.c42",
+      "ng.probe.rapid4x20.c51",
+      "ng.probe.rapid4x20.c54",
+      "ng.probe.rapid4x20.c68",
+      "ng.probe.rapid4x20.c69",
+      "ng.probe.rapid4x20.c72",
+      "ng.probe.rapid4x20.c73",
+      "ng.probe.simple40",
+      "ng.probe.simple40.c11",
+      "ng.probe.simple40.c12",
+      "ng.probe.simple40.c26",
+      "ng.probe.simple40.c27",
+      "ng.probe.simple40.c32",
+      "ng.probe.simple40.c36",
+      "ng.probe.simple40.c6",
+      "ng.probe.simple40.c7",
+      "ng.probe.simple40.c8",
+      "ng.probe.simple40.c9",
+      "ng.probe.slow4x20",
+      "ng.probe.slow4x20.c10",
+      "ng.probe.slow4x20.c11",
+      "ng.probe.slow4x20.c15",
+      "ng.probe.slow4x20.c19",
+      "ng.probe.slow4x20.c2",
+      "ng.probe.slow4x20.c22",
+      "ng.probe.slow4x20.c28",
+      "ng.probe.slow4x20.c37",
+      "ng.probe.slow4x20.c4",
+      "ng.probe.slow4x20.c45",
+      "ng.probe.slow4x20.c49",
+      "ng.probe.slow4x20.c52",
+      "ng.probe.slow4x20.c55",
+      "ng.probe.slow4x20.c56",
+      "ng.probe.slow4x20.c6",
+      "ng.probe.slow4x20.c67",
+      "ng.probe.slow4x20.c68",
+      "ng.probe.slow4x20.c74",
+      "ng.probe.slow4x20.c76",
+      "ng.probe.slow4x20.c77",
       "node.evidence_researcher",
-      "node.gate",
       "node.orchestrator",
+      "node.risk_analyst",
       "orchestrator",
-      "predict_risk",
-      "verify"
+      "planner",
+      "safety_reviewer",
+      "search_guidelines"
     ],
     "spans_per_requested_trace": {
-      "39c80a0b4d7bb1a1014587d71e6c14a6": 39,
-      "71675184fa9d74a1f79971d96288b358": 29,
-      "7fbe50ab8f6bf4e4bad258cd06ce1a23": 30
-    }
+      "ddf4d6942af50ba45bdade74d3c75a51": 48,
+      "08551bbc218656d91cb46cd53efbb227": 33
+    },
+    "stabilize_hist": [
+      81,
+      81,
+      81
+    ]
   },
   "counts_match_this_run": false,
   "historical_arize_ui_before_rerun": {
@@ -196,14 +286,14 @@
   },
   "cases": [
     {
-      "run_id": "e722f25de64740eb810ecd1d9d3a4b4b",
+      "run_id": "3c7fcc391387495ea9f5c9b04ae4e7fb",
       "status": "finalized",
-      "latency_s": 56.0,
-      "cost_usd": 0.005558,
+      "latency_s": 67.85,
+      "cost_usd": 0.00575,
       "llm_calls": 19,
       "tool_calls": 13,
-      "tokens": 31108,
-      "confidence": 0.872,
+      "tokens": 31466,
+      "confidence": 0.89,
       "revisions": 0,
       "self_critique": "clean",
       "self_critique_code_issues": [],
@@ -219,7 +309,7 @@
       "phoenix": {
         "span_count": 220,
         "trace_ids": [
-          "39c80a0b4d7bb1a1014587d71e6c14a6"
+          "ddf4d6942af50ba45bdade74d3c75a51"
         ],
         "kinds": {
           "TOOL": 25,
@@ -281,34 +371,31 @@
       "export_delta": {
         "phoenix": {
           "spans": 220,
-          "exports": 24,
+          "exports": 21,
           "failures": 0,
           "http_statuses": {
-            "200": 24
+            "200": 21
           },
           "ok": true
         },
         "arize": {
           "spans": 220,
-          "exports": 24,
-          "failures": 4,
-          "http_statuses": {
-            "200": 20,
-            "500": 4
-          },
-          "ok": false
+          "exports": 20,
+          "failures": 0,
+          "http_statuses": {},
+          "ok": true
         }
       }
     },
     {
-      "run_id": "5953be607dc24ab9a7313a4c68dff197",
+      "run_id": "753f6a70b6b54d9587a62553e49644cc",
       "status": "finalized",
-      "latency_s": 53.81,
-      "cost_usd": 0.005063,
+      "latency_s": 54.26,
+      "cost_usd": 0.005099,
       "llm_calls": 19,
       "tool_calls": 11,
-      "tokens": 27570,
-      "confidence": 0.893,
+      "tokens": 27663,
+      "confidence": 0.9,
       "revisions": 0,
       "self_critique": "clean",
       "self_critique_code_issues": [],
@@ -324,7 +411,7 @@
       "phoenix": {
         "span_count": 216,
         "trace_ids": [
-          "71675184fa9d74a1f79971d96288b358"
+          "08551bbc218656d91cb46cd53efbb227"
         ],
         "kinds": {
           "TOOL": 21,
@@ -386,122 +473,24 @@
       "export_delta": {
         "phoenix": {
           "spans": 216,
-          "exports": 23,
+          "exports": 20,
           "failures": 0,
-          "http_statuses": {},
+          "http_statuses": {
+            "200": 20
+          },
           "ok": true
         },
         "arize": {
           "spans": 216,
-          "exports": 26,
-          "failures": 6,
-          "http_statuses": {},
-          "ok": false
-        }
-      }
-    },
-    {
-      "run_id": "2cf4d8099ce0455c990b7800dc5578ba",
-      "status": "finalized",
-      "latency_s": 50.95,
-      "cost_usd": 0.004626,
-      "llm_calls": 19,
-      "tool_calls": 9,
-      "tokens": 24799,
-      "confidence": 0.919,
-      "revisions": 0,
-      "self_critique": "clean",
-      "self_critique_code_issues": [],
-      "review_verdicts": [
-        "approve"
-      ],
-      "official_first_failed_checks": [],
-      "official_first_red_team_pass": true,
-      "official_first_red_team_issues": [],
-      "review_count": 1,
-      "final_failed_checks": [],
-      "case_id": "N4",
-      "phoenix": {
-        "span_count": 212,
-        "trace_ids": [
-          "7fbe50ab8f6bf4e4bad258cd06ce1a23"
-        ],
-        "kinds": {
-          "TOOL": 17,
-          "EVALUATOR": 3,
-          "GUARDRAIL": 1,
-          "CHAIN": 147,
-          "LLM": 38,
-          "AGENT": 6
-        },
-        "unknown_kind_count": 0,
-        "names": [
-          "ChatCompletion",
-          "ChatOpenAI",
-          "LangGraph",
-          "RunnableAssign<parsed,parsing_error>",
-          "RunnableLambda",
-          "RunnableParallel<parsed,parsing_error>",
-          "RunnableParallel<raw>",
-          "RunnableSequence",
-          "RunnableWithFallbacks",
-          "Unnamed",
-          "_check_refusal",
-          "clinical_writer",
-          "cohort_stats",
-          "episode_recall",
-          "episode_write",
-          "evidence_researcher",
-          "explain_factors",
-          "gate",
-          "intake",
-          "mcp.tools/call.cohort_stats",
-          "mcp.tools/call.episode_recall",
-          "mcp.tools/call.explain_factors",
-          "mcp.tools/call.memory_read",
-          "mcp.tools/call.predict_risk",
-          "mcp.tools/call.screen_note",
-          "mcp.tools/call.search_guidelines",
-          "memory_read",
-          "neuroguard.run",
-          "node.clinical_writer",
-          "node.evidence_researcher",
-          "node.gate",
-          "node.intake",
-          "node.orchestrator",
-          "node.planner",
-          "node.risk_analyst",
-          "node.safety_reviewer",
-          "orchestrator",
-          "planner",
-          "predict_risk",
-          "risk_analyst",
-          "safety_reviewer",
-          "screen_note",
-          "search_guidelines",
-          "verify",
-          "verify.precheck"
-        ]
-      },
-      "export_delta": {
-        "phoenix": {
-          "spans": 212,
-          "exports": 21,
+          "exports": 20,
           "failures": 0,
           "http_statuses": {},
           "ok": true
-        },
-        "arize": {
-          "spans": 212,
-          "exports": 24,
-          "failures": 4,
-          "http_statuses": {},
-          "ok": false
         }
       }
     }
   ],
-  "n_cases": 3,
+  "n_cases": 2,
   "official_first_red_team_pass_rate": 1.0,
   "official_first_red_team_pass_before": {
     "rate": 1.0,
@@ -510,45 +499,36 @@
   "official_first_red_team_pass_after": 1.0,
   "revisions_used": [
     0,
-    0,
     0
   ],
-  "run_id": "e722f25de64740eb810ecd1d9d3a4b4b",
+  "run_id": "3c7fcc391387495ea9f5c9b04ae4e7fb",
   "status": "ok",
   "latency_s": [
-    56.0,
-    53.81,
-    50.95
+    67.85,
+    54.26
   ],
-  "wall_s": 167.27,
-  "cost_usd": 0.015247,
-  "llm_calls": 57,
-  "tool_calls": 33,
-  "tokens": 83477,
+  "wall_s": 126.59,
+  "cost_usd": 0.010849,
+  "llm_calls": 38,
+  "tool_calls": 24,
+  "tokens": 59129,
   "confidence": [
-    0.872,
-    0.893,
-    0.919
+    0.89,
+    0.9
   ],
   "failed_checks": [
-    [],
     [],
     []
   ],
   "counts_match_per_trace": {
-    "39c80a0b4d7bb1a1014587d71e6c14a6": {
+    "ddf4d6942af50ba45bdade74d3c75a51": {
       "phoenix": 220,
-      "arize": 39,
+      "arize": 48,
       "match": false
     },
-    "71675184fa9d74a1f79971d96288b358": {
+    "08551bbc218656d91cb46cd53efbb227": {
       "phoenix": 216,
-      "arize": 29,
-      "match": false
-    },
-    "7fbe50ab8f6bf4e4bad258cd06ce1a23": {
-      "phoenix": 212,
-      "arize": 30,
+      "arize": 33,
       "match": false
     }
   },

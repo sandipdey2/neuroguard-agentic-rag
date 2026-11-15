@@ -35,7 +35,11 @@ SPAN_KIND_ATTR = "openinference.span.kind"
 _KEEP_KEYS = {SPAN_KIND_ATTR, "tool.name", "llm.model_name", "llm.request.model_name", "llm.response.model_name"}
 _KEEP_PREFIXES = ("llm.token_count.",)
 _REDACT_KEEP_KEYS = {"input.value", "output.value"}
-_REDACT_VALUE_LIMIT = 400
+_REDACT_VALUE_LIMIT = 2048  # input.value / output.value cap (a few KB, not unbounded)
+_OTHER_ATTR_LIMIT = 1024
+_MAX_EVENTS = 20
+_MAX_EXPORT_ATTEMPTS = 4
+_RETRY_HTTP = frozenset({429, 500, 502, 503, 504})
 _CHAIN_NODES = {"planner", "orchestrator"}
 _GUARD_NODES = {"gate"}
 _SPECIALIST_NODES = {"intake", "risk_analyst", "evidence_researcher", "clinical_writer", "safety_reviewer"}
@@ -88,6 +92,9 @@ def metrics(spans: list[dict]) -> dict:
 
 ARIZE_UI = "https://app.arize.com/"
 DEFAULT_ARIZE_HTTP = "https://otlp.arize.com/v1/traces"
+# Arize's recommended OTLP gRPC endpoint (register() default). The gRPC exporter
+# uses the URL netloc, i.e. otlp.arize.com:443 with TLS.
+DEFAULT_ARIZE_GRPC = "https://otlp.arize.com/v1"
 
 _export_stats: dict[str, dict] = {}
 
@@ -141,8 +148,37 @@ def arize_requested() -> bool:
 
 
 def arize_endpoint() -> str:
+    """HTTP traces URL (fallback transport, and status when gRPC is unavailable)."""
     raw = _read_secret("ARIZE_COLLECTOR_ENDPOINT") or DEFAULT_ARIZE_HTTP
     return _http_traces_endpoint(raw)
+
+
+def arize_grpc_endpoint() -> str:
+    """gRPC collector URL. Never appends /v1/traces (that path is HTTP-only)."""
+    raw = (_read_secret("ARIZE_COLLECTOR_ENDPOINT") or DEFAULT_ARIZE_GRPC).strip().rstrip("/")
+    if raw.endswith("/v1/traces"):
+        raw = raw[: -len("/traces")]
+    if "://" not in raw:
+        raw = "https://" + raw
+    return raw
+
+
+def grpc_available() -> bool:
+    """True when the optional gRPC OTLP exporter can be imported (not on Streamlit Cloud)."""
+    try:
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter  # noqa: F401
+        from grpc import Compression  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
+def arize_transport() -> str:
+    """Preferred Arize transport: 'grpc' when the optional package is installed, else 'http'."""
+    wanted = (_read_secret("ARIZE_OTLP_TRANSPORT") or "grpc").strip().lower()
+    if wanted in {"http", "https"}:
+        return "http"
+    return "grpc" if grpc_available() else "http"
 
 
 def arize_project() -> str:
@@ -176,7 +212,11 @@ def arize_status() -> dict:
         reason = "tracing will start on the first instrumented run"
     else:
         reason = f"exporting OpenTelemetry spans to Arize AX (project {arize_project()})"
-    return {"enabled": bool(enabled), "configured": requested, "endpoint": DEFAULT_ARIZE_HTTP if requested else None,
+    endpoint = None
+    if requested:
+        endpoint = arize_grpc_endpoint() if arize_transport() == "grpc" else DEFAULT_ARIZE_HTTP
+    return {"enabled": bool(enabled), "configured": requested, "endpoint": endpoint,
+            "transport": arize_transport() if requested else None,
             "ui": ARIZE_UI, "project": arize_project(), "reason": reason}
 
 
@@ -251,19 +291,45 @@ def _record_export(name: str, result, n: int, error: str | None = None, http_sta
 
 
 def _hook_exporter_status(exporter) -> None:
-    """Remember the last HTTP status from an OTLP client (no headers, no bodies)."""
-    client = getattr(exporter, "_client", None)
-    if client is None or getattr(client, "_ng_status_hooked", False):
+    """Remember the last HTTP or gRPC status from an OTLP client (no headers, no bodies)."""
+    if getattr(exporter, "_ng_status_hooked", False):
         return
-    orig = client.export
+    client = getattr(exporter, "_client", None)
+    if client is not None and hasattr(client, "export") and not getattr(client, "_ng_status_hooked", False):
+        orig_client = client.export
+
+        def client_export(data):
+            result = orig_client(data)
+            code = getattr(result, "status_code", None)
+            client._ng_last_status = code
+            exporter._ng_last_status = code
+            return result
+
+        client.export = client_export  # type: ignore[method-assign]
+        client._ng_status_hooked = True
+
+    orig = exporter.export
 
     def export(data):
-        result = orig(data)
-        client._ng_last_status = getattr(result, "status_code", None)
-        return result
+        try:
+            result = orig(data)
+            if getattr(exporter, "_ng_last_status", None) is None:
+                client = getattr(exporter, "_client", None)
+                exporter._ng_last_status = getattr(client, "_ng_last_status", None) if client is not None else None
+            return result
+        except Exception as exc:
+            code = getattr(exc, "code", None)
+            if callable(code):
+                try:
+                    exporter._ng_last_status = str(code())
+                except Exception:
+                    exporter._ng_last_status = type(exc).__name__
+            else:
+                exporter._ng_last_status = type(exc).__name__
+            raise
 
-    client.export = export  # type: ignore[method-assign]
-    client._ng_status_hooked = True
+    exporter.export = export  # type: ignore[method-assign]
+    exporter._ng_status_hooked = True
 
 
 def _safe_endpoint(exporter) -> str | None:
@@ -273,8 +339,18 @@ def _safe_endpoint(exporter) -> str | None:
     # host + path only; never query string or userinfo
     try:
         from urllib.parse import urlparse
-        p = urlparse(raw)
+        typ = type(exporter).__name__.upper()
+        transport = getattr(exporter, "_ng_transport", "")
+        if transport == "grpc" or "GRPC" in typ:
+            if "://" not in raw:
+                host = raw.split("/")[0]
+                if ":" not in host:
+                    host = host + ":443"
+                return f"https://{host}"
+        p = urlparse(raw if "://" in raw else "https://" + raw)
         host = p.hostname or ""
+        if not host:
+            return raw.split("?")[0]
         port = f":{p.port}" if p.port else ""
         return f"{p.scheme}://{host}{port}{p.path}"
     except Exception:
@@ -295,16 +371,30 @@ class _RedactingExporter:
 
     def _export_once(self, spans):
         result = self._wrapped.export(spans)
-        status = getattr(getattr(self._wrapped, "_client", None), "_ng_last_status", None)
+        status = getattr(self._wrapped, "_ng_last_status", None)
+        if status is None:
+            status = getattr(getattr(self._wrapped, "_client", None), "_ng_last_status", None)
         return result, status
 
+    def _retryable(self, result, status) -> bool:
+        if status in _RETRY_HTTP:
+            return True
+        if isinstance(status, str) and any(tok in status.upper() for tok in ("UNAVAILABLE", "DEADLINE", "RESOURCE_EXHAUSTED", "500")):
+            return True
+        return False
+
     def _export_with_retry(self, spans):
-        """On HTTP 500, retry the same batch once after a short delay. Do not split:
-        splitting amplified request volume when the collector was already returning 500s."""
-        result, status = self._export_once(spans)
-        if (not self._succeeded(result)) and status == 500:
-            time.sleep(1.0)
+        """Retry the same batch with backoff on HTTP 5xx/429 or gRPC UNAVAILABLE. Do not split."""
+        delay = 0.5
+        result, status = None, None
+        for attempt in range(_MAX_EXPORT_ATTEMPTS):
             result, status = self._export_once(spans)
+            if self._succeeded(result):
+                break
+            if attempt >= _MAX_EXPORT_ATTEMPTS - 1 or not self._retryable(result, status):
+                break
+            time.sleep(delay)
+            delay = min(delay * 2, 8.0)
         _record_export(self.name, result, len(spans), http_status=status)
         return result
 
@@ -373,18 +463,16 @@ def _add_span_processor(provider, processor) -> None:
 def attach_exporter(provider, exporter, name: str) -> None:
     """Attach ``exporter`` behind the redacting wrapper (tests and dual Phoenix + Arize setup).
 
-    Uses BatchSpanProcessor so a run of ~220 spans is a handful of HTTP POSTs
-    rather than one request per span. Arize AX returned HTTP 500 on a subset of
-    those bursts (the v2.5.1 e2e lost ~20 of 220 spans); 500 is not retried by
-    the OTLP HTTP client. Short scripts must still call ``force_flush()``.
+    Uses BatchSpanProcessor (max_export_batch_size=64, schedule_delay 1s,
+    max_queue_size 4096). Short scripts must still call ``force_flush()``.
     """
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
     wrapped = exporter if isinstance(exporter, _RedactingExporter) else _RedactingExporter(exporter, name=name)
     processor = BatchSpanProcessor(
         wrapped,
-        max_queue_size=2048,
-        schedule_delay_millis=2000,
-        max_export_batch_size=128,
+        max_queue_size=4096,
+        schedule_delay_millis=1000,
+        max_export_batch_size=64,
         export_timeout_millis=30000,
     )
     _add_span_processor(provider, processor)
@@ -407,6 +495,7 @@ def exporter_inventory(provider=None) -> list[dict]:
             "name": getattr(exp, "name", None) if exp is not None else None,
             "inner": type(inner).__name__ if inner is not None else None,
             "endpoint": _safe_endpoint(inner) if inner is not None else None,
+            "transport": getattr(inner, "_ng_transport", None) if inner is not None else None,
             "is_default": proc is default,
         })
     return out
@@ -417,14 +506,14 @@ def _make_phoenix_exporter():
     return OTLPSpanExporter(endpoint=_http_traces_endpoint(collector_endpoint() or DEFAULT_UI))
 
 
-def _make_arize_exporter(space_id: str, api_key: str):
+def _make_arize_http_exporter(space_id: str, api_key: str):
     endpoint = arize_endpoint()
     try:
         from arize.otel import HTTPSpanExporter
-        return HTTPSpanExporter(endpoint=endpoint, space_id=space_id, api_key=api_key)
+        exp = HTTPSpanExporter(endpoint=endpoint, space_id=space_id, api_key=api_key)
     except Exception:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-        return OTLPSpanExporter(
+        exp = OTLPSpanExporter(
             endpoint=endpoint,
             headers={
                 "authorization": api_key,
@@ -433,6 +522,49 @@ def _make_arize_exporter(space_id: str, api_key: str):
                 "space_id": space_id,
             },
         )
+    exp._ng_transport = "http"
+    return exp
+
+
+def _make_arize_grpc_exporter(space_id: str, api_key: str):
+    """Arize-recommended OTLP gRPC (otlp.arize.com:443, gzip, space_id/api_key metadata)."""
+    from grpc import Compression
+    endpoint = arize_grpc_endpoint()
+    try:
+        from arize.otel import GRPCSpanExporter
+        exp = GRPCSpanExporter(
+            endpoint=endpoint,
+            space_id=space_id,
+            api_key=api_key,
+            compression=Compression.Gzip,
+            timeout=30,
+        )
+    except Exception:
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        exp = OTLPSpanExporter(
+            endpoint=endpoint,
+            headers={
+                "authorization": api_key,
+                "api_key": api_key,
+                "arize-space-id": space_id,
+                "space_id": space_id,
+                "arize-interface": "otel",
+            },
+            compression=Compression.Gzip,
+            timeout=30,
+        )
+    exp._ng_transport = "grpc"
+    return exp
+
+
+def _make_arize_exporter(space_id: str, api_key: str):
+    """Prefer gRPC when the optional proto-grpc package is installed; otherwise HTTP."""
+    if arize_transport() == "grpc":
+        try:
+            return _make_arize_grpc_exporter(space_id, api_key)
+        except Exception:
+            pass
+    return _make_arize_http_exporter(space_id, api_key)
 
 
 def _tracing_resource():
@@ -526,7 +658,7 @@ def _redact_text(value: str) -> str:
     from .guardrails import redact
     text, _ = redact(str(value))
     text = _GH_TOKEN.sub("[REDACTED-TOKEN]", text)
-    return text[:500]
+    return text[:_OTHER_ATTR_LIMIT]
 
 
 def _drop_key(key: str) -> bool:
@@ -553,7 +685,15 @@ def _redact_mapping(attrs) -> None:
 def _redact_events(span) -> None:
     """Scrub span events (OpenInference often puts prompts here). Attributes are already covered."""
     events = getattr(span, "events", None) or getattr(span, "_events", None) or ()
-    for ev in list(events):
+    ev_list = list(events)
+    if len(ev_list) > _MAX_EVENTS:
+        ev_list = ev_list[:_MAX_EVENTS]
+        if hasattr(span, "_events"):
+            try:
+                span._events = ev_list
+            except Exception:
+                pass
+    for ev in ev_list:
         ev_attrs = getattr(ev, "_attributes", None)
         if ev_attrs is None:
             ev_attrs = getattr(ev, "attributes", None)
@@ -658,8 +798,8 @@ def safe_attributes(attrs: dict | None) -> dict:
             out[k] = tuple(items)
         else:
             if isinstance(value, dict):
-                value = json.dumps(value, default=str)[:500]
-            out[k] = _redact_text(value)
+                value = json.dumps(value, default=str)[:_OTHER_ATTR_LIMIT]
+            out[k] = _redact_text(value)[:_OTHER_ATTR_LIMIT]
     return out
 
 
