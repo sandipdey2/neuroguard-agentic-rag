@@ -214,7 +214,8 @@ SYSTEM = {
                                       "semantic_search BEFORE you; the retrieved documents are below. You have no tools. Return findings "
                                       "supported by these documents only, each with the document id."),
     "clinical_writer": ("You are the Clinical Writer agent of a decision-support tool. Follow the report template exactly and use only the "
-                        "facts and evidence supplied."),
+                        "facts and evidence supplied. Never name or dose a medicine, never say the patient has had or is having a stroke, "
+                        "and never call the model estimate certain or the patient's true risk."),
     "safety_reviewer": "You are the Safety Reviewer agent. Follow the review instructions and return a verdict.",
 }
 
@@ -746,7 +747,10 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         # reflection / self-critique before the Safety Reviewer: deterministic checks + LLM critique, one self-revision
         sc = {"code_issues": [], "llm_problems": [], "revised": False}
         if not s.get("self_critique") and ctx.budget_left():
-            v0 = verify(draft, s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), None, ctx)
+            # Red team has not run yet: do not count red_team_pass as a failed official check
+            # (that was the 11/12 "first verify" seen in Arize — no confirmed finding, no quote).
+            v0 = verify(draft, s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), None, ctx,
+                        require_red_team=False, stage="precheck")
             sc["code_issues"] = [c for c in v0["failed"] if c not in ("red_team_pass", "within_budget")]
             try:
                 crit = await structured("clinical_writer", SelfCritique, [
@@ -800,7 +804,8 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         ctx.audit.log("safety_reviewer", "prompt_get", "red_team_review", "allow")
         red_raw = (await structured("safety_reviewer", RedTeam, [SystemMessage(sys_prompt), HumanMessage(p.messages[0].content.text)])).model_dump()
         red = confirm_red_team(red_raw, s["draft"])
-        v = verify(s["draft"], s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), red, ctx)
+        v = verify(s["draft"], s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), red, ctx,
+                    stage="review")
         issues = [f"failed check: {c}" for c in v["failed"] if c != "red_team_pass"]
         d = v["details"]
         if d["uncited_bullets"]:
@@ -830,7 +835,8 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         rv = s.get("review") or {}
         red = rv.get("red_team")
         if s.get("draft") and not s.get("pending_review"):
-            v = verify(s["draft"], s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), red, ctx)
+            v = verify(s["draft"], s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), red, ctx,
+                        stage="gate")
         else:
             v = {"checks": {}, "failed": ["draft_not_reviewed"], "passed": False, "details": {}}
         finalized = v["passed"] and s.get("risk") is not None

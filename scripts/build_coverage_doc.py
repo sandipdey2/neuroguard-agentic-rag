@@ -132,7 +132,7 @@ lines += ["", "## How the new pieces fit one run", "",
 from collections import Counter  # noqa: E402
 _ab = Counter(r[2] for r in AGENT_BUILD)
 lines += ["", "## AI Agent build diagram (\"How to Build an AI Agent\": 8 boxes, 37 items)", "",
-          f"**Status (v2.5.1): {len(AGENT_BUILD)} items - " + ", ".join(f"{n} {k}" for k, n in _ab.items()) + ".** "
+          f"**Status (v2.5.2): {len(AGENT_BUILD)} items - " + ", ".join(f"{n} {k}" for k, n in _ab.items()) + ".** "
           "v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, "
           "agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, "
           "API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. "

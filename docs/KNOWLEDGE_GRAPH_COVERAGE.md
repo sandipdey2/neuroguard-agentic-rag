@@ -116,7 +116,7 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 
 ## AI Agent build diagram ("How to Build an AI Agent": 8 boxes, 37 items)
 
-**Status (v2.5.1): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
+**Status (v2.5.2): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
 
 | Box | Item | Status | File / function | How it works |
 |---|---|---|---|---|

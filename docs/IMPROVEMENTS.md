@@ -16,6 +16,13 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.5.2 (export accounting + only wrapped exporters)
+- TracerProvider is built in-process with at most two redacting-wrapped OTLP exporters (Phoenix / Arize). register() is no longer used, so no unwrapped default processor can attach itself.
+- Exporters use BatchSpanProcessor (not one HTTP POST per span). The v2.5.1 Arize HTTP 500s happened on a 220-request burst; 500 is not retried by the OTLP client.
+- Export status counts every FAILURE, not just the last result, and records HTTP status counts.
+- Writer self-critique pre-check no longer emits a failed official verify (11/12 `red_team_pass`) before red team has run. Official 12-check gate is unchanged.
+- OTLP uses BatchSpanProcessor; a failed HTTP 500 is retried once after a short delay (the client does not retry 500 on its own).
+
 ## Done in v2.5.1 (optional Arize AX export alongside Phoenix)
 - The same redacted OpenTelemetry spans also export to Arize AX when `ARIZE_SPACE_ID` and `ARIZE_API_KEY` are set (environment or Streamlit secrets); no-op otherwise (`core/observability.py`, official `arize-otel` package). Phoenix and Arize can be on together.
 - Monitoring tab shows Phoenix on/off and Arize on/off, with a link to https://app.arize.com/ when Arize is on.

@@ -153,7 +153,14 @@ def section(md: str, title: str) -> str:
 
 
 def verify(report_md: str, risk: dict | None, analyst: dict | None, retrieved: dict, evidence_text: str,
-           red_team: dict | None, ctx: RunContext) -> dict:
+           red_team: dict | None, ctx: RunContext, *, require_red_team: bool = True, stage: str = "review") -> dict:
+    """Run the 12-check gate over a draft.
+
+    ``require_red_team`` must stay True for the Safety Reviewer and the finalize
+    gate. The writer's deterministic pre-check runs before red team has been
+    invoked, so it passes ``require_red_team=False`` and does not count
+    ``red_team_pass`` as a failure (that 11/12 was not a confirmed finding).
+    """
     t_verify = time.time()
     checks = {}
     p = (risk or {}).get("risk_probability")
@@ -185,13 +192,15 @@ def verify(report_md: str, risk: dict | None, analyst: dict | None, retrieved: d
     details = {"uncited_bullets": uncited, "invalid_citations": bad, "citations": cited, "ungrounded_numbers": ungrounded,
                "dosing_matches": dosing, "diagnosis_matches": diag, "phi_types": phi,
                "red_team_issues": (red_team or {}).get("issues", []), "evidence_bullets": len(bullets),
-               "numbers_checked": len(nums)}
-    required = ctx.contract["required_checks"]
+               "numbers_checked": len(nums), "verify_stage": stage, "require_red_team": require_red_team}
+    required = list(ctx.contract["required_checks"])
+    if not require_red_team:
+        required = [c for c in required if c != "red_team_pass"]
     failed = [c for c in required if not checks.get(c)]
     result = {"checks": checks, "failed": failed, "passed": not failed, "details": details}
     try:
         from .observability import emit_verify_span
-        emit_verify_span(ctx, result, t_verify, time.time())
+        emit_verify_span(ctx, result, t_verify, time.time(), stage=stage)
     except Exception:
         pass
     return result

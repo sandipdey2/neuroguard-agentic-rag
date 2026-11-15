@@ -31,6 +31,15 @@ _DROP_SEGS = {"note", "question", "report", "report_md", "prompt", "content", "i
               "patient_note", "free_text", "input_messages", "output_messages", "prompt_template",
               "completion", "invocation_parameters"}
 _GH_TOKEN = re.compile(r"\b(ghp|gho|github_pat)_[A-Za-z0-9_]{8,}")
+SPAN_KIND_ATTR = "openinference.span.kind"
+_KEEP_KEYS = {SPAN_KIND_ATTR, "tool.name", "llm.model_name", "llm.request.model_name", "llm.response.model_name"}
+_KEEP_PREFIXES = ("llm.token_count.",)
+_REDACT_KEEP_KEYS = {"input.value", "output.value"}
+_REDACT_VALUE_LIMIT = 400
+_CHAIN_NODES = {"planner", "orchestrator"}
+_GUARD_NODES = {"gate"}
+_SPECIALIST_NODES = {"intake", "risk_analyst", "evidence_researcher", "clinical_writer", "safety_reviewer"}
+_LLM_SPAN_NAMES = {"ChatOpenAI", "ChatCompletion", "OpenAI"}
 
 _provider = None
 _inited = False
@@ -173,7 +182,12 @@ def arize_status() -> dict:
 
 def export_status() -> dict:
     """Last OTLP export result per destination (``phoenix`` / ``arize``). No credentials."""
-    return {k: dict(v) for k, v in _export_stats.items()}
+    out = {}
+    for k, v in _export_stats.items():
+        item = dict(v)
+        item["http_statuses"] = dict(v.get("http_statuses") or {})
+        out[k] = item
+    return out
 
 
 def reset_tracing() -> None:
@@ -214,22 +228,57 @@ def _scrub_error(exc: BaseException) -> str:
     return msg
 
 
-def _record_export(name: str, result, n: int, error: str | None = None) -> None:
+def _record_export(name: str, result, n: int, error: str | None = None, http_status=None) -> None:
     res_name = getattr(result, "name", None) or str(result)
-    ok = res_name in {"SUCCESS", "SpanExportResult.SUCCESS"} or result == 0
-    prev = _export_stats.get(name) or {"spans": 0, "exports": 0, "failures": 0}
+    succeeded = res_name in {"SUCCESS", "SpanExportResult.SUCCESS"} or result == 0
+    prev = _export_stats.get(name) or {"spans": 0, "exports": 0, "failures": 0, "http_statuses": {}}
     prev["spans"] = int(prev.get("spans", 0)) + int(n)
     prev["exports"] = int(prev.get("exports", 0)) + 1
     prev["result"] = res_name
-    if error:
+    if http_status is not None:
+        statuses = prev.setdefault("http_statuses", {})
+        key = str(http_status)
+        statuses[key] = int(statuses.get(key, 0)) + 1
+    if error or not succeeded:
         prev["failures"] = int(prev.get("failures", 0)) + 1
-        prev["error"] = error
+        prev["error"] = error or res_name
         prev["ok"] = False
     else:
-        prev["error"] = None
-        prev["ok"] = bool(ok)
-        prev["failures"] = int(prev.get("failures", 0))
+        prev["ok"] = int(prev.get("failures", 0)) == 0
+        if prev["ok"]:
+            prev["error"] = None
     _export_stats[name] = prev
+
+
+def _hook_exporter_status(exporter) -> None:
+    """Remember the last HTTP status from an OTLP client (no headers, no bodies)."""
+    client = getattr(exporter, "_client", None)
+    if client is None or getattr(client, "_ng_status_hooked", False):
+        return
+    orig = client.export
+
+    def export(data):
+        result = orig(data)
+        client._ng_last_status = getattr(result, "status_code", None)
+        return result
+
+    client.export = export  # type: ignore[method-assign]
+    client._ng_status_hooked = True
+
+
+def _safe_endpoint(exporter) -> str | None:
+    raw = str(getattr(exporter, "_endpoint", None) or getattr(exporter, "endpoint", "") or "")
+    if not raw:
+        return None
+    # host + path only; never query string or userinfo
+    try:
+        from urllib.parse import urlparse
+        p = urlparse(raw)
+        host = p.hostname or ""
+        port = f":{p.port}" if p.port else ""
+        return f"{p.scheme}://{host}{port}{p.path}"
+    except Exception:
+        return "(unparseable)"
 
 
 class _RedactingExporter:
@@ -238,15 +287,36 @@ class _RedactingExporter:
     def __init__(self, wrapped, name: str = "exporter"):
         self._wrapped = wrapped
         self.name = name
+        _hook_exporter_status(wrapped)
+
+    def _succeeded(self, result) -> bool:
+        res_name = getattr(result, "name", None) or str(result)
+        return res_name in {"SUCCESS", "SpanExportResult.SUCCESS"} or result == 0
+
+    def _export_once(self, spans):
+        result = self._wrapped.export(spans)
+        status = getattr(getattr(self._wrapped, "_client", None), "_ng_last_status", None)
+        return result, status
+
+    def _export_with_retry(self, spans):
+        """On HTTP 500, retry the same batch once after a short delay. Do not split:
+        splitting amplified request volume when the collector was already returning 500s."""
+        result, status = self._export_once(spans)
+        if (not self._succeeded(result)) and status == 500:
+            time.sleep(1.0)
+            result, status = self._export_once(spans)
+        _record_export(self.name, result, len(spans), http_status=status)
+        return result
 
     def export(self, spans):
-        for span in spans:
+        for span in spans or []:
             _redact_span(span)
         n = len(spans) if spans is not None else 0
+        if n == 0:
+            from opentelemetry.sdk.trace.export import SpanExportResult
+            return SpanExportResult.SUCCESS
         try:
-            result = self._wrapped.export(spans)
-            _record_export(self.name, result, n)
-            return result
+            return self._export_with_retry(list(spans))
         except Exception as exc:
             _record_export(self.name, "ERROR", n, error=type(exc).__name__)
             raise
@@ -268,13 +338,21 @@ def _guess_exporter_name(exp) -> str:
     return "phoenix"
 
 
-def _install_redacting_exporter(provider) -> None:
+def _iter_processors(provider):
     msp = getattr(provider, "_active_span_processor", None)
-    processors = getattr(msp, "_span_processors", ()) if msp is not None else ()
-    for proc in processors:
-        exp = getattr(proc, "span_exporter", None)
-        if exp is None:
-            exp = getattr(getattr(proc, "_batch_processor", None), "_exporter", None)
+    return list(getattr(msp, "_span_processors", ()) or ()) if msp is not None else []
+
+
+def _processor_exporter(proc):
+    exp = getattr(proc, "span_exporter", None)
+    if exp is None:
+        exp = getattr(getattr(proc, "_batch_processor", None), "_exporter", None)
+    return exp
+
+
+def _install_redacting_exporter(provider) -> None:
+    for proc in _iter_processors(provider):
+        exp = _processor_exporter(proc)
         if exp is None or isinstance(exp, _RedactingExporter):
             continue
         wrapped = _RedactingExporter(exp, name=_guess_exporter_name(exp))
@@ -293,10 +371,50 @@ def _add_span_processor(provider, processor) -> None:
 
 
 def attach_exporter(provider, exporter, name: str) -> None:
-    """Attach ``exporter`` behind the redacting wrapper (tests and dual Phoenix + Arize setup)."""
-    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    """Attach ``exporter`` behind the redacting wrapper (tests and dual Phoenix + Arize setup).
+
+    Uses BatchSpanProcessor so a run of ~220 spans is a handful of HTTP POSTs
+    rather than one request per span. Arize AX returned HTTP 500 on a subset of
+    those bursts (the v2.5.1 e2e lost ~20 of 220 spans); 500 is not retried by
+    the OTLP HTTP client. Short scripts must still call ``force_flush()``.
+    """
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
     wrapped = exporter if isinstance(exporter, _RedactingExporter) else _RedactingExporter(exporter, name=name)
-    _add_span_processor(provider, SimpleSpanProcessor(wrapped))
+    processor = BatchSpanProcessor(
+        wrapped,
+        max_queue_size=2048,
+        schedule_delay_millis=2000,
+        max_export_batch_size=128,
+        export_timeout_millis=30000,
+    )
+    _add_span_processor(provider, processor)
+
+
+def exporter_inventory(provider=None) -> list[dict]:
+    """Describe every span processor/exporter on ``provider`` (no credentials)."""
+    provider = provider if provider is not None else _provider
+    if provider is None:
+        return []
+    out = []
+    default = getattr(provider, "_default_processor", None)
+    for i, proc in enumerate(_iter_processors(provider)):
+        exp = _processor_exporter(proc)
+        inner = getattr(exp, "_wrapped", exp) if exp is not None else None
+        out.append({
+            "index": i,
+            "processor": type(proc).__name__,
+            "redacting": isinstance(exp, _RedactingExporter),
+            "name": getattr(exp, "name", None) if exp is not None else None,
+            "inner": type(inner).__name__ if inner is not None else None,
+            "endpoint": _safe_endpoint(inner) if inner is not None else None,
+            "is_default": proc is default,
+        })
+    return out
+
+
+def _make_phoenix_exporter():
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+    return OTLPSpanExporter(endpoint=_http_traces_endpoint(collector_endpoint() or DEFAULT_UI))
 
 
 def _make_arize_exporter(space_id: str, api_key: str):
@@ -317,25 +435,28 @@ def _make_arize_exporter(space_id: str, api_key: str):
         )
 
 
-def _register_phoenix():
-    from phoenix.otel import register
-    endpoint = _http_traces_endpoint(collector_endpoint() or DEFAULT_UI)
-    return register(project_name=PROJECT_NAME, endpoint=endpoint, protocol="http/protobuf",
-                    auto_instrument=True, batch=False, verbose=False, set_global_tracer_provider=True)
+def _tracing_resource():
+    from opentelemetry.sdk.resources import Resource
+    project = arize_project()
+    return Resource.create({
+        "service.name": project,
+        "openinference.project.name": project,
+        "model_id": project,
+        "arize.project.name": project,
+        "arize.project.type": "application",
+    })
 
 
-def _register_arize_provider(space_id: str, api_key: str):
-    from arize.otel import register, Transport
-    return register(
-        space_id=space_id,
-        api_key=api_key,
-        project_name=arize_project(),
-        endpoint=arize_endpoint(),
-        transport=Transport.HTTP,
-        batch=False,
-        verbose=False,
-        set_global_tracer_provider=True,
-    )
+def _set_global_provider(provider) -> None:
+    """Set the global provider only if one has not already been installed."""
+    try:
+        from opentelemetry import trace as otel_trace
+        from opentelemetry.trace import ProxyTracerProvider
+        current = otel_trace.get_tracer_provider()
+        if current is None or type(current).__name__ == "ProxyTracerProvider" or isinstance(current, ProxyTracerProvider):
+            otel_trace.set_tracer_provider(provider)
+    except Exception:
+        pass
 
 
 def _auto_instrument(provider) -> None:
@@ -351,18 +472,24 @@ def _auto_instrument(provider) -> None:
         pass
 
 
-def _fallback_arize_provider(space_id: str, api_key: str):
-    from opentelemetry import trace as otel_trace
-    from opentelemetry.sdk.resources import Resource
+def _build_provider(want_ph: bool, want_ax: bool):
+    """Build a TracerProvider with only redacting-wrapped OTLP exporters. Does not call register()."""
     from opentelemetry.sdk.trace import TracerProvider
-    resource = Resource.create({
-        "openinference.project.name": arize_project(),
-        "model_id": arize_project(),
-        "service.name": arize_project(),
-    })
-    provider = TracerProvider(resource=resource)
-    otel_trace.set_tracer_provider(provider)
-    attach_exporter(provider, _make_arize_exporter(space_id, api_key), "arize")
+    # Use the SDK TracerProvider (not phoenix.otel.TracerProvider) so no default
+    # processor is self-attached and then left unwrapped.
+    provider = TracerProvider(resource=_tracing_resource())
+    if want_ph:
+        attach_exporter(provider, _make_phoenix_exporter(), "phoenix")
+    if want_ax:
+        creds = arize_credentials()
+        if creds:
+            space_id, api_key = creds
+            attach_exporter(provider, _make_arize_exporter(space_id, api_key), "arize")
+    _set_global_provider(provider)
+    try:
+        _auto_instrument(provider)
+    except Exception:
+        pass
     return provider
 
 
@@ -378,26 +505,7 @@ def init_tracing():
         _provider = None
         return None
     try:
-        provider = None
-        if want_ph:
-            provider = _register_phoenix()
-        elif want_ax:
-            space_id, api_key = arize_credentials()  # type: ignore[misc]
-            try:
-                provider = _register_arize_provider(space_id, api_key)
-            except Exception:
-                provider = _fallback_arize_provider(space_id, api_key)
-            try:
-                _auto_instrument(provider)
-            except Exception:
-                pass
-        try:
-            _install_redacting_exporter(provider)
-        except Exception:
-            pass
-        if want_ph and want_ax:
-            space_id, api_key = arize_credentials()  # type: ignore[misc]
-            attach_exporter(provider, _make_arize_exporter(space_id, api_key), "arize")
+        provider = _build_provider(want_ph, want_ax)
         _provider = provider
         _init_error = None
         return provider
@@ -425,20 +533,100 @@ def _drop_key(key: str) -> bool:
     return any(seg.replace("-", "_") in _DROP_SEGS for seg in str(key).lower().split("."))
 
 
-def _redact_span(span) -> None:
-    attrs = getattr(span, "_attributes", None)
+def _redact_mapping(attrs) -> None:
+    """In-place safe_attributes on a possibly frozen OTel attribute mapping."""
     if attrs is None:
         return
     try:
         if hasattr(attrs, "_immutable"):
             attrs._immutable = False
         redacted = safe_attributes(dict(attrs))
-        attrs.clear()
-        attrs.update(redacted)
+        if hasattr(attrs, "clear"):
+            attrs.clear()
+            attrs.update(redacted)
         if hasattr(attrs, "_immutable"):
             attrs._immutable = True
     except Exception:
         pass
+
+
+def _redact_events(span) -> None:
+    """Scrub span events (OpenInference often puts prompts here). Attributes are already covered."""
+    events = getattr(span, "events", None) or getattr(span, "_events", None) or ()
+    for ev in list(events):
+        ev_attrs = getattr(ev, "_attributes", None)
+        if ev_attrs is None:
+            ev_attrs = getattr(ev, "attributes", None)
+        _redact_mapping(ev_attrs)
+
+
+def _redact_span(span) -> None:
+    attrs = getattr(span, "_attributes", None)
+    if attrs is not None:
+        try:
+            if hasattr(attrs, "_immutable"):
+                attrs._immutable = False
+            redacted = safe_attributes(dict(attrs))
+            redacted[SPAN_KIND_ATTR] = infer_span_kind(getattr(span, "name", "") or "", redacted.get(SPAN_KIND_ATTR))
+            attrs.clear()
+            attrs.update(redacted)
+            if hasattr(attrs, "_immutable"):
+                attrs._immutable = True
+        except Exception:
+            pass
+    _redact_events(span)
+    status = getattr(span, "_status", None) or getattr(span, "status", None)
+    desc = getattr(status, "description", None) if status is not None else None
+    if desc:
+        try:
+            from opentelemetry.trace import Status, StatusCode
+            code = getattr(status, "status_code", None) or getattr(status, "code", None)
+            if hasattr(span, "_status"):
+                span._status = Status(code or StatusCode.UNSET, _redact_text(desc)[:200])
+        except Exception:
+            pass
+
+
+def infer_span_kind(name: str, existing: str | None = None) -> str:
+    """OpenInference span kind. Never returns UNKNOWN so Arize AX does not show 'kind: unknown'."""
+    if existing and str(existing).strip() and str(existing).strip().upper() != "UNKNOWN":
+        return str(existing).strip().upper()
+    n = name or ""
+    bare = n[5:] if n.startswith("node.") else n
+    if n == "neuroguard.run":
+        return "AGENT"
+    if n == "verify" or n.startswith("verify."):
+        return "EVALUATOR"
+    if n.startswith("mcp.tools/call.") or n.startswith("mcp."):
+        return "TOOL"
+    if bare in _CHAIN_NODES:
+        return "CHAIN"
+    if bare in _GUARD_NODES:
+        return "GUARDRAIL"
+    if n.startswith("node.") or bare in _SPECIALIST_NODES:
+        return "AGENT"
+    if n in _LLM_SPAN_NAMES or n.startswith("Chat") or "ChatCompletion" in n:
+        return "LLM"
+    if n.startswith("Runnable") or n in {"LangGraph", "Unnamed", "_check_refusal", "RunnableSequence",
+                                          "RunnableLambda", "RunnableWithFallbacks"} or n.startswith("Runnable"):
+        return "CHAIN"
+    # LangChain often emits a span named after the tool itself
+    if bare in {"predict_risk", "explain_factors", "cohort_stats", "screen_note", "search_guidelines",
+                "episode_recall", "episode_write", "memory_read", "memory_write", "graph_traverse",
+                "semantic_search", "search_files", "load_skill", "execute_query", "web_search",
+                "web_fetch", "get_memory", "shell", "pubmed_search", "calculator"}:
+        return "TOOL"
+    return "CHAIN"
+
+
+def _with_kind(name: str, attrs: dict | None) -> dict:
+    out = dict(attrs or {})
+    out[SPAN_KIND_ATTR] = infer_span_kind(name, out.get(SPAN_KIND_ATTR))
+    return out
+
+
+def _keep_key(key: str) -> bool:
+    return key in _KEEP_KEYS or key.startswith(_KEEP_PREFIXES)
 
 
 def safe_attributes(attrs: dict | None) -> dict:
@@ -446,6 +634,17 @@ def safe_attributes(attrs: dict | None) -> dict:
     out = {}
     for key, value in (attrs or {}).items():
         k = str(key)
+        if _keep_key(k):
+            if isinstance(value, (int, float, bool)) or value is None:
+                out[k] = value
+            else:
+                out[k] = str(value)[:200]
+            continue
+        if k in _REDACT_KEEP_KEYS:
+            if isinstance(value, dict):
+                value = json.dumps(value, default=str)
+            out[k] = _redact_text(value)[:_REDACT_VALUE_LIMIT]
+            continue
         if _SECRET_KEY.search(k) or _drop_key(k):
             continue
         if value is None or isinstance(value, bool):
@@ -488,7 +687,7 @@ def safe_set(span, attrs: dict) -> None:
 @contextmanager
 def start_span(name: str, attributes: dict | None = None) -> Iterator[Any]:
     tracer = get_tracer()
-    attrs = safe_attributes(attributes or {})
+    attrs = safe_attributes(_with_kind(name, attributes or {}))
     if tracer is None:
         yield None
         return
@@ -511,7 +710,7 @@ def emit_span(name: str, start: float, end: float, attributes: dict | None = Non
     if tracer is None:
         return
     from opentelemetry.trace import Status, StatusCode
-    span = tracer.start_span(name, start_time=int(start * 1e9), attributes=safe_attributes(attributes or {}))
+    span = tracer.start_span(name, start_time=int(start * 1e9), attributes=safe_attributes(_with_kind(name, attributes or {})))
     if ok:
         span.set_status(Status(StatusCode.OK))
     else:
@@ -523,26 +722,43 @@ def emit_tool_span(ctx, agent: str, tool: str, start: float, end: float, decisio
                    args: dict | None = None, ok: bool = True, error: str | None = None) -> None:
     attrs = ctx_attributes(ctx, agent=agent, tool=tool, hook=decision, ok=ok,
                            latency_ms=int((end - start) * 1000))
+    attrs["tool.name"] = tool
     if args:
-        attrs["tool.args"] = json.dumps(args, default=str)[:400]
+        payload = json.dumps(args, default=str)[:_REDACT_VALUE_LIMIT]
+        attrs["tool.args"] = payload
+        attrs["input.value"] = payload
+    summary = {"ok": bool(ok), "hook": decision}
     if error:
         attrs["error"] = error
+        summary["error"] = error
+    attrs["output.value"] = json.dumps(summary, default=str)[:_REDACT_VALUE_LIMIT]
     emit_span(f"mcp.tools/call.{tool}", start, end, attrs, ok=ok and decision == "allow", error=error)
 
 
-def emit_verify_span(ctx, result: dict, start: float, end: float | None = None) -> None:
+def emit_verify_span(ctx, result: dict, start: float, end: float | None = None, stage: str = "review") -> None:
     checks = result.get("checks") or {}
     failed = result.get("failed") or []
+    stage = stage or "review"
+    required = (result.get("details") or {}).get("require_red_team", stage != "precheck")
+    # Official review/gate spans stay named "verify". The writer pre-check is
+    # "verify.precheck" so Arize does not present it as a failed first 12-check.
+    name = "verify.precheck" if stage == "precheck" else "verify"
+    total = len([c for c in checks if required or c != "red_team_pass"]) if not required else len(checks)
+    passed_n = sum(1 for c, v in checks.items() if v and (required or c != "red_team_pass"))
+    if not required:
+        total = len(checks) - (1 if "red_team_pass" in checks else 0)
+        passed_n = sum(1 for c, v in checks.items() if c != "red_team_pass" and v)
     attrs = ctx_attributes(ctx,
-                           **{"checks.passed": sum(1 for v in checks.values() if v),
+                           **{"checks.passed": passed_n,
                               "checks.failed": ",".join(failed),
-                              "checks.total": len(checks),
+                              "checks.total": total,
                               "verify.passed": bool(result.get("passed")),
+                              "verify.stage": stage,
                               "decision": "pass" if result.get("passed") else "fail"})
-    emit_span("verify", start, end or time.time(), attrs, ok=True)
+    emit_span(name, start, end or time.time(), attrs, ok=True)
 
 
-def force_flush(timeout_millis: int = 5000) -> bool:
+def force_flush(timeout_millis: int = 30000) -> bool:
     init_tracing()
     if _provider is None:
         return False

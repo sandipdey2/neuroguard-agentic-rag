@@ -1,155 +1,558 @@
 {
-  "ok": true,
-  "phoenix_ui": "http://127.0.0.1:51783",
+  "ok": false,
+  "phoenix_ui": "http://127.0.0.1:34683",
   "arize_ui": "https://app.arize.com/",
   "project": "neuroguard",
-  "phoenix_requested": true,
-  "arize_requested": true,
-  "phoenix_status_reason": "tracing will start on the first instrumented run",
-  "phoenix_status_after": {
-    "enabled": true,
-    "configured": true,
-    "endpoint": "http://127.0.0.1:51783",
-    "ui": "http://127.0.0.1:51783",
-    "project": "neuroguard",
-    "reason": "exporting OpenTelemetry spans to http://127.0.0.1:51783 (project neuroguard)"
-  },
-  "arize_status_reason": "tracing will start on the first instrumented run",
-  "arize_status_after": {
-    "enabled": true,
-    "configured": true,
-    "endpoint": "https://otlp.arize.com/v1/traces",
-    "ui": "https://app.arize.com/",
-    "project": "neuroguard",
-    "reason": "exporting OpenTelemetry spans to Arize AX (project neuroguard)"
-  },
+  "exporter_inventory": [
+    {
+      "index": 0,
+      "processor": "BatchSpanProcessor",
+      "redacting": true,
+      "name": "phoenix",
+      "inner": "OTLPSpanExporter",
+      "endpoint": "http://127.0.0.1:34683/v1/traces",
+      "is_default": false
+    },
+    {
+      "index": 1,
+      "processor": "BatchSpanProcessor",
+      "redacting": true,
+      "name": "arize",
+      "inner": "HTTPSpanExporter",
+      "endpoint": "https://otlp.arize.com/v1/traces",
+      "is_default": false
+    }
+  ],
+  "inventory_ok": true,
   "export_status": {
     "phoenix": {
-      "spans": 220,
-      "exports": 220,
+      "spans": 648,
+      "exports": 68,
       "failures": 0,
+      "http_statuses": {
+        "200": 68
+      },
       "result": "SUCCESS",
-      "error": null,
-      "ok": true
+      "ok": true,
+      "error": null
     },
     "arize": {
-      "spans": 220,
-      "exports": 220,
-      "failures": 0,
+      "spans": 648,
+      "exports": 74,
+      "failures": 14,
+      "http_statuses": {
+        "200": 60,
+        "500": 14
+      },
       "result": "SUCCESS",
-      "error": null,
-      "ok": true
+      "ok": false,
+      "error": "FAILURE"
     }
   },
   "force_flush_ok": true,
-  "arize_export_ok": true,
-  "arize_export_result": "SUCCESS",
-  "arize_export_error": null,
-  "arize_export_spans": 220,
-  "phoenix_export_result": "SUCCESS",
-  "phoenix_export_spans": 220,
+  "failed_export_log_count": 70,
+  "failed_export_log_500_count": 70,
+  "arize_export_ok": false,
+  "phoenix_export_ok": true,
+  "phoenix": {
+    "span_count": 648,
+    "trace_ids": [
+      "39c80a0b4d7bb1a1014587d71e6c14a6",
+      "71675184fa9d74a1f79971d96288b358",
+      "7fbe50ab8f6bf4e4bad258cd06ce1a23"
+    ],
+    "kinds": {
+      "TOOL": 63,
+      "EVALUATOR": 9,
+      "GUARDRAIL": 3,
+      "CHAIN": 441,
+      "LLM": 114,
+      "AGENT": 18
+    },
+    "unknown_kind_count": 0,
+    "missing_kind_count": 0,
+    "names": [
+      "ChatCompletion",
+      "ChatOpenAI",
+      "LangGraph",
+      "RunnableAssign<parsed,parsing_error>",
+      "RunnableLambda",
+      "RunnableParallel<parsed,parsing_error>",
+      "RunnableParallel<raw>",
+      "RunnableSequence",
+      "RunnableWithFallbacks",
+      "Unnamed",
+      "_check_refusal",
+      "clinical_writer",
+      "cohort_stats",
+      "episode_recall",
+      "episode_write",
+      "evidence_researcher",
+      "explain_factors",
+      "gate",
+      "intake",
+      "mcp.tools/call.cohort_stats",
+      "mcp.tools/call.episode_recall",
+      "mcp.tools/call.explain_factors",
+      "mcp.tools/call.memory_read",
+      "mcp.tools/call.predict_risk",
+      "mcp.tools/call.screen_note",
+      "mcp.tools/call.search_guidelines",
+      "memory_read",
+      "neuroguard.run",
+      "node.clinical_writer",
+      "node.evidence_researcher",
+      "node.gate",
+      "node.intake",
+      "node.orchestrator",
+      "node.planner",
+      "node.risk_analyst",
+      "node.safety_reviewer",
+      "orchestrator",
+      "planner",
+      "predict_risk",
+      "risk_analyst",
+      "safety_reviewer",
+      "screen_note",
+      "search_guidelines",
+      "verify",
+      "verify.precheck"
+    ],
+    "kind_column": "attributes.openinference.span.kind",
+    "trace_id_column": "context.trace_id"
+  },
   "arize_query": {
     "attempted": true,
     "usable": true,
-    "spans_confirmed_in_ui_api": null,
-    "attempts": [
-      {
-        "method": "graphql_app",
-        "http_status": 200,
-        "auth_ok": true,
-        "body_len": 147
-      },
-      {
-        "method": "rest_v2_spaces",
-        "http_status": 401,
-        "auth_ok": false,
-        "body_len": 193
-      },
-      {
-        "method": "api_arize_v2",
-        "http_status": 401,
-        "auth_ok": false,
-        "body_len": 193
-      }
+    "project_found": true,
+    "span_count": 98,
+    "trace_ids": [
+      "39c80a0b4d7bb1a1014587d71e6c14a6",
+      "71675184fa9d74a1f79971d96288b358",
+      "7fbe50ab8f6bf4e4bad258cd06ce1a23"
     ],
-    "note": "A query API accepted these credentials but this script could not confirm spans arrived"
+    "span_count_for_run": 98,
+    "kinds": {
+      "CHAIN": 75,
+      "LLM": 6,
+      "GUARDRAIL": 2,
+      "TOOL": 12,
+      "EVALUATOR": 2,
+      "AGENT": 1
+    },
+    "unknown_kind_count": 0,
+    "notes": [
+      "GraphQL returned totalCount=98 rows=98 traces=3 for project neuroguard in the time window (includeRootSpans=false, page size 50)."
+    ],
+    "errors": [],
+    "project_type": "application",
+    "project_names": [
+      "neuroguard"
+    ],
+    "span_rows": 98,
+    "spans_per_trace": {
+      "39c80a0b4d7bb1a1014587d71e6c14a6": 39,
+      "7fbe50ab8f6bf4e4bad258cd06ce1a23": 30,
+      "71675184fa9d74a1f79971d96288b358": 29
+    },
+    "span_names": [
+      "ChatCompletion",
+      "ChatOpenAI",
+      "RunnableAssign<parsed,parsing_error>",
+      "RunnableLambda",
+      "RunnableParallel<parsed,parsing_error>",
+      "RunnableParallel<raw>",
+      "RunnableSequence",
+      "RunnableWithFallbacks",
+      "Unnamed",
+      "_check_refusal",
+      "episode_recall",
+      "episode_write",
+      "gate",
+      "mcp.tools/call.episode_recall",
+      "mcp.tools/call.memory_read",
+      "mcp.tools/call.predict_risk",
+      "mcp.tools/call.screen_note",
+      "mcp.tools/call.search_guidelines",
+      "memory_read",
+      "node.evidence_researcher",
+      "node.gate",
+      "node.orchestrator",
+      "orchestrator",
+      "predict_risk",
+      "verify"
+    ],
+    "spans_per_requested_trace": {
+      "39c80a0b4d7bb1a1014587d71e6c14a6": 39,
+      "71675184fa9d74a1f79971d96288b358": 29,
+      "7fbe50ab8f6bf4e4bad258cd06ce1a23": 30
+    }
   },
-  "run_id": "4a21552967b44621b9429ebb5cf7f2be",
-  "status": "finalized",
-  "latency_s": 71.72,
-  "wall_s": 71.72,
-  "cost_usd": 0.005729,
-  "llm_calls": 19,
-  "tool_calls": 13,
-  "tokens": 31332,
-  "confidence": 0.88,
-  "failed_checks": [],
-  "span_count": 220,
-  "span_names": [
-    "ChatCompletion",
-    "ChatOpenAI",
-    "LangGraph",
-    "RunnableAssign<parsed,parsing_error>",
-    "RunnableLambda",
-    "RunnableParallel<parsed,parsing_error>",
-    "RunnableParallel<raw>",
-    "RunnableSequence",
-    "RunnableWithFallbacks",
-    "Unnamed",
-    "_check_refusal",
-    "clinical_writer",
-    "cohort_stats",
-    "episode_recall",
-    "episode_write",
-    "evidence_researcher",
-    "explain_factors",
-    "gate",
-    "intake",
-    "mcp.tools/call.cohort_stats",
-    "mcp.tools/call.episode_recall",
-    "mcp.tools/call.explain_factors",
-    "mcp.tools/call.memory_read",
-    "mcp.tools/call.predict_risk",
-    "mcp.tools/call.screen_note",
-    "mcp.tools/call.search_guidelines",
-    "memory_read",
-    "neuroguard.run",
-    "node.clinical_writer",
-    "node.evidence_researcher",
-    "node.gate",
-    "node.intake",
-    "node.orchestrator",
-    "node.planner",
-    "node.risk_analyst",
-    "node.safety_reviewer",
-    "orchestrator",
-    "planner",
-    "predict_risk",
-    "risk_analyst",
-    "safety_reviewer",
-    "screen_note",
-    "search_guidelines",
-    "verify"
+  "counts_match_this_run": false,
+  "historical_arize_ui_before_rerun": {
+    "traces": 6,
+    "spans": 205,
+    "explanation": "The 6 traces / 205 spans already in the Arize UI before this rerun are: (1) the v2.5.1 real e2e case, which exported 220 spans to Phoenix but only about 200 to Arize because ~20 OTLP HTTP 500s were hidden by a last-result SUCCESS counter; (2) five singleton diagnostic spans sent while investigating those 500s (each was its own trace, all HTTP 200). 200 + 5 = 205 spans, 1 + 5 = 6 traces."
+  },
+  "cases": [
+    {
+      "run_id": "e722f25de64740eb810ecd1d9d3a4b4b",
+      "status": "finalized",
+      "latency_s": 56.0,
+      "cost_usd": 0.005558,
+      "llm_calls": 19,
+      "tool_calls": 13,
+      "tokens": 31108,
+      "confidence": 0.872,
+      "revisions": 0,
+      "self_critique": "clean",
+      "self_critique_code_issues": [],
+      "review_verdicts": [
+        "approve"
+      ],
+      "official_first_failed_checks": [],
+      "official_first_red_team_pass": true,
+      "official_first_red_team_issues": [],
+      "review_count": 1,
+      "final_failed_checks": [],
+      "case_id": "demo67",
+      "phoenix": {
+        "span_count": 220,
+        "trace_ids": [
+          "39c80a0b4d7bb1a1014587d71e6c14a6"
+        ],
+        "kinds": {
+          "TOOL": 25,
+          "EVALUATOR": 3,
+          "GUARDRAIL": 1,
+          "CHAIN": 147,
+          "LLM": 38,
+          "AGENT": 6
+        },
+        "unknown_kind_count": 0,
+        "names": [
+          "ChatCompletion",
+          "ChatOpenAI",
+          "LangGraph",
+          "RunnableAssign<parsed,parsing_error>",
+          "RunnableLambda",
+          "RunnableParallel<parsed,parsing_error>",
+          "RunnableParallel<raw>",
+          "RunnableSequence",
+          "RunnableWithFallbacks",
+          "Unnamed",
+          "_check_refusal",
+          "clinical_writer",
+          "cohort_stats",
+          "episode_recall",
+          "episode_write",
+          "evidence_researcher",
+          "explain_factors",
+          "gate",
+          "intake",
+          "mcp.tools/call.cohort_stats",
+          "mcp.tools/call.episode_recall",
+          "mcp.tools/call.explain_factors",
+          "mcp.tools/call.memory_read",
+          "mcp.tools/call.predict_risk",
+          "mcp.tools/call.screen_note",
+          "mcp.tools/call.search_guidelines",
+          "memory_read",
+          "neuroguard.run",
+          "node.clinical_writer",
+          "node.evidence_researcher",
+          "node.gate",
+          "node.intake",
+          "node.orchestrator",
+          "node.planner",
+          "node.risk_analyst",
+          "node.safety_reviewer",
+          "orchestrator",
+          "planner",
+          "predict_risk",
+          "risk_analyst",
+          "safety_reviewer",
+          "screen_note",
+          "search_guidelines",
+          "verify",
+          "verify.precheck"
+        ]
+      },
+      "export_delta": {
+        "phoenix": {
+          "spans": 220,
+          "exports": 24,
+          "failures": 0,
+          "http_statuses": {
+            "200": 24
+          },
+          "ok": true
+        },
+        "arize": {
+          "spans": 220,
+          "exports": 24,
+          "failures": 4,
+          "http_statuses": {
+            "200": 20,
+            "500": 4
+          },
+          "ok": false
+        }
+      }
+    },
+    {
+      "run_id": "5953be607dc24ab9a7313a4c68dff197",
+      "status": "finalized",
+      "latency_s": 53.81,
+      "cost_usd": 0.005063,
+      "llm_calls": 19,
+      "tool_calls": 11,
+      "tokens": 27570,
+      "confidence": 0.893,
+      "revisions": 0,
+      "self_critique": "clean",
+      "self_critique_code_issues": [],
+      "review_verdicts": [
+        "approve"
+      ],
+      "official_first_failed_checks": [],
+      "official_first_red_team_pass": true,
+      "official_first_red_team_issues": [],
+      "review_count": 1,
+      "final_failed_checks": [],
+      "case_id": "N2",
+      "phoenix": {
+        "span_count": 216,
+        "trace_ids": [
+          "71675184fa9d74a1f79971d96288b358"
+        ],
+        "kinds": {
+          "TOOL": 21,
+          "EVALUATOR": 3,
+          "GUARDRAIL": 1,
+          "CHAIN": 147,
+          "LLM": 38,
+          "AGENT": 6
+        },
+        "unknown_kind_count": 0,
+        "names": [
+          "ChatCompletion",
+          "ChatOpenAI",
+          "LangGraph",
+          "RunnableAssign<parsed,parsing_error>",
+          "RunnableLambda",
+          "RunnableParallel<parsed,parsing_error>",
+          "RunnableParallel<raw>",
+          "RunnableSequence",
+          "RunnableWithFallbacks",
+          "Unnamed",
+          "_check_refusal",
+          "clinical_writer",
+          "cohort_stats",
+          "episode_recall",
+          "episode_write",
+          "evidence_researcher",
+          "explain_factors",
+          "gate",
+          "intake",
+          "mcp.tools/call.cohort_stats",
+          "mcp.tools/call.episode_recall",
+          "mcp.tools/call.explain_factors",
+          "mcp.tools/call.memory_read",
+          "mcp.tools/call.predict_risk",
+          "mcp.tools/call.screen_note",
+          "mcp.tools/call.search_guidelines",
+          "memory_read",
+          "neuroguard.run",
+          "node.clinical_writer",
+          "node.evidence_researcher",
+          "node.gate",
+          "node.intake",
+          "node.orchestrator",
+          "node.planner",
+          "node.risk_analyst",
+          "node.safety_reviewer",
+          "orchestrator",
+          "planner",
+          "predict_risk",
+          "risk_analyst",
+          "safety_reviewer",
+          "screen_note",
+          "search_guidelines",
+          "verify",
+          "verify.precheck"
+        ]
+      },
+      "export_delta": {
+        "phoenix": {
+          "spans": 216,
+          "exports": 23,
+          "failures": 0,
+          "http_statuses": {},
+          "ok": true
+        },
+        "arize": {
+          "spans": 216,
+          "exports": 26,
+          "failures": 6,
+          "http_statuses": {},
+          "ok": false
+        }
+      }
+    },
+    {
+      "run_id": "2cf4d8099ce0455c990b7800dc5578ba",
+      "status": "finalized",
+      "latency_s": 50.95,
+      "cost_usd": 0.004626,
+      "llm_calls": 19,
+      "tool_calls": 9,
+      "tokens": 24799,
+      "confidence": 0.919,
+      "revisions": 0,
+      "self_critique": "clean",
+      "self_critique_code_issues": [],
+      "review_verdicts": [
+        "approve"
+      ],
+      "official_first_failed_checks": [],
+      "official_first_red_team_pass": true,
+      "official_first_red_team_issues": [],
+      "review_count": 1,
+      "final_failed_checks": [],
+      "case_id": "N4",
+      "phoenix": {
+        "span_count": 212,
+        "trace_ids": [
+          "7fbe50ab8f6bf4e4bad258cd06ce1a23"
+        ],
+        "kinds": {
+          "TOOL": 17,
+          "EVALUATOR": 3,
+          "GUARDRAIL": 1,
+          "CHAIN": 147,
+          "LLM": 38,
+          "AGENT": 6
+        },
+        "unknown_kind_count": 0,
+        "names": [
+          "ChatCompletion",
+          "ChatOpenAI",
+          "LangGraph",
+          "RunnableAssign<parsed,parsing_error>",
+          "RunnableLambda",
+          "RunnableParallel<parsed,parsing_error>",
+          "RunnableParallel<raw>",
+          "RunnableSequence",
+          "RunnableWithFallbacks",
+          "Unnamed",
+          "_check_refusal",
+          "clinical_writer",
+          "cohort_stats",
+          "episode_recall",
+          "episode_write",
+          "evidence_researcher",
+          "explain_factors",
+          "gate",
+          "intake",
+          "mcp.tools/call.cohort_stats",
+          "mcp.tools/call.episode_recall",
+          "mcp.tools/call.explain_factors",
+          "mcp.tools/call.memory_read",
+          "mcp.tools/call.predict_risk",
+          "mcp.tools/call.screen_note",
+          "mcp.tools/call.search_guidelines",
+          "memory_read",
+          "neuroguard.run",
+          "node.clinical_writer",
+          "node.evidence_researcher",
+          "node.gate",
+          "node.intake",
+          "node.orchestrator",
+          "node.planner",
+          "node.risk_analyst",
+          "node.safety_reviewer",
+          "orchestrator",
+          "planner",
+          "predict_risk",
+          "risk_analyst",
+          "safety_reviewer",
+          "screen_note",
+          "search_guidelines",
+          "verify",
+          "verify.precheck"
+        ]
+      },
+      "export_delta": {
+        "phoenix": {
+          "spans": 212,
+          "exports": 21,
+          "failures": 0,
+          "http_statuses": {},
+          "ok": true
+        },
+        "arize": {
+          "spans": 212,
+          "exports": 24,
+          "failures": 4,
+          "http_statuses": {},
+          "ok": false
+        }
+      }
+    }
   ],
-  "manual_span_names_found": [
-    "node.planner",
-    "node.orchestrator",
-    "node.gate",
-    "verify",
-    "neuroguard.run"
+  "n_cases": 3,
+  "official_first_red_team_pass_rate": 1.0,
+  "official_first_red_team_pass_before": {
+    "rate": 1.0,
+    "note": "Before this fix, Arize showed a first verify span of 11/12 (only red_team_pass failed) on real runs, then a 12/12 pass ~6s later. Episode logs for those runs had review_verdicts=['approve'], self_critique=clean, red_team_rules=[], revisions=0. The 11/12 was the writer pre-check calling verify(..., red_team=None) before red_team_review ran \u2014 not a confirmed rule/quote. Official first-pass red_team_pass was already 1.0 on those runs. After the fix, that pre-check emits verify.precheck and does not fail red_team_pass; official reviewer/gate still require it."
+  },
+  "official_first_red_team_pass_after": 1.0,
+  "revisions_used": [
+    0,
+    0,
+    0
   ],
-  "tool_span_names": [
-    "mcp.tools/call.cohort_stats",
-    "mcp.tools/call.episode_recall",
-    "mcp.tools/call.explain_factors",
-    "mcp.tools/call.memory_read",
-    "mcp.tools/call.predict_risk",
-    "mcp.tools/call.screen_note",
-    "mcp.tools/call.search_guidelines"
+  "run_id": "e722f25de64740eb810ecd1d9d3a4b4b",
+  "status": "ok",
+  "latency_s": [
+    56.0,
+    53.81,
+    50.95
   ],
-  "no_secrets_in_span_attrs": true,
+  "wall_s": 167.27,
+  "cost_usd": 0.015247,
+  "llm_calls": 57,
+  "tool_calls": 33,
+  "tokens": 83477,
+  "confidence": [
+    0.872,
+    0.893,
+    0.919
+  ],
+  "failed_checks": [
+    [],
+    [],
+    []
+  ],
+  "counts_match_per_trace": {
+    "39c80a0b4d7bb1a1014587d71e6c14a6": {
+      "phoenix": 220,
+      "arize": 39,
+      "match": false
+    },
+    "71675184fa9d74a1f79971d96288b358": {
+      "phoenix": 216,
+      "arize": 29,
+      "match": false
+    },
+    "7fbe50ab8f6bf4e4bad258cd06ce1a23": {
+      "phoenix": 212,
+      "arize": 30,
+      "match": false
+    }
+  },
   "model": "gpt-4o-mini",
-  "query_error": null,
-  "otlp_http_500_log_lines": 20,
-  "otlp_http_500_note": "The process printed 20 lines of 'Failed to export spans batch code: 500, reason: Internal Server Error' during the run. The wrapped Phoenix and Arize exporters each recorded 220 SUCCESS results and 0 failures, and the local Phoenix query returned 220 spans. The 500 lines were not attributed to a wrapped exporter failure counter; they may be a collector-side or SDK log from a retry/forward path. Arize export is still reported as SUCCESS from the exporter return value; this log does not independently confirm every span arrived in the Arize UI."
+  "temperature": 0,
+  "query_error": null
 }

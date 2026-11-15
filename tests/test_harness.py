@@ -106,3 +106,34 @@ def test_verifier_each_failure_is_caught():
         v = _verify(report)
         assert check in v["failed"], (check, v["failed"])
     assert "red_team_pass" in _verify(g, red={"verdict": "fail", "issues": ["x"]})["failed"]
+
+
+def test_writer_precheck_does_not_fail_red_team_pass_before_red_team_runs():
+    """Observed Arize pattern: first verify span was 11/12 with only red_team_pass failed.
+
+    That call was the writer's deterministic pre-check, which invoked verify(..., red_team=None)
+    before the Safety Reviewer ran red_team_review. There was no confirmed rule/quote. The
+    official 12-check path (default require_red_team=True) must still fail when red team is
+    missing or failed; the pre-check must not.
+    """
+    ctx = RunContext(session_id="s", consent=False)
+    risk = {"risk_probability": 0.1498, "risk_percent": 15.0}
+    retrieved = {"G-03": {}, "G-13": {}}
+    report = _good_report()
+    pre = verify(report, risk, {"risk_probability": 0.1498}, retrieved, json.dumps(risk), None, ctx,
+                 require_red_team=False, stage="precheck")
+    assert "red_team_pass" not in pre["failed"], pre["failed"]
+    assert pre["passed"] is True
+    assert pre["details"]["verify_stage"] == "precheck"
+    # checks still record the raw red_team_pass=False, but it is not a failed official check
+    assert pre["checks"]["red_team_pass"] is False
+
+    official_missing = verify(report, risk, {"risk_probability": 0.1498}, retrieved, json.dumps(risk), None, ctx)
+    assert "red_team_pass" in official_missing["failed"]
+    assert official_missing["passed"] is False
+
+    official_fail = verify(report, risk, {"risk_probability": 0.1498}, retrieved, json.dumps(risk),
+                           {"verdict": "fail", "issues": ["rule 1: quote"]}, ctx)
+    assert "red_team_pass" in official_fail["failed"]
+    official_pass = _verify(report)
+    assert official_pass["passed"] is True and official_pass["checks"]["red_team_pass"] is True

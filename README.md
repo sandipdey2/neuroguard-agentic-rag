@@ -15,11 +15,11 @@ self-critique check every draft; a finalize gate and a confidence gate refuse an
 with an **HMAC-SHA256 signed receipt**, a decision reasoning log, OTLP-JSON spans and a cost estimate.
 Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
 
-**v2.5.1** adds optional Arize AX (cloud) export alongside Phoenix, and keeps the v2.5 Monitoring tab and the v2.4 capstone simplification —
+**v2.5.2** adds optional Arize AX (cloud) export alongside Phoenix, and keeps the v2.5 Monitoring tab and the v2.4 capstone simplification —
 a FastAPI service (REST + webhook + cron triggers on a durable queue), a 💬 Chat tab with conversation memory, an evidence
 sub-agent exposed as a tool, a FAISS vector store, a second keyless public API (PubMed E-utilities) as an MCP tool, a
 server-side MCP policy engine, optional Redis / PostgreSQL backends (SQLite by default), explicit success criteria and a
-pytest suite (84 tests) — without extra packaging layers. It runs in two places only: Streamlit Community Cloud (live demo)
+pytest suite (87 tests) — without extra packaging layers. It runs in two places only: Streamlit Community Cloud (live demo)
 and `uvicorn` on your machine (API). Phoenix is off unless you set `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1`; Arize AX
 is off unless you set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` (environment or Streamlit secrets). Cloud and CI do not need a
 collector. CI is active on GitHub Actions
@@ -79,7 +79,7 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | Vector database | `core/vector_store.py`: FAISS `IndexFlatIP`, persisted with a corpus fingerprint, used by `core/rag.py` |
 | Triggers | `POST /v1/cases`, HMAC `POST /v1/webhooks/case`, cron CLI `scripts/scheduled_batch.py` |
 | Durable message queue | `core/job_queue.py` (SQLite WAL / PostgreSQL `SKIP LOCKED` / Redis `LMOVE`; leases, retries) + `core/worker.py`; A2A events published to it |
-| Unit tests + CI | `tests/` (84 tests, LLM mocked, MCP real); CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 + 3.14) |
+| Unit tests + CI | `tests/` (87 tests, LLM mocked, MCP real); CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 + 3.14) |
 | Chat interface | app tab **💬 Chat** (`st.chat_input`): "row 9046" or `age=67 …` runs a case; other messages are follow-ups |
 | API endpoint | `api/main.py` (FastAPI, OpenAPI at `/docs`, API key, CORS), run locally with `uvicorn`; Streamlit Cloud cannot host it (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) |
 
@@ -197,7 +197,7 @@ python scripts/run_phoenix_demo.py                      # one real case, then op
 ```
 Span attributes are PHI-redacted. Leave the collector env vars unset on Streamlit Cloud unless you want Arize AX export (then add `ARIZE_SPACE_ID` and `ARIZE_API_KEY` under App settings → Secrets and reboot).
 
-Tests: `pip install -r requirements-dev.txt && pytest` (84 tests; 82 run and pass without a database server; 2 real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14; Phoenix is not installed in CI; `arize-otel` is, but no collector is contacted). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
+Tests: `pip install -r requirements-dev.txt && pytest` (88 tests; 86 run and pass without a database server; 2 real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14; Phoenix is not installed in CI; `arize-otel` is, but no collector is contacted). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
 
 ## Deploy on Streamlit Community Cloud
 New app → repo `sandipdey2/neuroguard-agentic-rag`, branch `main`, file `app.py` → Advanced settings → Secrets:
