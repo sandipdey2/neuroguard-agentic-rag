@@ -329,7 +329,7 @@ agent = {
 }
 print(json.dumps(agent, indent=1))
 fails = {}
-for fc in pc.failed_checks: 
+for fc in pc.failed_checks:
     for f in fc: fails[f] = fails.get(f, 0) + 1
 print("failed checks across final drafts:", fails)""")
 md("## 10. RAGAS-style faithfulness (LLM judge) on guideline-evidence bullets\nFollowing Es et al. (2024): each statement is judged supported / not supported by its cited context.")

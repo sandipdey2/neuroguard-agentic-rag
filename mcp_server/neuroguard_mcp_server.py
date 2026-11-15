@@ -361,5 +361,39 @@ EVIDENCE:
 """
 
 
+
+@mcp.prompt()
+def garden_review(patterns_json: str, hint_library_json: str = "{}", required_checks_json: str = "[]") -> str:
+    """Gardener: review clustered, de-identified run feedback and PROPOSE (never apply) a constraint for each recurring pattern."""
+    return f"""You are the Gardener for a stroke-risk clinical decision-support harness. You review past work, not a live case.
+INPUT is a list of recurring patterns mined from de-identified run episodes and evaluation logs (no notes, no questions,
+no patient text). Each pattern has a key, a support count and episode ids.
+For EACH pattern return one proposal with exactly these fields:
+- pattern: the recurring correction in one sentence;
+- support: the support count copied from INPUT (do not change it);
+- episode_ids: copied from INPUT;
+- proposed_constraint: {{"type": "check" | "tool" | "hint", "change": one concrete sentence}}. Prefer turning a repeated
+  correction into a deterministic check or a whitelisted hint; a tool change only if the agents lacked information;
+- validation_plan: how to prove the change helps (which eval/cases.json profiles to re-run, the metric that must improve,
+  and that pytest and scripts/verify_mcp.py must still pass).
+Rules:
+1. You only PROPOSE. A human applies changes through code review. Never claim a change was made.
+2. Never propose removing, loosening or skipping a required check, the red team, the finalize gate, the PHI guard,
+   the budget or human approval. Proposals may only add or tighten constraints.
+3. Do not invent patterns, counts, episode ids or numbers that are not in INPUT.
+4. A hint must be one short instruction; if HINT_LIBRARY already covers the pattern, say so and propose a stronger
+   deterministic check or writer-template rule instead of a duplicate hint.
+5. Return JSON only: {{"proposals": [...]}}.
+
+REQUIRED_CHECKS (must stay required):
+{required_checks_json}
+
+HINT_LIBRARY (existing whitelisted hints):
+{hint_library_json}
+
+INPUT:
+{patterns_json}
+"""
+
 if __name__ == "__main__":
     mcp.run(transport="stdio")

@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "2.5.3"
+VERSION = "2.6.0"
 INCLUDE = ["app.py", "harness_contract.json", "requirements.txt", "requirements-dev.txt", "requirements-api.txt", "pytest.ini",
            ".env.example", "requirements-phoenix.txt", "README.md", "LICENSE", "CHANGELOG.md",
            "DATA_SOURCES.md", "module_summary.md", "module_summary.pdf", "architecture_diagram.png", "architecture_diagram.pdf",

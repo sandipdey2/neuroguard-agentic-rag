@@ -10,7 +10,7 @@ from core.permissions import AuditLog
 def test_contract_has_top_p_and_success_criteria():
     c = load_contract()
     assert c["top_p"] == 1.0 and c["temperature"] == 0
-    assert c["contract_version"] == "1.3.0"
+    assert c["contract_version"] == "1.4.0"
     assert len(c["required_checks"]) == 12
     assert {t["metric"] for t in c["success_criteria"]["targets"]} >= {"attack_block_rate", "finalized_rate", "cost_per_run_usd"}
 
@@ -128,8 +128,12 @@ def test_writer_precheck_does_not_fail_red_team_pass_before_red_team_runs():
     # checks still record the raw red_team_pass=False, but it is not a failed official check
     assert pre["checks"]["red_team_pass"] is False
 
+    assert pre["check_status"]["red_team_pass"] == "NOT_RUN" and pre["unrun_checks"] == []
+
+    # v2.6: the official path with no red-team result is NOT_RUN (blocked), never a pass
     official_missing = verify(report, risk, {"risk_probability": 0.1498}, retrieved, json.dumps(risk), None, ctx)
-    assert "red_team_pass" in official_missing["failed"]
+    assert official_missing["check_status"]["red_team_pass"] == "NOT_RUN"
+    assert "red_team_pass" in official_missing["unrun_checks"]
     assert official_missing["passed"] is False
 
     official_fail = verify(report, risk, {"risk_probability": 0.1498}, retrieved, json.dumps(risk),
@@ -137,3 +141,66 @@ def test_writer_precheck_does_not_fail_red_team_pass_before_red_team_runs():
     assert "red_team_pass" in official_fail["failed"]
     official_pass = _verify(report)
     assert official_pass["passed"] is True and official_pass["checks"]["red_team_pass"] is True
+
+
+# ----------------------------------------------------------------------------- v2.6: PASS / FAIL / NOT_RUN
+def test_check_status_all_pass_and_unrun_empty():
+    v = _verify(_good_report())
+    assert set(v["check_status"].values()) == {"PASS"}
+    assert v["unrun_checks"] == [] and v["failed"] == [] and v["passed"] is True
+    assert set(v["check_status"]) == set(load_contract()["required_checks"])
+
+
+def test_failed_check_is_fail_not_not_run():
+    v = _verify(_good_report().replace("- blood pressure", "- take aspirin 81 mg"))
+    assert v["check_status"]["no_dosing_advice"] == "FAIL" and "no_dosing_advice" in v["failed"]
+    assert v["unrun_checks"] == []
+
+
+def test_missing_predict_risk_is_not_run_and_blocks():
+    ctx = RunContext(session_id="s", consent=False)
+    v = verify(_good_report(), None, None, {"G-03": {}, "G-13": {}}, "{}", {"verdict": "pass", "issues": []}, ctx)
+    for c in ("risk_in_unit_interval", "risk_matches_model", "report_states_model_risk"):
+        assert v["check_status"][c] == "NOT_RUN" and c in v["unrun_checks"], c
+        assert v["checks"][c] is False          # backward-compatible bool view never says True
+    assert v["passed"] is False
+
+
+def test_missing_analyst_only_risk_matches_model_not_run():
+    ctx = RunContext(session_id="s", consent=False)
+    risk = {"risk_probability": 0.1498, "risk_percent": 15.0}
+    v = verify(_good_report(), risk, None, {"G-03": {}, "G-13": {}}, json.dumps(risk), {"verdict": "pass", "issues": []}, ctx)
+    assert v["unrun_checks"] == ["risk_matches_model"] and v["passed"] is False
+
+
+def test_empty_draft_text_checks_are_not_run_not_silent_pass():
+    ctx = RunContext(session_id="s", consent=False)
+    risk = {"risk_probability": 0.1498, "risk_percent": 15.0}
+    v = verify("", risk, {"risk_probability": 0.1498}, {}, json.dumps(risk), {"verdict": "pass", "issues": []}, ctx)
+    for c in ("no_dosing_advice", "no_phi_in_output", "no_diagnosis_claim"):
+        assert v["check_status"][c] == "NOT_RUN" and c in v["unrun_checks"]
+    assert v["passed"] is False
+
+
+def test_contract_check_unknown_to_verifier_is_not_run():
+    ctx = RunContext(session_id="s", consent=False)
+    ctx.contract = {**ctx.contract, "required_checks": list(ctx.contract["required_checks"]) + ["future_check"]}
+    risk = {"risk_probability": 0.1498, "risk_percent": 15.0}
+    v = verify(_good_report(), risk, {"risk_probability": 0.1498}, {"G-03": {}, "G-13": {}}, json.dumps(risk),
+               {"verdict": "pass", "issues": []}, ctx)
+    assert v["check_status"]["future_check"] == "NOT_RUN" and v["unrun_checks"] == ["future_check"] and not v["passed"]
+
+
+def test_not_reviewed_result_blocks_every_required_check():
+    from core.harness import not_reviewed
+    ctx = RunContext(session_id="s", consent=False)
+    v = not_reviewed(ctx)
+    assert v["passed"] is False and set(v["unrun_checks"]) == set(ctx.contract["required_checks"])
+    assert set(v["check_status"].values()) == {"NOT_RUN"}
+
+
+def test_contract_v14_declares_not_run_policy_and_gardener():
+    c = load_contract()
+    assert c["verification"]["statuses"] == ["PASS", "FAIL", "NOT_RUN"]
+    assert c["agents"]["gardener"]["prompts"] == ["garden_review"] and c["agents"]["gardener"]["tools"] == []
+    assert c["gardening"]["mode"] == "propose_only"

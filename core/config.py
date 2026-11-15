@@ -30,7 +30,7 @@ def secret(name: str, default: str | None = None) -> str | None:
 
 
 def get_credentials() -> tuple[str | None, str]:
-    return secret("OPENAI_API_KEY"), secret("OPENAI_API_BASE", DEFAULT_BASE_URL)
+    return secret("OPENAI_API_KEY"), secret("OPENAI_API_BASE", DEFAULT_BASE_URL) or DEFAULT_BASE_URL
 
 
 def load_contract() -> dict:

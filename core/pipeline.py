@@ -10,6 +10,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import os
+import subprocess
 import threading
 import time
 from pathlib import Path
@@ -28,6 +30,24 @@ from .monitoring import record_run
 from .mcp_client import SERVER, mcp_session
 
 SERVER_SHA = hashlib.sha256(Path(SERVER).read_bytes()).hexdigest()
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def git_revision(root: Path = REPO_ROOT) -> dict:
+    """The code revision a run was produced by: ``git rev-parse HEAD`` and whether the working tree had changes.
+
+    Falls back to the ``GIT_SHA`` / ``NG_GIT_SHA`` environment variable (then ``"unknown"``) when git or the
+    .git directory is not available (e.g. some hosted containers). ``git_dirty`` is then None (not known).
+    """
+    def _git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, timeout=5, check=True).stdout.strip()
+    try:
+        head = _git("rev-parse", "HEAD")
+        dirty = bool(_git("status", "--porcelain", "--untracked-files=no"))
+        return {"git_sha": head, "git_dirty": dirty, "git_source": "git"}
+    except Exception:
+        env = os.environ.get("GIT_SHA") or os.environ.get("NG_GIT_SHA")
+        return {"git_sha": env or "unknown", "git_dirty": None, "git_source": "env" if env else "unavailable"}
 
 
 def _store_metrics(res: dict) -> dict:
@@ -53,7 +73,9 @@ def _receipt(ctx: RunContext, inputs: dict, result: dict) -> dict:
         "mcp_server_sha256": SERVER_SHA, "inputs_sha256": sha(inputs), "report_sha256": sha(result.get("report") or ""),
         "trace_sha256": sha(result.get("trace", [])), "audit_chain_head": ctx.audit.entries[-1]["hash"] if ctx.audit.entries else None,
         "audit_chain_valid": ctx.audit.verify_chain(), "status": result["status"], "checks": v.get("checks", {}),
-        "failed_checks": v.get("failed", []), "needs_human_approval": final.get("needs_human_approval", False),
+        "failed_checks": v.get("failed", []), "check_status": v.get("check_status", {}),
+        "unrun_checks": v.get("unrun_checks", []), "block_reason": final.get("block_reason"), **git_revision(),
+        "needs_human_approval": final.get("needs_human_approval", False),
         "approval": None, "counts": {"llm_calls": ctx.llm_calls, "tokens": ctx.tokens, "tool_calls": ctx.perms.tool_calls,
                                      "spans": len(ctx.spans), "decisions": len(ctx.decisions)},
         "cost_usd": round(ctx.cost_usd, 6), "confidence": (final.get("confidence") or {}).get("score"),
@@ -127,7 +149,8 @@ async def _run_graph(inputs: dict, gate: dict, ctx: RunContext, llm, progress=No
         init = {"rag_mode": inputs["rag_mode"], "question": inputs["question"], "note": inputs["note"], "audience": inputs["audience"], "profile": inputs["profile"],
                 "turns": 0, "visits": {}, "revisions": 0, "pending_review": False, "retrieved": {}, "evidence_log": [],
                 "trace": [{"agent": "input_guardrail", "type": "guardrail", **gate}], "route": [], "self_critique": {}}
-        state, seen = None, 0
+        state: dict = {}
+        seen = 0
         # astream(values) yields the full state after every node; the last value equals ainvoke's result.
         async for state in graph.astream(init, config={"recursion_limit": 80}, stream_mode="values"):
             tr = state.get("trace", [])

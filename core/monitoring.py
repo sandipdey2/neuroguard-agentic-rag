@@ -57,6 +57,7 @@ def record_run(result: dict, phoenix: dict | None = None) -> int:
     verification = final.get("verification") or {}
     checks = verification.get("checks") or receipt.get("checks") or {}
     failed = list(verification.get("failed") or receipt.get("failed_checks") or [])
+    failed += [f"NOT_RUN:{c}" for c in (verification.get("unrun_checks") or receipt.get("unrun_checks") or [])]
     cost = result.get("cost") or {}
     cost_usd = receipt.get("cost_usd")
     if cost_usd is None:

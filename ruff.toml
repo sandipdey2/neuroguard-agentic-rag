@@ -1,0 +1,17 @@
+# Lint config (v2.6.0). Run: ruff check .
+target-version = "py313"
+line-length = 160
+extend-exclude = ["dist", "evaluation.ipynb", "data", "eval", "knowledge"]
+
+[lint]
+# pyflakes (F), pycodestyle errors (E) and warnings (W), import hygiene (I001 not enforced), bugbear subset
+select = ["E", "F", "W", "B006", "B008", "B015", "B018"]
+ignore = [
+  "E501",   # long lines: report/prompt templates are intentionally long
+  "E731",   # small lambdas used as local predicates in the agents
+  "E701", "E702",  # compact one-line UI statements in app.py
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["E402"]
+"scripts/*" = ["E402"]

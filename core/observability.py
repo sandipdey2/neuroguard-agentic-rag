@@ -892,9 +892,10 @@ def emit_verify_span(ctx, result: dict, start: float, end: float | None = None, 
                            **{"checks.passed": passed_n,
                               "checks.failed": ",".join(failed),
                               "checks.total": total,
+                              "checks.not_run": ",".join(result.get("unrun_checks") or []),
                               "verify.passed": bool(result.get("passed")),
                               "verify.stage": stage,
-                              "decision": "pass" if result.get("passed") else "fail"})
+                              "decision": "pass" if result.get("passed") else ("blocked_unrun" if result.get("unrun_checks") else "fail")})
     emit_span(name, start, end or time.time(), attrs, ok=True)
 
 

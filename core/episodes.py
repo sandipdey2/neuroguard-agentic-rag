@@ -104,7 +104,8 @@ def recall(factors: list[str], age_band: str | None = None, k: int = 3, window: 
 
 
 def learned_hints(window: int = 30, min_support: int = 2, max_hints: int = 3) -> list[dict]:
-    cnt, support = Counter(), {}
+    cnt: Counter[str] = Counter()
+    support: dict[str, list[str]] = {}
     for e in _rows(window):
         keys = {f"check:{c}" for c in e["failed_checks"]} | {f"rule:{r}" for r in e["red_team_rules"]}
         if e["clinician_decision"] == "REJECTED":
@@ -117,7 +118,18 @@ def learned_hints(window: int = 30, min_support: int = 2, max_hints: int = 3) ->
             cnt[k_] += 1
             support.setdefault(k_, []).append(e["run_id"][:8])
     active = [(k_, n) for k_, n in cnt.most_common() if n >= min_support][:max_hints]
-    return [{"key": k_, "support": n, "hint": HINT_LIBRARY[k_], "episodes": support[k_][:5]} for k_, n in active]
+    out = [{"key": k_, "support": n, "hint": HINT_LIBRARY[k_], "episodes": support[k_][:5]} for k_, n in active]
+    trial = trial_hint()
+    if trial and trial not in {h["key"] for h in out}:   # gardener trial (scripts/garden.py --trial): whitelisted keys only
+        out = [{"key": trial, "support": 0, "hint": HINT_LIBRARY[trial], "episodes": [], "trial": True}] + out[:max(0, max_hints - 1)]
+    return out
+
+
+def trial_hint() -> str | None:
+    """``NG_TRIAL_HINT`` names ONE existing HINT_LIBRARY key to inject for a gardener trial run. Free text is ignored."""
+    import os
+    k_ = (os.environ.get("NG_TRIAL_HINT") or "").strip()
+    return k_ if k_ in HINT_LIBRARY else None
 
 
 def retrieval_boosts(factors: list[str], window: int = 200, step: float = 0.01) -> dict:

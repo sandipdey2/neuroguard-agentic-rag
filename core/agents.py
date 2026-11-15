@@ -48,7 +48,7 @@ from .a2a import AGENT_DESCRIPTIONS
 from .context import assemble_evidence, count as count_tokens, messages_tokens, truncate
 from .data import validate_profile
 from .guardrails import redact
-from .harness import RunContext, section, verify
+from .harness import RunContext, not_reviewed, release_decision, section, verify
 from .skills import catalog_for, load_body
 
 SPECIALISTS = ["intake", "risk_analyst", "evidence_researcher", "clinical_writer", "safety_reviewer"]
@@ -807,6 +807,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         v = verify(s["draft"], s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), red, ctx,
                     stage="review")
         issues = [f"failed check: {c}" for c in v["failed"] if c != "red_team_pass"]
+        issues += [f"check not run: {c}" for c in v.get("unrun_checks", []) if c != "red_team_pass"]
         d = v["details"]
         if d["uncited_bullets"]:
             issues.append("uncited evidence bullets: " + " | ".join(b[:80] for b in d["uncited_bullets"][:3]))
@@ -826,7 +827,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
         finish_task(s, "safety_reviewer", "review", {"verdict": verdict, "failed": v["failed"]})
         trace += [{"agent": "safety_reviewer", "type": "mcp_prompt_get", "prompt": "red_team_review"},
                   {"agent": "safety_reviewer", "type": "review", "verdict": verdict, "failed_checks": v["failed"],
-                   "issues": issues, "ms": _ms(t0)}]
+                   "unrun_checks": v.get("unrun_checks", []), "issues": issues, "ms": _ms(t0)}]
         return {"phase": "validator", "review": review, "pending_review": False, "trace": trace, "revisions": revisions + (1 if verdict == "revise" else 0)}
 
     # ------------------------------------------------------------------ finalize gate
@@ -838,8 +839,10 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             v = verify(s["draft"], s.get("risk"), s.get("analyst"), s.get("retrieved") or {}, evidence_text(s), red, ctx,
                         stage="gate")
         else:
-            v = {"checks": {}, "failed": ["draft_not_reviewed"], "passed": False, "details": {}}
-        finalized = v["passed"] and s.get("risk") is not None
+            v = not_reviewed(ctx)
+        unrun = list(v.get("unrun_checks") or [])
+        # a REQUIRED check that never ran blocks release (status blocked_unrun); it is never counted as a pass
+        finalized, status, block_reason = release_decision(v, s.get("risk"))
         band = (s.get("risk") or {}).get("risk_band")
         # ---- confidence score + policy gate
         card = {}
@@ -884,9 +887,12 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
                 mem = json.loads(_text(await tool_map["memory_write"].ainvoke(d.args)))
             else:
                 mem = {"skipped": d.reason}
-        ctx.decide("harness", "finalize", "finalized" if finalized else "not_finalized",
-                   "all required checks passed" if finalized else f"failed: {v['failed'] + failed_conf}",
-                   options=["finalized", "not_finalized"], evidence={"approval_reasons": reasons})
+        if failed_conf:
+            status = "not_finalized"
+        ctx.decide("harness", "finalize", status,
+                   "all required checks passed" if finalized else
+                   "; ".join(x for x in [block_reason, f"failed: {v['failed'] + failed_conf}" if (v["failed"] + failed_conf) else None] if x) or "no authoritative predict_risk result",
+                   options=["finalized", "not_finalized", "blocked_unrun"], evidence={"approval_reasons": reasons, "unrun_checks": unrun})
         # ---- episodic memory: one de-identified episode per run (feeds the bounded learning loop)
         rv_trace = [t for t in s.get("trace", []) if t.get("type") == "review"]
         sc = s.get("self_critique") or {}
@@ -899,7 +905,7 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
                    "review_verdicts": [t["verdict"] for t in rv_trace],
                    "failed_checks": sorted({c for t in rv_trace for c in t.get("failed_checks", []) if c != "red_team_pass"} | set(sc.get("code_issues", []))),
                    "red_team_rules": sorted({int(m) for t in rv_trace for i in t.get("issues", []) for m in re.findall(r"red team: rule (\d)", i)}),
-                   "confidence": cscore, "outcome": "finalized" if finalized else "not_finalized",
+                   "confidence": cscore, "outcome": status, "unrun_checks": unrun,
                    "cited": sorted(set(re.findall(r"\[(G-\d{2})\]", s.get("draft", ""))))}
         ep_res = None
         d = ctx.perms.pre_tool_use("harness", "episode_write", {"episode_json": json.dumps(episode)})
@@ -907,13 +913,14 @@ def build_graph(llm, tools: list, session, ctx: RunContext):
             ep_res = json.loads(_text(await tool_map["episode_write"].ainvoke(d.args)))
         ctx.decide("harness", "episode_write", "stored" if ep_res else "skipped", "de-identified run episode for episodic memory / learning loop",
                    evidence={"fields": sorted(episode)})
-        final = {"status": "finalized" if finalized else "not_finalized", "verification": {**v, "failed": v["failed"] + failed_conf},
+        final = {"status": status, "block_reason": block_reason, "verification": {**v, "failed": v["failed"] + failed_conf},
                  "needs_human_approval": bool(reasons) and finalized, "approval_reasons": reasons, "memory": mem,
                  "confidence": {"score": cscore, "gate": cgate, "components": comps, "weights": C["confidence"]["weights"],
                                 "refuse_below": C["confidence"]["refuse_below"], "review_below": C["confidence"]["review_below"]},
                  "episode": {"stored": bool(ep_res), **episode}}
-        ctx.audit.log("harness", "finalize_gate", "report", final["status"], failed=v["failed"])
-        tr = {"agent": "gate", "type": "gate", "status": final["status"], "failed_checks": final["verification"]["failed"], "needs_human_approval": final["needs_human_approval"],
+        ctx.audit.log("harness", "finalize_gate", "report", final["status"], failed=v["failed"], unrun=unrun)
+        tr = {"agent": "gate", "type": "gate", "status": final["status"], "failed_checks": final["verification"]["failed"],
+              "unrun_checks": unrun, "block_reason": block_reason, "needs_human_approval": final["needs_human_approval"],
               "approval_reasons": reasons, "memory": mem, "confidence": cscore, "confidence_gate": cgate, "ms": _ms(t0)}
         return {"phase": "validator", "final": final, "trace": [tr]}
 

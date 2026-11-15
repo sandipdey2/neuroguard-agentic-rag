@@ -32,7 +32,7 @@ BODY = {"profile": {"age": 67, "gender": "Male", "hypertension": 0, "heart_disea
 
 def test_health_and_openapi(api):
     h = api.get("/health").json()
-    assert h["status"] == "ok" and h["version"] == "2.5.3" and h["queue"]["backend"] == "sqlite" and h["auth"] == "api-key"
+    assert h["status"] == "ok" and h["version"] == "2.6.0" and h["queue"]["backend"] == "sqlite" and h["auth"] == "api-key"
     spec = api.get("/openapi.json").json()
     assert {"/v1/cases", "/v1/cases/{job_id}", "/v1/receipts/{job_id}/verify", "/v1/webhooks/case"} <= set(spec["paths"])
     assert api.get("/docs").status_code == 200

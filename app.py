@@ -186,7 +186,12 @@ with tab_run:
         k[6].metric("Cost (USD, list)", f"{(res_.get('cost') or {}).get('cost_usd', 0):.4f}")
         k[7].metric("Latency (s)", res_["latency_s"])
         if res_["status"] != "finalized":
-            st.error("The finalize gate refused to release this report. Failed checks: " + ", ".join((final.get("verification") or {}).get("failed", [])))
+            _vv = final.get("verification") or {}
+            if final.get("status") == "blocked_unrun":
+                st.error("The finalize gate BLOCKED this report: required check(s) NOT_RUN - " + ", ".join(_vv.get("unrun_checks", []))
+                         + (" · failed: " + ", ".join(_vv.get("failed", [])) if _vv.get("failed") else ""))
+            else:
+                st.error("The finalize gate refused to release this report. Failed checks: " + ", ".join(_vv.get("failed", [])))
         if final.get("needs_human_approval"):
             st.info("Clinician sign-off required: " + ", ".join(final["approval_reasons"]))
             a1, a2, _ = st.columns([1, 1, 3])
@@ -248,7 +253,14 @@ with tab_run:
                     st.markdown(f"> {d['text']}\n\n[{d['url']}]({d['url']}) · accessed {d['accessed']} · {d['license']}")
         with t[6]:
             v = final.get("verification") or {}
-            st.dataframe(pd.DataFrame([{"check": c, "result": "PASS" if ok else "FAIL"} for c, ok in (v.get("checks") or {}).items()]), width="stretch")
+            _st = v.get("check_status") or {c: ("PASS" if ok else "FAIL") for c, ok in (v.get("checks") or {}).items()}
+            _req = set(v.get("required") or _st)
+            st.dataframe(pd.DataFrame([{"check": c, "result": r, "required": c in _req} for c, r in _st.items()]), width="stretch")
+            if v.get("unrun_checks"):
+                st.warning("NOT_RUN required checks (block release): " + ", ".join(v["unrun_checks"]))
+            rc0 = st.session_state.get("receipt") or {}
+            st.caption(f"Code revision on the receipt: git `{str(rc0.get('git_sha', 'unknown'))[:12]}`"
+                       + (" (uncommitted changes)" if rc0.get("git_dirty") else ""))
             st.json(v.get("details", {}))
             rc = st.session_state["receipt"]
             st.markdown(f"**Signed receipt** - signature `{rc['signature'][:24]}...` · verifies in this process: "
@@ -518,7 +530,7 @@ report** for a clinician or patient. It is a demonstration product built on publ
 3. A **planner** recalls similar de-identified past episodes and writes a structured plan; the **LLM orchestrator** (gpt-4o-mini,
    LangGraph) executes it, delegating via **A2A-style tasks** to five agents - Intake, Risk Analyst, Evidence Researcher (ReAct,
    hybrid + graph RAG, re-retrieves when topics are missing), Clinical Writer (self-critique) and Safety Reviewer.
-4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 20 tools (incl. PubMed E-utilities), 6 resources (incl. the registry://tools tool registry) + 1 resource template, 2 prompts, and a server-side policy engine.
+4. Agents act only through a **real MCP server** (official SDK, stdio subprocess): 20 tools (incl. PubMed E-utilities), 6 resources (incl. the registry://tools tool registry) + 1 resource template, 3 prompts (incl. the Gardener `garden_review`), and a server-side policy engine.
    Three selectable **RAG modes**: classical (fixed semantic_search before the LLM), agentic (the LLM calls search tools) and
    agentic search (context-retrieval tools over local files, skills, the cohort database, allowlisted CDC/NIH/WHO pages, memory
    and a sandboxed shell). The **Context window** tab shows every slot with its token count.

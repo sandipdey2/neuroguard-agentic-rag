@@ -25,6 +25,7 @@ async def main():
         print("resources/templates/list ->", [t.uriTemplate for t in tmpl.resourceTemplates])
         prompts = await s.list_prompts()
         print("prompts/list ->", [p.name for p in prompts.prompts])
+        assert {p.name for p in prompts.prompts} == {"clinical_report", "red_team_review", "garden_review"}, [p.name for p in prompts.prompts]
         calls = [("predict_risk", P), ("explain_factors", {**P, "top": 3}), ("cohort_stats", {"age": 67, "hypertension": 0, "heart_disease": 1}),
                  ("screen_note", {"note": "Follow-up visit. Denies weakness. Occasional headaches."}),
                  ("search_guidelines", {"query": "high blood pressure stroke risk", "k": 2}),
@@ -60,6 +61,8 @@ async def main():
             print(f"resources/read {uri} ->", r.contents[0].text[:200].replace("\n", " "))
         g = await s.get_prompt("clinical_report", {"audience": "clinician", "facts_json": "{}", "evidence_json": "[]"})
         print("prompts/get clinical_report ->", g.messages[0].content.text[:160].replace("\n", " "))
+        g = await s.get_prompt("garden_review", {"patterns_json": "[]", "hint_library_json": "{}", "required_checks_json": "[]"})
+        print("prompts/get garden_review ->", g.messages[0].content.text[:160].replace("\n", " "))
 
 
 asyncio.run(main())

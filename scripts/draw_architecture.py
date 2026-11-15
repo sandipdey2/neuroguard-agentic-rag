@@ -25,7 +25,7 @@ from core.skills import catalog  # noqa: E402
 SK = catalog()
 from core import graph_rag  # noqa: E402
 GS = graph_rag.stats()
-assert len(TOOLS) == 20 and len(STATIC) == 6 and len(TEMPL) == 1 and len(PROMPTS) == 2 and len(SK) == 6, (TOOLS, RES, PROMPTS, SK)
+assert len(TOOLS) == 20 and len(STATIC) == 6 and len(TEMPL) == 1 and len(PROMPTS) == 3 and len(SK) == 6, (TOOLS, RES, PROMPTS, SK)
 assert {"graph_traverse", "episode_recall", "episode_write"} <= set(TOOLS) and "graph://knowledge-graph" in STATIC
 assert {"semantic_search", "search_files", "load_skill", "execute_query", "web_search", "web_fetch", "get_memory", "shell"} <= set(TOOLS)
 assert set(K["rag_modes"]) >= {"classical", "agentic", "agentic_search"}
@@ -59,7 +59,7 @@ def arrow(x1, y1, x2, y2, label="", both=False, color="#333", ls="-", rad=0.0, l
                 bbox=dict(fc="white", ec="none", pad=0.3))
 
 
-ax.text(94, 172, "NeuroGuard AI v2.5.1 - architecture as implemented (app.py, core/*.py, mcp_server/neuroguard_mcp_server.py)",
+ax.text(94, 172, "NeuroGuard AI v2.6.0 - architecture as implemented (app.py, core/*.py, mcp_server/neuroguard_mcp_server.py)",
         ha="center", va="top", fontsize=13.5, weight="bold")
 ax.text(94, 168.8, f"All LLM roles: {K['model']}, temperature {K['temperature']}, OpenAI-compatible Vocareum endpoint   |   contract v{K['contract_version']}   |   "
         "colour: blue UI, red guard, yellow LLM agent, green deterministic code, purple MCP, cyan observability, grey data", ha="center", va="top", fontsize=8.4, color="#444")
@@ -87,7 +87,7 @@ box(0, y1, 27, h1, "Streamlit UI (app.py)", "profile form, note, audience, conse
 box(30, y1, 28, h1, "Input guardrails\n(core/guardrails.py)", "PHI redaction -> prompt injection\n-> BE FAST emergency (9-1-1)\n-> dosing -> out of scope\n+ profile validation | no LLM\nmulti-modal intake (partial):\ncore/multimodal.py vision / pypdf", C["guard"], bfs=7.0)
 box(61, y1, 28, h1, "Run contract\n(harness_contract.json)", f"SHA-256 hashed before first token\n{B['max_llm_calls']} LLM | {B['max_tool_calls']} tools | {B['max_total_tokens'] // 1000}k tok | {B['wall_clock_timeout_s']} s\n"
     f"per-agent permissions, {len(K['required_checks'])} checks\ncontext, confidence, pricing,\nlearning, batch policies", C["rule"], bfs=7.0)
-box(92, y1, 28, h1, "Planner node (LLM)", f"MCP episode_recall: similar past\nepisodes + learned hints\n-> structured Plan (ordered steps,\nwatch-outs, rationale)\nplanner -> executor pattern", C["llm"], bfs=7.0)
+box(92, y1, 28, h1, "Planner node (LLM)", "MCP episode_recall: similar past\nepisodes + learned hints\n-> structured Plan (ordered steps,\nwatch-outs, rationale)\nplanner -> executor pattern", C["llm"], bfs=7.0)
 box(123, y1, 34, h1, "Executor: orchestrator (LLM)", "executes the plan: next agent, skill,\ninstruction, reason (structured)\ncode overrides: eligibility, FINISH\nonly after review | "
     f"{L['max_orchestrator_turns']} turns,\n{L['max_visits_per_agent']} visits/agent, {L['max_revisions']} revision | every route\n-> decision reasoning log", C["llm"], bfs=7.0)
 box(160, y1, 29, h1, "CaseState (LangGraph)", "short-term memory per run:\nprofile, plan, learning, intake,\nanalyst, risk, evidence, coverage,\nretrieved, draft, self_critique,\nreview, route, trace[]", C["state"], ls="--", bfs=7.0)
@@ -130,7 +130,7 @@ for x in (19, 56.5, 94):
 for x in (131.5, 169):
     arrow(x, 76, 128 if x < 150 else 134, 69, color="#6a3fa0", ls="--")
 arrow(106, 116, 100, 69, color="#a33", ls=":", label="episode_recall", lx=9, ly=20)
-box(139, 46, 50, 23, "Validator: finalize + confidence gate", f"re-runs the {len(K['required_checks'])} checks on the final draft\nconfidence = weighted calibration, cohort n,\n"
+box(139, 46, 50, 23, "Validator: finalize + confidence gate", f"re-runs the {len(K['required_checks'])} checks (PASS/FAIL/NOT_RUN);\nrequired NOT_RUN -> blocked_unrun\nconfidence = weighted calibration, cohort n,\n"
     "topic coverage, verifier, red team, grounding\n"
     f"< {CF['refuse_below']} refuse  |  < {CF['review_below']} clinician review\nclinician sign-off if high risk / red flags\nmemory_write (consent) + episode_write (harness)", C["rule"], bfs=7.1)
 ax.plot([157.4, 189.6], [105.5, 105.5], color="#333", lw=1.2)
@@ -146,7 +146,7 @@ box(33, yg, 30, hg, "Context windows\n(core/context.py)", f"tiktoken o200k_base 
 box(66, yg, 28, hg, "Decision log + OTLP-JSON\n(core/harness.py, observability.py)", "RunContext.decide(): actor, options,\nchosen, rationale, evidence | one span\nper LLM / MCP call -> OTLP-JSON export", C["obs"], fs=8.2, bfs=6.7)
 box(97, yg, 30, hg, "Phoenix / Arize AX (optional)", "OpenTelemetry + OpenInference\nPhoenix and/or Arize AX; else no-op\nUI: localhost:6006 / app.arize.com\nMonitoring tab uses SQLite", C["obs"], fs=8.2, bfs=6.6, ls="--")
 box(130, yg, 24, hg, "Cost / token economics", f"usage per call x list price\nUSD {K['pricing']['input_per_1m']}/1M in\nUSD {K['pricing']['output_per_1m']}/1M out\nper-agent cost; budgets cap spend", C["obs"], fs=8.2, bfs=6.6)
-box(157, yg, 32, hg, "Signed receipt (core/pipeline.py)", "HMAC-SHA256 over contract, server, inputs,\nreport, trace, decision-log hashes, audit head,\ncost, confidence | clinician decision re-signs\nand is written back to episodic memory", C["rule"], fs=8.2, bfs=6.6)
+box(157, yg, 32, hg, "Signed receipt (core/pipeline.py)", "HMAC-SHA256 over git commit, contract, server,\ninputs, report, trace, decision-log hashes, audit\nhead, check status + unrun checks, cost |\nclinician decision re-signs (episodic memory)", C["rule"], fs=8.2, bfs=6.6)
 arrow(173, 46, 173, 42.4)
 ax.annotate("", xy=(-1.4, 87), xytext=(-1.4, 42.4), arrowprops=dict(arrowstyle="-|>", color="#666", ls="--", lw=1.1))
 ax.text(-2.6, 60, "load_body()", rotation=90, fontsize=6.6, va="center", color="#555")

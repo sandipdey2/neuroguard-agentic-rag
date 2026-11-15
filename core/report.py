@@ -30,8 +30,12 @@ def full_markdown(result: dict, approval: dict | None = None) -> str:
     for cid, d in sorted((result.get("retrieved") or {}).items()):
         lines.append(f"- [{cid}] {d['publisher']}, \"{d['title']}\", {d['url']} (accessed {d['accessed']}; {d['license']})")
     lines += ["", "## Verification checks"]
-    for k, v in ((final.get("verification") or {}).get("checks") or {}).items():
-        lines.append(f"- {k}: {'PASS' if v else 'FAIL'}")
+    vv = final.get("verification") or {}
+    status = vv.get("check_status") or {k: ("PASS" if v else "FAIL") for k, v in (vv.get("checks") or {}).items()}
+    for k, st in status.items():
+        lines.append(f"- {k}: {st}")
+    if vv.get("unrun_checks"):
+        lines.append(f"- NOT_RUN required checks (release blocked): {', '.join(vv['unrun_checks'])}")
     lines += ["", f"Receipt signature (HMAC-SHA256): `{result['receipt']['signature']}`", "",
               "*NeuroGuard AI is clinical decision support for education and demonstration. It is not a medical device, "
               "has no regulatory clearance, and must not be used for diagnosis or treatment decisions.*"]

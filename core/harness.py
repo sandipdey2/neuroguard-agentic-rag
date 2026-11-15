@@ -49,7 +49,7 @@ class RunContext:
     cost_usd: float = 0.0
     audit: AuditLog = field(default_factory=AuditLog)
     bus: MessageBus = field(default_factory=MessageBus)
-    perms: PermissionEngine = None
+    perms: PermissionEngine = None  # type: ignore[assignment]  # built in __post_init__
     spans: list = field(default_factory=list)          # observability: one span per LLM / MCP call
     decisions: list = field(default_factory=list)      # decision reasoning log
     limiter: object = None                             # optional shared rate limiter (batch mode)
@@ -152,21 +152,49 @@ def section(md: str, title: str) -> str:
     return m.group(1) if m else ""
 
 
+PASS, FAIL, NOT_RUN = "PASS", "FAIL", "NOT_RUN"
+TEXT_CHECKS = ("report_states_model_risk", "every_evidence_claim_cited", "citations_were_retrieved", "numbers_grounded",
+               "no_dosing_advice", "no_diagnosis_claim", "disclaimer_present", "no_phi_in_output")
+
+
+def check_statuses(checks: dict, not_run: set[str], names) -> dict[str, str]:
+    """PASS / FAIL / NOT_RUN per check. A check that is missing from ``checks`` (or listed in ``not_run``) is NOT_RUN."""
+    return {c: NOT_RUN if (c in not_run or c not in checks) else (PASS if checks[c] else FAIL) for c in names}
+
+
 def verify(report_md: str, risk: dict | None, analyst: dict | None, retrieved: dict, evidence_text: str,
            red_team: dict | None, ctx: RunContext, *, require_red_team: bool = True, stage: str = "review") -> dict:
     """Run the 12-check gate over a draft.
 
+    Every check gets a status: PASS, FAIL or NOT_RUN. NOT_RUN means the check could
+    not be evaluated (its input never existed: no predict_risk output, no Risk
+    Analyst summary, no draft text, red team never invoked, or the contract lists a
+    check this verifier does not compute). A REQUIRED check that is NOT_RUN is
+    returned in ``unrun_checks`` and makes ``passed`` False: it is never a pass.
+
     ``require_red_team`` must stay True for the Safety Reviewer and the finalize
     gate. The writer's deterministic pre-check runs before red team has been
-    invoked, so it passes ``require_red_team=False`` and does not count
-    ``red_team_pass`` as a failure (that 11/12 was not a confirmed finding).
+    invoked, so it passes ``require_red_team=False``: ``red_team_pass`` is then
+    NOT_RUN and not required (it is neither a failure nor a pass).
+
+    Backward-compatible keys: ``checks`` (check -> bool, NOT_RUN is False),
+    ``failed`` (required checks with status FAIL), ``passed``.
     """
     t_verify = time.time()
     checks = {}
+    not_run: set[str] = set()
+    has_text = bool((report_md or "").strip())
+    report_md = report_md or ""
     p = (risk or {}).get("risk_probability")
+    if risk is None or p is None:
+        not_run |= {"risk_in_unit_interval", "risk_matches_model"}           # predict_risk never ran / matched
+    if not analyst:
+        not_run.add("risk_matches_model")                                    # Risk Analyst never summarised
     checks["risk_in_unit_interval"] = isinstance(p, (int, float)) and 0.0 <= p <= 1.0
-    checks["risk_matches_model"] = bool(analyst) and p is not None and abs(float(analyst.get("risk_probability", -1)) - p) < 5e-4
+    checks["risk_matches_model"] = bool(analyst) and p is not None and abs(float((analyst or {}).get("risk_probability", -1)) - p) < 5e-4
     pct = (risk or {}).get("risk_percent")
+    if pct is None:
+        not_run.add("report_states_model_risk")
     checks["report_states_model_risk"] = pct is not None and f"{pct:.1f}%" in report_md
     ev = section(report_md, "Guideline evidence")
     bullets = [b.strip() for b in re.findall(r"^\s*[-*]\s+(.+)$", ev, flags=re.M)]
@@ -187,23 +215,54 @@ def verify(report_md: str, risk: dict | None, analyst: dict | None, retrieved: d
     checks["disclaimer_present"] = all(re.search(p_, low) for p_ in DISCLAIMER_PATTERNS)
     phi = [n for n, pat in PHI if n != "person_name" and re.search(pat, report_md)]
     checks["no_phi_in_output"] = not phi
-    checks["red_team_pass"] = bool(red_team) and red_team.get("verdict") == "pass"
+    if not has_text:
+        not_run |= set(TEXT_CHECKS)        # an empty draft must not "pass" no_dosing_advice / no_phi_in_output
+    if red_team is None or not require_red_team:
+        not_run.add("red_team_pass")
+    checks["red_team_pass"] = bool(red_team) and (red_team or {}).get("verdict") == "pass"
     checks["within_budget"] = ctx.within_budget()
+    for c in not_run:
+        checks[c] = False                  # bool view: NOT_RUN is never True
+    contract_checks = list(ctx.contract["required_checks"])
+    required = [c for c in contract_checks if require_red_team or c != "red_team_pass"]
+    status = check_statuses(checks, not_run, list(dict.fromkeys(contract_checks + list(checks))))
+    failed = [c for c in required if status[c] == FAIL]
+    unrun = [c for c in required if status[c] == NOT_RUN]
     details = {"uncited_bullets": uncited, "invalid_citations": bad, "citations": cited, "ungrounded_numbers": ungrounded,
                "dosing_matches": dosing, "diagnosis_matches": diag, "phi_types": phi,
                "red_team_issues": (red_team or {}).get("issues", []), "evidence_bullets": len(bullets),
-               "numbers_checked": len(nums), "verify_stage": stage, "require_red_team": require_red_team}
-    required = list(ctx.contract["required_checks"])
-    if not require_red_team:
-        required = [c for c in required if c != "red_team_pass"]
-    failed = [c for c in required if not checks.get(c)]
-    result = {"checks": checks, "failed": failed, "passed": not failed, "details": details}
+               "numbers_checked": len(nums), "verify_stage": stage, "require_red_team": require_red_team,
+               "not_run": sorted(c for c, st in status.items() if st == NOT_RUN)}
+    result = {"checks": checks, "check_status": status, "failed": failed, "unrun_checks": unrun,
+              "required": required, "passed": not failed and not unrun, "details": details}
     try:
         from .observability import emit_verify_span
         emit_verify_span(ctx, result, t_verify, time.time(), stage=stage)
     except Exception:
         pass
     return result
+
+
+def release_decision(v: dict, risk: dict | None) -> tuple[bool, str, str | None]:
+    """Finalize-gate decision from a verify() result: (finalized, status, block_reason).
+
+    * any REQUIRED check NOT_RUN -> ("blocked_unrun", reason naming the checks): never a pass;
+    * any required check FAIL, or no authoritative risk -> "not_finalized";
+    * otherwise "finalized" (the confidence policy may still refuse afterwards).
+    """
+    unrun = list(v.get("unrun_checks") or [])
+    if unrun:
+        return False, "blocked_unrun", "required check(s) not run: " + ", ".join(unrun)
+    if v.get("passed") and not v.get("failed") and risk is not None:
+        return True, "finalized", None
+    return False, "not_finalized", None
+
+
+def not_reviewed(ctx: RunContext) -> dict:
+    """Verification result when no reviewed draft exists: every required check is NOT_RUN (blocked, never a pass)."""
+    req = list(ctx.contract["required_checks"])
+    return {"checks": {c: False for c in req}, "check_status": {c: NOT_RUN for c in req}, "failed": ["draft_not_reviewed"],
+            "unrun_checks": req, "required": req, "passed": False, "details": {"not_run": req}}
 
 
 # ----------------------------------------------------------------------------- receipt

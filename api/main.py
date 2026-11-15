@@ -35,7 +35,7 @@ from core.db import describe as db_describe
 from core.harness import verify_receipt
 from core.job_queue import get_queue
 
-VERSION = "2.5.3"
+VERSION = "2.6.0"
 WAIT_MAX_S = 330
 
 

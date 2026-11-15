@@ -4,7 +4,7 @@ import time
 
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from core.harness import RunContext, verify
@@ -451,10 +451,10 @@ def test_attach_exporter_uses_small_batches_and_inventory_records_transport():
     if batch_size is None:
         sched = getattr(proc, "_batch_processor", None) or proc
         batch_size = getattr(sched, "_max_export_batch_size", None)
-        delay = getattr(sched, "_schedule_delay", None) or getattr(sched, "_schedule_delay_millis", None)
+        _delay = getattr(sched, "_schedule_delay", None) or getattr(sched, "_schedule_delay_millis", None)
         queue = getattr(sched, "_max_queue_size", None)
     else:
-        delay = getattr(proc, "_schedule_delay_millis", None)
+        _delay = getattr(proc, "_schedule_delay_millis", None)
         queue = getattr(proc, "_max_queue_size", None)
     assert batch_size == 64, batch_size
     assert queue == 4096, queue
