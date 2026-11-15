@@ -1,0 +1,10 @@
+# v2.6.0 local checks (2026-11-15 02:33 PST)
+## Python 313
+pytest: 111 passed, 2 skipped in 10.35s
+ruff: All checks passed!
+mypy: Success: no issues found in 8 source files
+## Python 314
+pytest: 111 passed, 2 skipped in 9.97s
+ruff: All checks passed!
+mypy: Success: no issues found in 8 source files
+verify_mcp.py: exit 0 (eval/logs/verify_mcp_v260.log)

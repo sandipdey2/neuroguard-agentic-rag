@@ -16,6 +16,13 @@ then product quality, then infrastructure. "Effort" is a rough estimate for one 
 
 The core evaluation numbers were **not** changed by these items (no model, prompt or routing logic changed).
 
+## Done in v2.6.0 (agent operating system gaps)
+- **Gardener:** MCP prompt `garden_review` + `scripts/garden.py` cluster repeated corrections in de-identified episodes and write proposals with validation plans to `eval/gardening_queue.md`. They are proposals only and a human applies them. First real output: `override:clinical_writer` (4 of 37 episodes) and `retrieval:needed` (4 of 37).
+- **Receipt revision:** `git_sha` + `git_dirty` are in the HMAC-signed payload.
+- **PASS / FAIL / NOT_RUN:** a required check that did not run blocks release (`blocked_unrun`) and is listed in `unrun_checks` on the receipt.
+- **ruff + mypy** configs pass locally. The CI step is waiting to be pasted (`docs/CI_LINT_STEP.md`).
+- **Still open:** commands and exit codes are not stored per run (E03); there is no performance regression baseline that fails CI (C02); mypy covers the core only; nothing re-confirms an old issue on current `main` (Coordinate); the Gardener does not open pull requests by design.
+
 ## Done in v2.5.3 (Arize delivery; Phoenix is the complete record)
 - Prefer Arize's OTLP gRPC transport (`otlp.arize.com:443`, gzip) when the optional proto-grpc package is installed; HTTP remains the Streamlit Cloud fallback.
 - Smaller BatchSpanProcessor batches (64) with backoff retries on 5xx / UNAVAILABLE, plus hard caps on attribute and event size.

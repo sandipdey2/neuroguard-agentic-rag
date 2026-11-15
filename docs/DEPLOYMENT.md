@@ -27,6 +27,8 @@ port. The live demo therefore shows the UI and the chat tab; run the API locally
 4. Deploy. The first start trains the models (about 20 s); a full run then takes about 1-2 minutes.
    To turn on Arize AX later, add the two `ARIZE_*` secrets and reboot the app. The Monitoring tab
    then shows Arize as on and links to https://app.arize.com/.
+   Signed receipts carry the code revision (`git_sha`, `git_dirty`). If the host has no `.git` directory or no
+   `git` binary, add an optional `GIT_SHA = "<commit sha>"` secret; otherwise the receipt says `unknown`.
 
 ## 2. REST API locally with uvicorn
 
@@ -68,6 +70,13 @@ Tested: SQLite always; a real PostgreSQL 16.2 server and a real Redis 6.2 server
 CI is active on GitHub Actions ([`.github/workflows/ci.yml`](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml)).
 Every push to `main` runs pytest and `scripts/verify_mcp.py` on Python 3.13 and 3.14. The first run was green on 2026-11-14.
 The 2 real-server PostgreSQL / Redis tests skip in CI (no servers); fakeredis and SQLite cover those paths.
+
+Lint and types (v2.6.0): `ruff check .` and `mypy` pass locally (configs `ruff.toml`, `mypy.ini`). The workflow step that runs
+them in CI must be pasted once in the GitHub web editor (the automation token cannot edit workflow files): see
+[CI_LINT_STEP.md](CI_LINT_STEP.md).
+
+Gardener (v2.6.0): `python scripts/garden.py` reads only de-identified episodes and writes proposals to
+`eval/gardening_queue.md`. It needs no API key unless `--llm` or `--trial --live` is given, and it never edits code.
 
 ## Secrets
 

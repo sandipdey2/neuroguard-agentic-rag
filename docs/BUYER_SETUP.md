@@ -32,6 +32,7 @@ The key is read only from Streamlit secrets or environment variables and is neve
 ```bash
 python scripts/verify_mcp.py      # MCP tools/resources/prompts over stdio, no API key needed
 python scripts/smoke_test.py      # one full multi-agent run with the real LLM
+python scripts/garden.py          # Gardener: recurring correction patterns -> eval/gardening_queue.md (proposals only)
 streamlit run app.py
 ```
 
@@ -51,7 +52,7 @@ python scripts/scheduled_batch.py --rows 9046 31112     # cron trigger; add to c
 - Streamlit Community Cloud hosts only the UI (with the 💬 Chat tab), not the API; run the API on your own machine. See `docs/DEPLOYMENT.md`.
 - Browser clients on another origin: set `NG_CORS_ORIGINS`.
 - Shared storage (optional): set `DATABASE_URL` (PostgreSQL) and/or `REDIS_URL`; without them everything uses local SQLite and an in-process cache.
-- Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 and 3.14).
+- Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). Lint and types: `ruff check .` and `mypy` (see `docs/CI_LINT_STEP.md` to add them to CI). CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 and 3.14).
 - Optional Phoenix tracing: install `requirements-phoenix.txt` in the app venv, and install `arize-phoenix==21.0.0` in a *separate* venv (it pulls mcp 2.x). Run `phoenix serve`, set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006` (or `NG_PHOENIX=1`), then `python scripts/run_phoenix_demo.py`.
 - Optional Arize AX (cloud) export: set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` (environment or Streamlit secrets; placeholders are in `.streamlit/secrets.toml.example`). `arize-otel` is already in `requirements.txt`. Phoenix and Arize can be on together. The Streamlit **📈 Monitoring** tab works without either collector and shows an on/off line for each, with a link to https://app.arize.com/ when Arize is on.
 
@@ -59,7 +60,8 @@ python scripts/scheduled_batch.py --rows 9046 31112     # cron trigger; add to c
 - Budgets, turn caps, per-agent tool permissions, required checks and success criteria: `harness_contract.json` (re-run `python scripts/success_report.py` after an evaluation).
 - Agent behaviour: `skills/*/SKILL.md` (front matter = catalog entry; body = instructions loaded on demand).
 - Guideline corpus: `data/guidelines.json` (keep `id`, `url`, `license` for every chunk).
-- Report template and red-team prompt: MCP prompts in `mcp_server/neuroguard_mcp_server.py`.
+- Report template, red-team prompt and Gardener prompt (`garden_review`): MCP prompts in `mcp_server/neuroguard_mcp_server.py`.
+- Each check is PASS, FAIL or NOT_RUN. A required check that could not run blocks release (`blocked_unrun`). The signed receipt lists `check_status`, `unrun_checks` and the code revision (`git_sha`; set `GIT_SHA` on hosts without git).
 - Re-run `evaluation.ipynb` after any change and keep the published numbers in sync with its outputs.
 
 ## Important limits

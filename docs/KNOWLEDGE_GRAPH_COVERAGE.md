@@ -116,7 +116,7 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 
 ## AI Agent build diagram ("How to Build an AI Agent": 8 boxes, 37 items)
 
-**Status (v2.5.3): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
+**Status (v2.6.0): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
 
 | Box | Item | Status | File / function | How it works |
 |---|---|---|---|---|
@@ -137,7 +137,7 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 | 3 LLM | Top-p | full | `harness_contract.json top_p=1.0, core/config.py::get_llm` | passed to ChatOpenAI and written into every receipt (v2.3). |
 | 4 Tools | Web & data APIs | full | `core/pubmed.py (MCP pubmed_search), core/context_tools.py::web_fetch` | NCBI PubMed E-utilities (esearch + esummary, keyless, 3 req/s, cached, real snapshot fallback) + allowlisted CDC/NIH/WHO pages. **Limit:** PubMed returns metadata only; reports cite only G-xx excerpts |
 | 4 Tools | Custom tools | full | `mcp_server/neuroguard_mcp_server.py` | predict_risk, explain_factors, cohort_stats, screen_note, calculator, graph_traverse, .... |
-| 4 Tools | MCP | full | `official mcp SDK (FastMCP) over stdio` | 20 tools, 6 resources + 1 template, 2 prompts; server-side policy engine. |
+| 4 Tools | MCP | full | `official mcp SDK (FastMCP) over stdio` | 20 tools, 6 resources + 1 template, 3 prompts; server-side policy engine. |
 | 4 Tools | AI agent as a tool | full | `core/agent_tools.py::make_evidence_agent_tool` | Evidence Researcher sub-agent wrapped as LangChain StructuredTool consult_evidence_researcher; bound by the follow-up agent; A2A-traced. |
 | 5 Memory | Working memory | full | `core/agents.py::CaseState` | LangGraph state across nodes in one run. |
 | 5 Memory | Episodic memory | full | `core/episodes.py + core/chat_memory.py` | run episodes for the learning loop + de-identified conversation turns recalled into follow-ups (consent-gated, bounded). |

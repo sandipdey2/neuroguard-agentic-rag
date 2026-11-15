@@ -1,0 +1,142 @@
+{
+ "version": "2.6.0",
+ "date": "2026-11-15 10:29 UTC",
+ "case": "N2",
+ "dataset_id": 8213,
+ "model": "gpt-4o-mini",
+ "temperature": 0,
+ "top_p": 1.0,
+ "endpoint": "Vocareum OpenAI-compatible (gpt-4o-mini)",
+ "run_id": "0eca28f391ad49c5b3ac01edd7cba24d",
+ "status": "finalized",
+ "latency_s": 56.29,
+ "wall_s": 56.3,
+ "cost": {
+  "model": "gpt-4o-mini",
+  "input_tokens": 25570,
+  "output_tokens": 2400,
+  "cached_input_tokens": 1152,
+  "cost_usd": 0.005189,
+  "rates_usd_per_1m": {
+   "input": 0.15,
+   "output": 0.6,
+   "cached_input": 0.075
+  },
+  "pricing_source": "https://platform.openai.com/docs/pricing (Standard tier, gpt-4o-mini)",
+  "pricing_accessed": "2026-11-13"
+ },
+ "llm_calls": 19,
+ "tool_calls": 11,
+ "tokens": 27970,
+ "confidence": 0.894,
+ "receipt": {
+  "contract_version": "1.4.0",
+  "contract_sha256": "3a9ac78d614418f531d58b535ba4a679c1e141a7e728636fdcb7ea599818b8d8",
+  "mcp_server_sha256": "e01052edb0876c7f25ab41ceb5421f9c00ab78b5a2f5dec594001f83cefbc333",
+  "git_sha": "0fb8c595af37622bbc568a7229905258eea19331",
+  "git_dirty": false,
+  "git_source": "git",
+  "status": "finalized",
+  "check_status": {
+   "risk_in_unit_interval": "PASS",
+   "risk_matches_model": "PASS",
+   "report_states_model_risk": "PASS",
+   "every_evidence_claim_cited": "PASS",
+   "citations_were_retrieved": "PASS",
+   "numbers_grounded": "PASS",
+   "no_dosing_advice": "PASS",
+   "no_diagnosis_claim": "PASS",
+   "disclaimer_present": "PASS",
+   "no_phi_in_output": "PASS",
+   "red_team_pass": "PASS",
+   "within_budget": "PASS"
+  },
+  "unrun_checks": [],
+  "failed_checks": [],
+  "block_reason": null,
+  "needs_human_approval": true,
+  "key_id": "ephemeral:23df2ab1",
+  "algorithm": "HMAC-SHA256",
+  "signature": "4dab2d3a3ad44a269d18790da1427c37c98666714ab04ca564dd65de1247f5f8"
+ },
+ "receipt_signature_valid": true,
+ "gate_trace": [
+  {
+   "agent": "gate",
+   "type": "gate",
+   "status": "finalized",
+   "failed_checks": [],
+   "unrun_checks": [],
+   "block_reason": null,
+   "needs_human_approval": true,
+   "approval_reasons": [
+    "risk_band == high"
+   ],
+   "memory": {
+    "skipped": "write blocked: user has not consented to case-history storage"
+   },
+   "confidence": 0.894,
+   "confidence_gate": "pass",
+   "ms": 11
+  }
+ ],
+ "review_trace": [
+  {
+   "verdict": "approve",
+   "failed_checks": [],
+   "unrun_checks": [],
+   "issues": []
+  }
+ ],
+ "writer_precheck": [
+  {
+   "revised": false,
+   "code_issues": []
+  }
+ ],
+ "episode": {
+  "stored": true,
+  "run_id": "0eca28f391ad49c5b3ac01edd7cba24d",
+  "age_band": "70-79",
+  "factors": [
+   "age",
+   "heart_disease",
+   "glucose",
+   "emergency"
+  ],
+  "audience": "clinician",
+  "plan": [
+   "intake",
+   "risk_analyst",
+   "evidence_researcher",
+   "clinical_writer",
+   "safety_reviewer"
+  ],
+  "route": [
+   "intake",
+   "risk_analyst",
+   "evidence_researcher",
+   "clinical_writer",
+   "safety_reviewer",
+   "FINISH"
+  ],
+  "overrides": 0,
+  "retrieval_rounds": 1,
+  "self_critique": "clean",
+  "review_verdicts": [
+   "approve"
+  ],
+  "failed_checks": [],
+  "red_team_rules": [],
+  "confidence": 0.894,
+  "outcome": "finalized",
+  "unrun_checks": [],
+  "cited": [
+   "G-05",
+   "G-06",
+   "G-10",
+   "G-13"
+  ]
+ },
+ "phoenix": "not enabled for this run"
+}

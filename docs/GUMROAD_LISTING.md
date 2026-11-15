@@ -25,10 +25,10 @@ It is built for developers, AI engineers, health-tech founders and educators who
 pattern for trustworthy agent systems - not a black box.
 
 ## What is inside (feature bullets)
-- **Real MCP server** (stdio): 20 tools (incl. graph RAG traversal, episodic memory, a keyless PubMed literature search and 8 agentic-search context tools: files, skills, read-only SQL, allowlisted web, memory, sandboxed shell), 6 resources (incl. a tool registry) + 1 resource template, 2 prompts; a server-side policy engine re-checks every call; verification script included.
+- **Real MCP server** (stdio): 20 tools (incl. graph RAG traversal, episodic memory, a keyless PubMed literature search and 8 agentic-search context tools: files, skills, read-only SQL, allowlisted web, memory, sandboxed shell), 6 resources (incl. a tool registry) + 1 resource template, 3 prompts (report, red team, Gardener); a server-side policy engine re-checks every call; verification script included.
 - **Service layer (v2.3)**: FastAPI REST API (OpenAPI docs, API key, CORS, HMAC webhook), a cron batch trigger, a durable job queue with workers (SQLite / PostgreSQL / Redis), a chat tab with conversation memory, and an evidence sub-agent exposed as a tool.
 - **Simple to run**: one-click Streamlit Community Cloud deploy for the UI; the API runs locally with `uvicorn api.main:app`.
-- **93 pytest tests** (91 run and pass without a database server; no API key needed) and CI on GitHub Actions (Python 3.13 and 3.14), plus measurable success criteria with a target-vs-observed report (11/11 met).
+- **113 pytest tests** (111 run and pass without a database server; no API key needed), `ruff` + `mypy` configs, and CI on GitHub Actions (Python 3.13 and 3.14), plus measurable success criteria with a target-vs-observed report (11/11 met).
 - **Optional Phoenix and Arize AX tracing** and a Streamlit **Monitoring** tab (latency, cost, tokens, checks, decisions). Phoenix UI packages are optional; `arize-otel` ships in `requirements.txt` so Cloud can export to Arize AX once `ARIZE_SPACE_ID` / `ARIZE_API_KEY` secrets are added. The dashboard works without a collector.
 - **Agentic-AI knowledge-graph coverage**: planner -> executor, ReAct traces, hybrid sparse + dense retrieval, graph RAG, agentic re-retrieval, writer self-critique, confidence policy gate, decision reasoning log, OTLP-JSON spans, per-run cost, episodic memory with a bounded learning loop, lab-report image/PDF intake (partial) and a cohort batch runner (partial) - see docs/KNOWLEDGE_GRAPH_COVERAGE.md.
 - **Multi-agent orchestration**: LLM routing with code-enforced eligibility rules, turn cap, revision loop.
@@ -37,7 +37,10 @@ pattern for trustworthy agent systems - not a black box.
 - **Guardrails**: PHI redaction, prompt-injection and tool-misuse blocking, dosing-question refusal,
   BE FAST emergency stop with a call-9-1-1 message, sandboxed AST calculator.
 - **Verifier + red team**: deterministic invariants (risk range, number grounding, citations, no dosing, no
-  diagnosis, disclaimer, no PHI, budget) plus an LLM red-team pass whose findings are quote-confirmed.
+  diagnosis, disclaimer, no PHI, budget) plus an LLM red-team pass whose findings are quote-confirmed. Every check is
+  PASS, FAIL or NOT_RUN; a required check that did not run blocks release; the signed receipt records the git commit.
+- **Gardener**: reviews past de-identified runs for repeated corrections and proposes a new check, tool change or hint
+  with a validation plan (`scripts/garden.py`, MCP prompt `garden_review`). It never changes code by itself.
 - **Skills with progressive disclosure** (`SKILL.md` files) you can edit without touching code.
 - **Explainable ML**: calibrated logistic regression compared with random forest and gradient boosting, exact
   per-factor contributions, cohort statistics with confidence intervals, model card resource.
@@ -48,7 +51,7 @@ pattern for trustworthy agent systems - not a black box.
 - Pinned requirements tested on Python 3.13 and 3.14; one-click Streamlit Community Cloud deployment.
 
 ## What the buyer gets
-- `neuroguard-ai-2.5.3.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
+- `neuroguard-ai-2.6.0.zip`: full source (MIT license), skills, guideline corpus, MTSamples subset (CC0),
   evaluation notebook and results, architecture diagram, technical paper (PDF), buyer setup guide, changelog, tests and the REST API.
 - A data fetch script for the Stroke Prediction Dataset, which is **not bundled** because its Kaggle terms are
   educational use; bring your own licensed data for commercial deployments.

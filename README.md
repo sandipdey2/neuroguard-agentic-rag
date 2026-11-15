@@ -15,25 +15,25 @@ self-critique check every draft; a finalize gate and a confidence gate refuse an
 with an **HMAC-SHA256 signed receipt**, a decision reasoning log, OTLP-JSON spans and a cost estimate.
 Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
 
-**v2.5.3** prefers OTLP gRPC for optional, best-effort Arize AX export (HTTP fallback), treats Phoenix as the complete trace record, and keeps the v2.5 Monitoring tab and the v2.4 capstone simplification —
+**v2.6.0** adds a **Gardener** (MCP prompt `garden_review` + `scripts/garden.py`: clusters repeated corrections in de-identified episodes and *proposes* a check / tool / hint change with a validation plan, never applying it), the **git commit** (`git_sha`, `git_dirty`) inside the HMAC-signed receipt, **PASS / FAIL / NOT_RUN** status for every check (a required check that did not run blocks release as `blocked_unrun`), and `ruff` + `mypy` configs. It keeps v2.5.3's optional, best-effort Arize AX export (Phoenix is the complete trace record), the v2.5 Monitoring tab and the v2.4 capstone simplification —
 a FastAPI service (REST + webhook + cron triggers on a durable queue), a 💬 Chat tab with conversation memory, an evidence
 sub-agent exposed as a tool, a FAISS vector store, a second keyless public API (PubMed E-utilities) as an MCP tool, a
 server-side MCP policy engine, optional Redis / PostgreSQL backends (SQLite by default), explicit success criteria and a
-pytest suite (93 tests) — without extra packaging layers. It runs in two places only: Streamlit Community Cloud (live demo)
+pytest suite (113 tests) — without extra packaging layers. It runs in two places only: Streamlit Community Cloud (live demo)
 and `uvicorn` on your machine (API). Phoenix is off unless you set `PHOENIX_COLLECTOR_ENDPOINT` or `NG_PHOENIX=1`; Arize AX
 is off unless you set `ARIZE_SPACE_ID` and `ARIZE_API_KEY` (environment or Streamlit secrets). Cloud and CI do not need a
 collector. CI is active on GitHub Actions
 ([`.github/workflows/ci.yml`](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml), Python 3.13 and 3.14).
-See [What's new in v2.5](#whats-new-in-v25), [What's new in v2.3](#whats-new-in-v23) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+See [What's new in v2.6](#whats-new-in-v26), [Agent operating system mapping](#agent-operating-system-lauren-tan-sheet-mapped-to-code), [What's new in v2.5](#whats-new-in-v25), [What's new in v2.3](#whats-new-in-v23) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ![architecture](architecture_diagram.png)
 
 ## How a request flows (as implemented)
 1. **Input guardrails** (`core/guardrails.py`, no LLM): PHI redaction → prompt-injection/tool-misuse block → CDC BE FAST emergency stop ("call 9-1-1") → medication-dosing refusal → out-of-scope refusal.
-2. **Run contract** (`harness_contract.json` v1.3.0, `top_p` 1.0) is loaded and SHA-256 hashed before the first token: 9 turns, 36 LLM calls, 32 tool calls, 110k tokens, 300 s, per-agent permissions, 12 required checks, context budgets, confidence policy, list prices, learning and batch limits.
+2. **Run contract** (`harness_contract.json` v1.4.0, `top_p` 1.0) is loaded and SHA-256 hashed before the first token: 9 turns, 36 LLM calls, 32 tool calls, 110k tokens, 300 s, per-agent permissions, 12 required checks, context budgets, confidence policy, list prices, learning and batch limits.
 3. **Planner** (LLM) recalls similar de-identified past episodes via MCP `episode_recall` and writes a structured plan; the **orchestrator** (LangGraph) executes it — the LLM picks next agent + skill + instruction; code enforces eligibility, FINISH-only-after-review, one revision, visit/turn caps. Every decision goes to the decision log.
 4. **Specialists** — Intake, Risk Analyst, Evidence Researcher, Clinical Writer, Safety Reviewer — exchange **A2A-style** tasks/messages/artifacts (`core/a2a.py`). Tool users run a **ReAct** loop: thought → tool call → **pre-tool-use hook** → MCP observation (PHI-redacted, token-truncated) → back to context. The Evidence Researcher runs in one of three **RAG modes** chosen in the sidebar: *classical* (a fixed pipeline calls `semantic_search` before the LLM and injects the docs), *agentic* (default: the LLM calls hybrid search and **graph RAG** itself and re-retrieves when code finds a required topic uncovered) or *agentic search* (MCP context-retrieval tools over local files incl. `knowledge/Plan.md`, skills, the cohort database, allowlisted CDC/NIH/WHO pages, memory and a sandboxed shell). The **Context window** tab lists every slot with its token count. The writer **self-critiques** and revises once before review.
-5. **Finalize gate** re-runs the verifier, then a **confidence score** (calibration, cohort size, coverage, verifier, red team, grounding) refuses below 0.4 and asks for review below 0.7; high-risk or red-flag cases need **clinician sign-off**; one de-identified **episode** is stored for the bounded learning loop; a signed receipt is produced.
+5. **Finalize gate** re-runs the verifier (each check PASS / FAIL / NOT_RUN; a required NOT_RUN blocks release as `blocked_unrun`), then a **confidence score** (calibration, cohort size, coverage, verifier, red team, grounding) refuses below 0.4 and asks for review below 0.7; high-risk or red-flag cases need **clinician sign-off**; one de-identified **episode** is stored for the bounded learning loop; a signed receipt is produced.
 
 ## Coverage of the nine required concepts
 | # | Concept | Where / how (real code) |
@@ -41,7 +41,7 @@ See [What's new in v2.5](#whats-new-in-v25), [What's new in v2.3](#whats-new-in-
 | 1 | Harness: agent loop, fixed contract, gate | `react()` loop in `core/agents.py`; `harness_contract.json` hashed in `core/harness.py`; `gate` node refuses to finalize unless all 12 checks pass |
 | 2 | Memory & state | Short-term: LangGraph `CaseState`. Long-term: SQLite or PostgreSQL (`core/memory.py`, `core/db.py`) via MCP `memory_read`/`memory_write`, consent checkbox + clear button |
 | 3 | RAG | three selectable modes (classical / agentic / agentic search, see below); `core/rag.py` hybrid TF-IDF + 24-d LSA vectors over 30 verbatim CDC/NHLBI excerpts, `core/graph_rag.py` graph traversal, agentic re-retrieval → `guideline://{id}` resources → writer cites `[G-xx]`; verifier checks citations were retrieved |
-| 4 | MCP | `mcp_server/neuroguard_mcp_server.py`: 20 tools (incl. `pubmed_search`), 6 resources (incl. the `registry://tools` tool registry) + 1 resource template, 2 prompts; every call re-checked by the server-side policy engine `core/server_policy.py`; `scripts/verify_mcp.py` |
+| 4 | MCP | `mcp_server/neuroguard_mcp_server.py`: 20 tools (incl. `pubmed_search`), 6 resources (incl. the `registry://tools` tool registry) + 1 resource template, 3 prompts (`clinical_report`, `red_team_review`, `garden_review`); every call re-checked by the server-side policy engine `core/server_policy.py`; `scripts/verify_mcp.py` |
 | 5 | Skills | `skills/*/SKILL.md`; `core/skills.py` exposes name+description only; body injected when selected (trace: `skill_loaded`) |
 | 6 | Guardrails & permissions | Input guardrails; permission engine + pre-tool-use hook (`core/permissions.py`); AST-sandboxed calculator; consent for writes; human approval; hash-chained audit log |
 | 7 | Evals | Executed `evaluation.ipynb`, `eval/cases.json`, `eval/summary.json`, `eval/raw_results.json` (traces) |
@@ -60,6 +60,45 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | Production & governance | Confidence scoring → `core/confidence.py` (full) · Policy gates → guardrails, hook, finalize + confidence gate (full) · Audit trail → hash chain + signed receipt (full) · Decision reasoning logs → `RunContext.decide` (full) · Eval & observability → notebook + OTLP-JSON spans (full) · Cost / token economics → per-call list-price costing (full) |
 | RAG modes & agentic search | File search → `search_files` over `knowledge/` (Plan.md) + skills (full) · Skill loading → `load_skill`, own catalog only (full) · Database tools → `semantic_search` + read-only `execute_query` (full) · Web search → CDC/NIH/WHO allowlist, SSRF guard, offline fallback (**partial**: not a general search engine) · Memory tool → `get_memory` (full) · Shell → argv allowlist sandbox (full) · Context-window inspector → app tab + `context_window` trace (full) |
 | Frontier | Memory & learning loops → whitelisted hints + bounded boosts (**partial**) · Self-improving agents → prompt-level only (**partial**) · Multi-modal reasoning → `core/multimodal.py` lab image (vision) / PDF (**partial**) · Agentic workflows at scale → `core/batch.py` semaphore + token bucket (**partial**) |
+
+## What's new in v2.6
+| Change | Where (real code) |
+|---|---|
+| Gardener prompt + script | MCP prompt `garden_review` (`mcp_server/neuroguard_mcp_server.py`) and `scripts/garden.py`. Reads only de-identified episodes (episodic-memory table, `eval/raw_results.json`, `eval/logs/*.json`), clusters repeated failed checks, red-team rules, revisions, re-retrievals, orchestrator overrides and clinician rejections (support ≥ 2), and writes `eval/gardening_queue.md` + `eval/logs/garden_report.json`: recurring pattern, support, episode ids, proposed constraint (check / tool / hint) and validation plan. `--llm` asks gpt-4o-mini through `garden_review`; code drops proposals with unknown counts or loosening wording. `--trial [--live]` runs ONE `eval/cases.json` profile with ONE existing whitelisted hint (`NG_TRIAL_HINT`). It never edits code, prompts, the contract or checks. |
+| Git commit on the receipt | `core/pipeline.py::git_revision` → `git_sha` (`git rev-parse HEAD`), `git_dirty` (`git status --porcelain`, tracked files) inside the HMAC-signed payload; falls back to `GIT_SHA` / `NG_GIT_SHA`, then `unknown`, when git is unavailable. |
+| PASS / FAIL / NOT_RUN | `core/harness.py::verify` returns `check_status`, `unrun_checks` and `required` next to the old `checks` / `failed` / `passed`. NOT_RUN = the input never existed (no `predict_risk`, no Risk Analyst summary, empty draft, red team not run, or a contract check the verifier does not compute). `release_decision` turns any required NOT_RUN into `blocked_unrun` with a reason naming the check; it is never a pass. The receipt carries `check_status`, `unrun_checks` and `block_reason`; the **Checks & receipt** tab and the Markdown export show NOT_RUN. |
+| Lint + types | `ruff.toml` (`ruff check .`) and `mypy.ini` (`mypy`, scoped to the harness / gate / receipt / learning core + `scripts/garden.py`); both pass on 3.13 and 3.14. The CI step to paste is in [docs/CI_LINT_STEP.md](docs/CI_LINT_STEP.md). |
+| Contract v1.4.0 | adds the `gardener` agent (prompt `garden_review`, no tools), a `verification` block (statuses + NOT_RUN policy) and a `gardening` block (`propose_only`). Required checks, budgets and thresholds are unchanged. |
+
+Live check (2026-11-15, gpt-4o-mini via Vocareum, public case N2): finalized in 56.3 s, 19 LLM calls, 11 MCP tool calls, 27,970 tokens, \$0.005189 at list price; all 12 checks PASS, `unrun_checks` empty, receipt `git_sha` = the v2.6.0 code commit, `git_dirty` false, signature valid (`eval/logs/v260_live.json`).
+
+## Agent operating system (Lauren Tan sheet) mapped to code
+An honest map of the "Agent Operating System" field notes (two loops, evidence contract, match the check, three prompts, earned autonomy). **Covered** = implemented and tested; **partial** = part of the idea is implemented.
+
+| Concept | Status | Where |
+|---|---|---|
+| Outer loop: Collect | covered | de-identified episodes (`core/episodes.py`), clinician decisions, eval logs |
+| Outer loop: Coordinate | partial | planner groups similar past episodes; the receipt's `git_sha` says which commit a result came from, but nothing re-confirms an old issue on current `main` |
+| Outer loop: Assign | covered | planner + orchestrator: one owner per step, contract caps, the 12 checks as acceptance |
+| Inner loop: Implement → Run + inspect → Verify | covered | ReAct specialists on real MCP tools; `verify()` + red team |
+| Observed defect → revise | covered | Safety Reviewer `revise` (max 1) and writer self-critique |
+| BLOCKED / report missing check | covered (v2.6) | NOT_RUN status; required NOT_RUN → `blocked_unrun` with the check named |
+| Reviewable change only after checks pass | covered | finalize gate + confidence gate + clinician sign-off |
+| Engineer stays accountable | covered | clinician approve / reject re-signs the receipt; Gardener proposals are applied by a human |
+| E01 REVISION | covered (v2.6) | `git_sha`, `git_dirty`, contract and MCP-server SHA-256 on the signed receipt |
+| E02 REPRO | covered | `eval/cases.json`, fixed contract (temperature 0), `inputs_sha256` |
+| E03 RUN (commands + exit codes) | partial | CI logs and `eval/logs/*.log`; commands are not stored per run |
+| E04 PROOF | covered | trace, decision log, hash-chained audit log, OTLP spans, optional Phoenix |
+| E05 LIMITS | covered (v2.6) | `unrun_checks`, `block_reason` on the receipt |
+| C01 UI | covered | `scripts/apptest_session.py` full-journey AppTest |
+| C02 Performance | partial | the same profiles compared across RAG modes; no regression baseline that fails CI |
+| C03 Quality | covered locally, CI pending | pytest in CI; `ruff` + `mypy` pass locally; CI step in `docs/CI_LINT_STEP.md` (paste needed) |
+| Agent judgment / reusable mechanics / repository constraints | covered | LLM routing with code overrides; `scripts/*`; contract, hooks and server policy |
+| Gardening queue | covered (v2.6) | `scripts/garden.py` → `eval/gardening_queue.md` (collect, cluster, propose; a human fixes the shared cause) |
+| Coordinator prompt | partial | planner prompt produces the plan; it is not named "Coordinator" and returns no open-questions list |
+| Verifier prompt | partial | `red_team_review` + `verify()` record PASS / FAIL / NOT_RUN and evidence; commands are not recorded |
+| Gardener prompt | covered (v2.6) | MCP prompt `garden_review` |
+| Earn autonomy through repetition | partial, by design | explicit permissions, review rules, stop conditions and `reset_learning` rollback; autonomy never widens with repetition. **Broader delegation is deliberately out of scope** for a clinical decision-support tool. |
 
 ## What's new in v2.5
 | Feature | Where (real code) |
@@ -176,6 +215,8 @@ cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # add OPENAI_API_KE
 python scripts/verify_mcp.py          # MCP over stdio: tools/resources/prompts list + calls
 python scripts/smoke_test.py          # one full multi-agent run
 python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + plan, ReAct, decisions
+python scripts/garden.py              # Gardener: recurring patterns -> eval/gardening_queue.md (proposals only, no API key)
+ruff check . && mypy                  # lint + types (pip install -r requirements-dev.txt)
 streamlit run app.py
 ```
 ### Optional: Phoenix and Arize AX tracing
@@ -197,7 +238,7 @@ python scripts/run_phoenix_demo.py                      # one real case, then op
 ```
 Span attributes are PHI-redacted. **Phoenix is the complete trace record** (all spans, 0 export failures, no unknown OpenInference kinds). Arize AX is optional and best-effort: the same redacted spans are also sent (gRPC when `opentelemetry-exporter-otlp-proto-grpc` is installed, otherwise HTTP), but the Arize cloud collector may drop spans under HTTP 5xx or even after a successful export. When the two UIs disagree, trust Phoenix. Leave the collector env vars unset on Streamlit Cloud unless you want Arize AX export (then add `ARIZE_SPACE_ID` and `ARIZE_API_KEY` under App settings → Secrets and reboot).
 
-Tests: `pip install -r requirements-dev.txt && pytest` (93 tests; 91 run and pass without a database server; 2 real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14; Phoenix is not installed in CI; `arize-otel` is, but no collector is contacted). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
+Tests: `pip install -r requirements-dev.txt && pytest` (113 tests; 111 run and pass without a database server; 2 real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14; Phoenix is not installed in CI; `arize-otel` is, but no collector is contacted). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
 
 ## Deploy on Streamlit Community Cloud
 New app → repo `sandipdey2/neuroguard-agentic-rag`, branch `main`, file `app.py` → Advanced settings → Secrets:

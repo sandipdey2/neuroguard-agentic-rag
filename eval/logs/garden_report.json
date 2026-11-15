@@ -1,0 +1,178 @@
+{
+ "generated_at": "2026-11-15T10:29:40+0000",
+ "mode": "propose_only",
+ "episodes": 37,
+ "sources": {
+  "episodes_db": 30,
+  "raw_results.json": 7
+ },
+ "min_support": 2,
+ "patterns": [
+  {
+   "key": "override:clinical_writer",
+   "support": 4,
+   "rate": 0.108,
+   "episode_ids": [
+    "5953be60",
+    "93062a46",
+    "a8b5209e",
+    "c24b1017"
+   ],
+   "common_factors": [
+    "age",
+    "emergency",
+    "smoking",
+    "glucose"
+   ]
+  },
+  {
+   "key": "retrieval:needed",
+   "support": 4,
+   "rate": 0.108,
+   "episode_ids": [
+    "88b930c1",
+    "eb0cd921",
+    "875c51d8",
+    "2bf88ce1"
+   ],
+   "common_factors": [
+    "age",
+    "emergency",
+    "glucose",
+    "hypertension"
+   ]
+  }
+ ],
+ "proposals": [
+  {
+   "pattern": "the orchestrator's code override corrected an LLM routing choice",
+   "key": "override:clinical_writer",
+   "support": 4,
+   "episode_ids": [
+    "5953be60",
+    "93062a46",
+    "a8b5209e",
+    "c24b1017"
+   ],
+   "common_factors": [
+    "age",
+    "emergency",
+    "smoking",
+    "glucose"
+   ],
+   "proposed_constraint": {
+    "type": "hint",
+    "change": "Orchestrator: when the LLM routes to clinical_writer before risk+evidence exist, the code override fires; make the planner's order binding in the orchestrator prompt (whitelisted hint 'override:clinical_writer').",
+    "existing_whitelisted_hint": "Plan to gather intake, risk and evidence before asking the writer."
+   },
+   "validation_plan": {
+    "cases": [
+     "N1",
+     "N2"
+    ],
+    "metric": "share of runs with 'override:clinical_writer' must fall below the baseline 4/37 (10.8%) on a re-run of eval/cases.json N1, N2",
+    "must_hold": [
+     "all 12 required checks stay required (no loosening)",
+     "finalized rate does not drop",
+     "pytest passes",
+     "scripts/verify_mcp.py passes"
+    ],
+    "trial": "python scripts/garden.py --trial --key override:clinical_writer --case N1 [--live]"
+   },
+   "status": "proposed (not applied)"
+  },
+  {
+   "pattern": "evidence coverage was short after round 1 and a second retrieval round was needed",
+   "key": "retrieval:needed",
+   "support": 4,
+   "episode_ids": [
+    "88b930c1",
+    "eb0cd921",
+    "875c51d8",
+    "2bf88ce1"
+   ],
+   "common_factors": [
+    "age",
+    "emergency",
+    "glucose",
+    "hypertension"
+   ],
+   "proposed_constraint": {
+    "type": "tool",
+    "change": "Evidence Researcher: issue one search_guidelines query per required topic on the first pass (batch them), so the coverage gap that triggers round 2 is closed up front; whitelisted hint 'retrieval:needed' already exists.",
+    "existing_whitelisted_hint": "Search each risk factor separately and include the warning-signs excerpt on the first pass."
+   },
+   "validation_plan": {
+    "cases": [
+     "N1",
+     "N8"
+    ],
+    "metric": "share of runs with 'retrieval:needed' must fall below the baseline 4/37 (10.8%) on a re-run of eval/cases.json N1, N8",
+    "must_hold": [
+     "all 12 required checks stay required (no loosening)",
+     "finalized rate does not drop",
+     "pytest passes",
+     "scripts/verify_mcp.py passes"
+    ],
+    "trial": "python scripts/garden.py --trial --key retrieval:needed --case N1 [--live]"
+   },
+   "status": "proposed (not applied)"
+  }
+ ],
+ "llm_review": {
+  "model": "gpt-4o-mini",
+  "prompt": "garden_review",
+  "latency_s": 5.13,
+  "tokens": 1183,
+  "cost_usd": 0.000297,
+  "proposals": [
+   {
+    "pattern": "Ensure that clinical writers gather intake, risk, and evidence before drafting reports.",
+    "support": 4,
+    "episode_ids": [
+     "5953be60",
+     "93062a46",
+     "a8b5209e",
+     "c24b1017"
+    ],
+    "proposed_constraint": {
+     "type": "check",
+     "change": "Require clinical writers to gather intake, risk, and evidence before drafting reports."
+    },
+    "validation_plan": "Re-run eval/cases.json profiles related to clinical writing, focusing on the accuracy and completeness of reports. The metric that must improve is the number of rejected reports due to missing information. Ensure pytest and scripts/verify_mcp.py still pass."
+   },
+   {
+    "pattern": "Search each risk factor separately and include the warning-signs excerpt on the first pass.",
+    "support": 4,
+    "episode_ids": [
+     "88b930c1",
+     "eb0cd921",
+     "875c51d8",
+     "2bf88ce1"
+    ],
+    "proposed_constraint": {
+     "type": "check",
+     "change": "Implement a requirement to search each risk factor separately and include the warning-signs excerpt on the first pass."
+    },
+    "validation_plan": "Re-run eval/cases.json profiles that involve risk factor retrieval, measuring the completeness of the evidence gathered. The metric that must improve is the accuracy of risk factor citations. Ensure pytest and scripts/verify_mcp.py still pass."
+   }
+  ],
+  "dropped_unverifiable_or_loosening": 0
+ },
+ "trial": {
+  "key": "override:clinical_writer",
+  "case": "N1",
+  "hint": "Plan to gather intake, risk and evidence before asking the writer.",
+  "live": true,
+  "ran": true,
+  "how": "NG_TRIAL_HINT injects this whitelisted hint through episode_recall for this one process only",
+  "status": "finalized",
+  "hint_injected": true,
+  "pattern_recurred": false,
+  "latency_s": 55.16,
+  "cost_usd": 0.005543,
+  "run_id": "85147cc6544544eaadef5bf27199a415",
+  "unrun_checks": [],
+  "git_sha": "0fb8c595af37622bbc568a7229905258eea19331"
+ }
+}
