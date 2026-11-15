@@ -116,7 +116,7 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 
 ## AI Agent build diagram ("How to Build an AI Agent": 8 boxes, 37 items)
 
-**Status (v2.4.0): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
+**Status (v2.4.1): 37 items - 36 full, 1 out of scope.** v2.2 had 25 full, 9 partial and 3 missing; v2.3 closed all 12 gaps (top-p, success criteria, a second public data API, agent as a tool, conversation episodic memory, vector database, triggers, message queue, unit tests, chat interface, API endpoint, chat bot). v2.4 removed the chat-platform bot for capstone simplicity, so that item is now out of scope. Item labels follow the audit of the diagram; 'Limit' states what is deliberately not claimed.
 
 | Box | Item | Status | File / function | How it works |
 |---|---|---|---|---|
@@ -153,7 +153,7 @@ Red team for the context tools (s.6b): 44 attacks (20 shell injection, 15 SSRF, 
 | 7 Interface | Web app | full | `app.py (Streamlit Community Cloud)` | live demo with 7 tabs. |
 | 7 Interface | API endpoint | full | `api/main.py (FastAPI)` | POST /v1/cases, GET /v1/cases/{id}, GET /v1/receipts/{id}/verify, webhook, chat, health; API-key auth, CORS, OpenAPI /docs. **Limit:** Streamlit Cloud cannot host it: run it locally with uvicorn (docs/DEPLOYMENT.md) |
 | 7 Interface | Slack / Discord bot | out of scope | `-` | removed in v2.4 for capstone simplicity; the Streamlit Chat tab and POST /v1/chat cover chat access. **Limit:** not shipped |
-| 8 Testing | Unit tests | full | `tests/ (pytest), ci/github-actions-ci.yml` | harness, guardrails, permissions, sandbox, SQL authorizer, RAG/vector store, queue, cache, DB, API, chat memory, agent-as-tool, config templates; CI workflow for 3.13 + 3.14. **Limit:** the CI workflow ships as ci/github-actions-ci.yml; it runs once copied to .github/workflows/ (the push token had no workflow scope) |
+| 8 Testing | Unit tests | full | `tests/ (pytest), .github/workflows/ci.yml` | harness, guardrails, permissions, sandbox, SQL authorizer, RAG/vector store, queue, cache, DB, API, chat memory, agent-as-tool, config templates; CI on GitHub Actions for 3.13 + 3.14 (first run green on 2026-11-14). **Limit:** the 2 real-server PostgreSQL / Redis tests skip in CI (no servers); fakeredis and SQLite cover those paths |
 | 8 Testing | Latency tests | full | `evaluation.ipynb, eval/logs/e2e_v23.json` | per-run latency in every eval row and receipt; median vs target in success criteria. |
 | 8 Testing | Quality metrics | full | `evaluation.ipynb, eval/summary.json` | attack block rate, finalized rate, citation coverage, faithfulness, hit@3, AUC, Brier. |
 | 8 Testing | Improvement loop | full | `core/episodes.py, docs/IMPROVEMENTS.md` | episodes -> whitelisted hints + bounded retrieval boosts; roadmap from failures. |

@@ -1,5 +1,7 @@
 # 🧠 NeuroGuard AI — governed multi-agent stroke-risk decision support
 
+[![CI](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml)
+
 **Repository:** [https://github.com/sandipdey2/neuroguard-agentic-rag](https://github.com/sandipdey2/neuroguard-agentic-rag) · **Live demo:** [https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/](https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/) · **Paper:** [module_summary.pdf](module_summary.pdf) · **Evaluation:** [evaluation.ipynb](evaluation.ipynb) · **License:** MIT (code)
 
 > ⚠️ **Decision support only — not a medical device.** No regulatory clearance. Not for diagnosis, treatment or emergency triage.
@@ -13,11 +15,12 @@ self-critique check every draft; a finalize gate and a confidence gate refuse an
 with an **HMAC-SHA256 signed receipt**, a decision reasoning log, OTLP-JSON spans and a cost estimate.
 Every node of the agentic-AI knowledge graph is mapped to code in [docs/KNOWLEDGE_GRAPH_COVERAGE.md](docs/KNOWLEDGE_GRAPH_COVERAGE.md). Udacity AI Mastery Capstone — Project 7 (Integrative Industry Synthesis), healthcare.
 
-**v2.4.0 (simplified for the capstone)** keeps everything that runs the agent - a FastAPI service (REST + webhook + cron
+**v2.4.1** keeps the v2.4 capstone simplification - a FastAPI service (REST + webhook + cron
 triggers on a durable queue), a 💬 Chat tab with conversation memory, an evidence sub-agent exposed as a tool, a FAISS vector
 store, a second keyless public API (PubMed E-utilities) as an MCP tool, a server-side MCP policy engine, optional Redis /
 PostgreSQL backends (SQLite by default), explicit success criteria and a pytest suite (75 tests) - and drops the extra
 packaging layers. It runs in two places only: Streamlit Community Cloud (live demo) and `uvicorn` on your machine (API).
+CI is active on GitHub Actions ([`.github/workflows/ci.yml`](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml), Python 3.13 and 3.14); the first run was green on 2026-11-14.
 See [What's new in v2.3](#whats-new-in-v23) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ![architecture](architecture_diagram.png)
@@ -66,7 +69,7 @@ Full table with file/function, mechanism and evidence: [docs/KNOWLEDGE_GRAPH_COV
 | Vector database | `core/vector_store.py`: FAISS `IndexFlatIP`, persisted with a corpus fingerprint, used by `core/rag.py` |
 | Triggers | `POST /v1/cases`, HMAC `POST /v1/webhooks/case`, cron CLI `scripts/scheduled_batch.py` |
 | Durable message queue | `core/job_queue.py` (SQLite WAL / PostgreSQL `SKIP LOCKED` / Redis `LMOVE`; leases, retries) + `core/worker.py`; A2A events published to it |
-| Unit tests + CI | `tests/` (75 tests, LLM mocked, MCP real); CI workflow `ci/github-actions-ci.yml` (Python 3.13 + 3.14) |
+| Unit tests + CI | `tests/` (75 tests, LLM mocked, MCP real); CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 + 3.14) |
 | Chat interface | app tab **💬 Chat** (`st.chat_input`): "row 9046" or `age=67 …` runs a case; other messages are follow-ups |
 | API endpoint | `api/main.py` (FastAPI, OpenAPI at `/docs`, API key, CORS), run locally with `uvicorn`; Streamlit Cloud cannot host it (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) |
 
@@ -165,7 +168,7 @@ python scripts/smoke_test.py          # one full multi-agent run
 python scripts/live_evidence.py       # MCP handshake/PID + LLM-chosen tool_calls + plan, ReAct, decisions
 streamlit run app.py
 ```
-Tests: `pip install -r requirements-dev.txt && pytest` (75 tests; real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
+Tests: `pip install -r requirements-dev.txt && pytest` (75 tests; real PostgreSQL / Redis tests run when `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL` are set) and `python scripts/apptest_session.py` (Streamlit AppTest, several consecutive cases + attacks in one session). CI is active on GitHub Actions ([workflow](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml); Python 3.13 and 3.14). Rebuild: `scripts/draw_architecture.py`, `scripts/build_coverage_doc.py`, `scripts/build_pdf.py`, `scripts/build_dist.py` (product zip), `scripts/fetch_data.py` (re-download + checksum data).
 
 ## Deploy on Streamlit Community Cloud
 New app → repo `sandipdey2/neuroguard-agentic-rag`, branch `main`, file `app.py` → Advanced settings → Secrets:

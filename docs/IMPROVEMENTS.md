@@ -25,7 +25,7 @@ The core evaluation numbers were **not** changed by these items (no model, promp
 | Durable queue + workers, FastAPI API, HMAC webhook, cron trigger | `tests/test_queue.py`, `tests/test_api.py`, `tests/test_triggers.py`; live API run in `eval/logs/e2e_v23.json` |
 | Chat tab with conversation memory; evidence agent as a tool | `tests/test_chat.py`, `tests/test_agent_as_tool.py`; live follow-ups 14.3 s / 29.9 s |
 
-Still open from this list: networked A2A (item 10; events now reach the durable queue but agents still run in one process), OIDC auth (12), HIPAA readiness (13), parallel gathering (7). Item 11 is partly done: PostgreSQL is supported, row-level security and WORM audit storage are not. The CI workflow ships as `ci/github-actions-ci.yml` and runs once it is copied to `.github/workflows/`.
+Still open from this list: networked A2A (item 10; events now reach the durable queue but agents still run in one process), OIDC auth (12), HIPAA readiness (13), parallel gathering (7). Item 11 is partly done: PostgreSQL is supported, row-level security and WORM audit storage are not. CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 and 3.14).
 
 ## Done in v2.1.0 (agentic-AI knowledge-graph coverage; notebook re-executed)
 | Change | Effect (eval/summary.json) |

@@ -51,7 +51,7 @@ python scripts/scheduled_batch.py --rows 9046 31112     # cron trigger; add to c
 - Streamlit Community Cloud hosts only the UI (with the 💬 Chat tab), not the API; run the API on your own machine. See `docs/DEPLOYMENT.md`.
 - Browser clients on another origin: set `NG_CORS_ORIGINS`.
 - Shared storage (optional): set `DATABASE_URL` (PostgreSQL) and/or `REDIS_URL`; without them everything uses local SQLite and an in-process cache.
-- Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). To run CI on GitHub, copy `ci/github-actions-ci.yml` to `.github/workflows/ci.yml`.
+- Tests: `pip install -r requirements-dev.txt && pytest` (no API key needed). CI is active on GitHub Actions (`.github/workflows/ci.yml`, Python 3.13 and 3.14).
 
 ## 7. Customise
 - Budgets, turn caps, per-agent tool permissions, required checks and success criteria: `harness_contract.json` (re-run `python scripts/success_report.py` after an evaluation).

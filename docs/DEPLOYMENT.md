@@ -58,6 +58,12 @@ Tested: SQLite always; a real PostgreSQL 16.2 server and a real Redis 6.2 server
 (`test_cache_db.py::test_postgres_backend_real`, `test_queue.py::test_redis_queue_real`, enabled with
 `NG_TEST_PG_URL` / `NG_TEST_REDIS_URL`), and fakeredis in CI.
 
+## Continuous integration
+
+CI is active on GitHub Actions ([`.github/workflows/ci.yml`](https://github.com/sandipdey2/neuroguard-agentic-rag/actions/workflows/ci.yml)).
+Every push to `main` runs pytest and `scripts/verify_mcp.py` on Python 3.13 and 3.14. The first run was green on 2026-11-14.
+The 2 real-server PostgreSQL / Redis tests skip in CI (no servers); fakeredis and SQLite cover those paths.
+
 ## Secrets
 
 Only placeholders live in the repo: `.env.example` and `.streamlit/secrets.toml.example`.

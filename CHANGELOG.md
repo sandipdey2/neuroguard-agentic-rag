@@ -2,6 +2,12 @@
 
 **Repository:** https://github.com/sandipdey2/neuroguard-agentic-rag · **Live demo:** https://neuroguard-agentic-rag-4ywylkye6e2rgzavdb5xrb.streamlit.app/
 
+## 2.4.1 - 2026-11-14
+CI is now active on GitHub Actions.
+- Workflow at `.github/workflows/ci.yml` (Python 3.13 and 3.14): pytest and the MCP server check over stdio. First run was green on 2026-11-14 (https://github.com/sandipdey2/neuroguard-agentic-rag/actions/runs/43604794444).
+- Docs, coverage table, README CI badge and product zip updated. The earlier copy-this-file draft at `ci/github-actions-ci.yml` was removed as a duplicate.
+- API version 2.4.1; product zip `neuroguard-ai-2.4.1.zip`.
+
 ## 2.4.0 - 2026-11-14
 Simplified for the capstone presentation. No change to the agents, prompts, MCP server, harness contract (still v1.3.0, same hash) or evaluation numbers.
 - Removed the chat-platform bots, the mobile-client guide, the self-hosted-model profile and all container and cluster deployment files (`bots/`, `deploy/`, container build/compose files, `Procfile`, `requirements-bots.txt`, `docs/MOBILE_CLIENT.md`, `eval/logs/deploy_validation.log`) with their tests.
